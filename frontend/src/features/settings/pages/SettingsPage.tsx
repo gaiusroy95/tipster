@@ -1,55 +1,36 @@
+import {
+  BellIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/outline'
 import { PageShell } from '@/shared/layouts/PageShell'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/Card'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { useSettings, useUpdateSettings } from '@/features/settings/hooks/useSettings'
+import { useLinkedAccounts } from '@/features/auth/hooks/useSocialAuth'
 import { useToast } from '@/shared/components/ui/Toast'
-import { cn } from '@/shared/utils/cn'
-
 import { ConnectedAccountsCard } from '@/features/settings/components/ConnectedAccountsCard'
+import { SettingsOverview } from '@/features/settings/components/SettingsOverview'
+import { SettingsSection } from '@/features/settings/components/SettingsSection'
+import { SettingsToggle } from '@/features/settings/components/SettingsToggle'
 
-function Toggle({
-  checked,
-  onChange,
-  label,
-  description,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-  label: string
-  description?: string
-}) {
+function SettingsSkeleton() {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex items-start justify-between gap-4 w-full py-3 min-h-[44px] text-left"
-    >
-      <div className="min-w-0 flex-1 pr-2">
-        <p className="font-medium">{label}</p>
-        {description && <p className="text-sm text-text-muted mt-0.5 leading-relaxed">{description}</p>}
+    <div className="space-y-5">
+      <Skeleton className="h-36 rounded-2xl" />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="space-y-5">
+          <Skeleton className="h-52 rounded-2xl" />
+          <Skeleton className="h-32 rounded-2xl" />
+        </div>
+        <Skeleton className="h-80 rounded-2xl" />
       </div>
-      <div
-        className={cn(
-          'w-11 h-6 rounded-full transition-colors relative shrink-0 mt-0.5',
-          checked ? 'bg-accent-primary' : 'bg-bg-elevated border border-border-default',
-        )}
-      >
-        <span
-          className={cn(
-            'absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform',
-            checked && 'translate-x-5',
-          )}
-        />
-      </div>
-    </button>
+    </div>
   )
 }
 
 export function SettingsPage() {
   const { data, isLoading, isError, refetch } = useSettings()
+  const { data: linkedData } = useLinkedAccounts()
   const updateSettings = useUpdateSettings()
   const { toast } = useToast()
 
@@ -64,8 +45,8 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <PageShell title="Settings">
-        <Skeleton className="h-48 w-full max-w-lg" />
+      <PageShell title="Settings" description="Manage notifications, privacy, and sign-in options">
+        <SettingsSkeleton />
       </PageShell>
     )
   }
@@ -78,43 +59,59 @@ export function SettingsPage() {
     )
   }
 
+  const linkedAccountCount = linkedData?.accounts.length ?? 0
+
   return (
-    <PageShell title="Settings" className="pb-24 xl:pb-6">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-        </CardHeader>
-        <CardContent className="divide-y divide-border-default">
-          <Toggle
-            label="Email notifications"
-            description="Receive bet results and season updates by email (future)"
-            checked={data.emailNotifications}
-            onChange={(v) => handleToggle('emailNotifications', v)}
-          />
-          <Toggle
-            label="Push notifications"
-            description="Mobile push alerts (future)"
-            checked={data.pushNotifications}
-            onChange={(v) => handleToggle('pushNotifications', v)}
-          />
-        </CardContent>
-      </Card>
+    <PageShell
+      title="Settings"
+      description="Manage notifications, privacy, and sign-in options"
+      className="pb-24 xl:pb-6"
+    >
+      <div className="space-y-5">
+        <SettingsOverview settings={data} linkedAccountCount={linkedAccountCount} />
 
-      <ConnectedAccountsCard className="mt-6" />
+        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+          <div className="space-y-5">
+            <SettingsSection
+              icon={<BellIcon className="h-5 w-5" aria-hidden="true" />}
+              title="Notifications"
+              description="Choose how Tipster Arena reaches you about bets and seasons."
+              accent="primary"
+            >
+              <div className="space-y-2">
+                <SettingsToggle
+                  label="Email notifications"
+                  description="Receive bet results and season updates by email (future)"
+                  checked={data.emailNotifications}
+                  onChange={(v) => handleToggle('emailNotifications', v)}
+                />
+                <SettingsToggle
+                  label="Push notifications"
+                  description="Mobile push alerts for live results and reminders (future)"
+                  checked={data.pushNotifications}
+                  onChange={(v) => handleToggle('pushNotifications', v)}
+                />
+              </div>
+            </SettingsSection>
 
-      <Card className="w-full max-w-lg mt-6">
-        <CardHeader>
-          <CardTitle>Privacy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Toggle
-            label="Public profile"
-            description="Allow others to view your transparency profile"
-            checked={data.showProfilePublic}
-            onChange={(v) => handleToggle('showProfilePublic', v)}
-          />
-        </CardContent>
-      </Card>
+            <SettingsSection
+              icon={<ShieldCheckIcon className="h-5 w-5" aria-hidden="true" />}
+              title="Privacy"
+              description="Control what other players can see on your profile."
+              accent="gold"
+            >
+              <SettingsToggle
+                label="Public profile"
+                description="Allow others to view your transparency profile, stats, and bet history."
+                checked={data.showProfilePublic}
+                onChange={(v) => handleToggle('showProfilePublic', v)}
+              />
+            </SettingsSection>
+          </div>
+
+          <ConnectedAccountsCard />
+        </div>
+      </div>
     </PageShell>
   )
 }

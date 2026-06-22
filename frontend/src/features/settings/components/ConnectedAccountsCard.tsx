@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { LinkIcon } from '@heroicons/react/24/outline'
 import { SOCIAL_PROVIDERS } from '@/core/constants/socialProviders'
 import { initiateSocialAuth } from '@/features/auth/lib/socialAuth'
 import {
@@ -7,8 +8,9 @@ import {
 } from '@/features/auth/hooks/useSocialAuth'
 import type { SocialAuthProvider } from '@/features/auth/types/socialAuth'
 import { SocialProviderIcon } from '@/features/auth/components/SocialProviderIcon'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/Card'
+import { SettingsSection } from '@/features/settings/components/SettingsSection'
 import { Button } from '@/shared/components/ui/Button'
+import { Badge } from '@/shared/components/ui/Badge'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { useToast } from '@/shared/components/ui/Toast'
@@ -43,7 +45,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
   }
 
   if (isLoading) {
-    return <Skeleton className={cn('h-48 w-full', className)} />
+    return <Skeleton className={cn('h-72 w-full rounded-2xl', className)} />
   }
 
   if (isError || !data) {
@@ -53,14 +55,14 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
   const linkedProviders = new Set(data.accounts.map((a) => a.provider))
 
   return (
-    <Card className={cn('w-full max-w-lg', className)}>
-      <CardHeader>
-        <CardTitle>Connected accounts</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-text-muted leading-relaxed">
-          Link social accounts for faster sign-in. Email and password sign-in remains available when linked.
-        </p>
+    <SettingsSection
+      className={className}
+      icon={<LinkIcon className="h-5 w-5" aria-hidden="true" />}
+      title="Connected accounts"
+      description="Link social accounts for faster sign-in. Email and password sign-in stays available."
+      accent="gold"
+    >
+      <div className="space-y-2">
         {SOCIAL_PROVIDERS.map((provider) => {
           const linked = linkedProviders.has(provider.id)
           const account = data.accounts.find((a) => a.provider === provider.id)
@@ -71,22 +73,35 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
           return (
             <div
               key={provider.id}
-              className="rounded-lg border border-border-default bg-bg-elevated p-3 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4"
+              className={cn(
+                'rounded-xl border px-4 py-3.5 space-y-3',
+                linked
+                  ? 'border-accent-secondary/25 bg-accent-secondary/5'
+                  : 'border-border-default/70 bg-bg-elevated/40',
+                'sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4',
+              )}
             >
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                    provider.id === 'google' && 'bg-white border border-border-default',
-                    provider.id === 'facebook' && 'bg-[#1877F2] text-white',
-                    provider.id === 'apple' && 'bg-black text-white',
+                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm',
+                    provider.id === 'google' && 'bg-white border-border-default',
+                    provider.id === 'facebook' && 'bg-[#1877F2] text-white border-[#1877F2]',
+                    provider.id === 'apple' && 'bg-black text-white border-black',
                   )}
                 >
-                  <SocialProviderIcon provider={provider.id} className="h-5 w-5" />
+                  <SocialProviderIcon provider={provider.id} className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{provider.name}</p>
-                  <p className="text-sm text-text-muted break-all sm:break-words">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold text-text-primary">{provider.name}</p>
+                    {linked ? (
+                      <Badge variant="win" className="text-[10px] px-2 py-0">Connected</Badge>
+                    ) : (
+                      <Badge variant="muted" className="text-[10px] px-2 py-0">Not linked</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-text-muted mt-0.5 break-all sm:break-words leading-relaxed">
                     {statusLabel}
                   </p>
                 </div>
@@ -115,7 +130,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
             </div>
           )
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </SettingsSection>
   )
 }

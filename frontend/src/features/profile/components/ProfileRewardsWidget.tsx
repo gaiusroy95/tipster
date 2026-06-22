@@ -19,7 +19,7 @@ const STREAK_DISPLAY_SLOTS = 8
 const FORUM_VIEW_TARGET = 1000
 const FORUM_VIEW_REWARD = 2000
 
-interface ProfileRewardsWidgetProps {
+interface ProfileRewardsWidgetProps { 
   profile: UserProfileStats
   dashboard?: DashboardData
   variant?: 'full' | 'compact'
