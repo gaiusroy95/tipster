@@ -1,0 +1,186 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg-primary: #07060d;
+  --color-bg-surface: #12101c;
+  --color-bg-elevated: #1a1728;
+  --color-bg-panel: #141225;
+  --color-border-default: #2a2640;
+  --color-border-strong: #3a3550;
+  --color-border-glow: #4f46e5;
+  --color-text-primary: #f4f2ff;
+  --color-text-muted: #9b94b8;
+  --color-accent-primary: #f59e0b;
+  --color-accent-secondary: #6366f1;
+  --color-accent-win: #34d399;
+  --color-accent-loss: #f87171;
+  --color-accent-live: #fb7185;
+  --color-accent-gold: #fcd34d;
+
+  --color-betting-btn: #151a2e;
+  --color-betting-btn-hover: #1a2238;
+  --color-betting-btn-border: #2a3450;
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-glow-accent: 0 0 32px rgba(99, 102, 241, 0.25);
+
+  --layout-bottom-nav: 4rem;
+  --layout-sticky-offset: calc(var(--layout-bottom-nav) + env(safe-area-inset-bottom, 0px));
+  --layout-toast-offset: calc(var(--layout-sticky-offset) + 0.5rem);
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary font-sans text-base min-h-screen;
+    background-image: none;
+  }
+
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent-secondary;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .glass-panel {
+    @apply bg-bg-surface border border-border-default;
+  }
+
+  .sidebar-panel {
+    @apply rounded-lg border border-border-default bg-bg-surface;
+  }
+
+  .arena-tab-active {
+    @apply text-accent-primary border-accent-primary;
+  }
+
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .pb-layout-nav {
+    padding-bottom: var(--layout-sticky-offset);
+  }
+
+  .bottom-nav-offset {
+    bottom: var(--layout-sticky-offset);
+  }
+
+  .toast-offset {
+    bottom: var(--layout-toast-offset);
+  }
+
+  .scroll-snap-x {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll-snap-item {
+    scroll-snap-align: start;
+  }
+
+  .horizontal-scroll-strip {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+
+  .horizontal-scroll-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .horizontal-scroll-strip:hover {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border-strong) transparent;
+    }
+
+    .horizontal-scroll-strip:hover::-webkit-scrollbar {
+      display: block;
+      height: 4px;
+    }
+
+    .horizontal-scroll-strip:hover::-webkit-scrollbar-thumb {
+      background: var(--color-border-strong);
+      border-radius: 9999px;
+    }
+  }
+
+  @keyframes news-flow {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  .news-flow-track {
+    display: flex;
+    width: max-content;
+    gap: 1rem;
+    animation: news-flow var(--news-flow-duration, 60s) linear infinite;
+    will-change: transform;
+  }
+
+  .news-flow:hover .news-flow-track,
+  .news-flow:focus-within .news-flow-track {
+    animation-play-state: paused;
+  }
+
+  .news-flow-item {
+    width: min(100vw - 2rem, 280px);
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 640px) {
+    .news-flow-item {
+      width: 240px;
+    }
+  }
+
+  .news-flow-compact .news-flow-item {
+    width: min(100vw - 2rem, 220px);
+  }
+
+  @media (min-width: 640px) {
+    .news-flow-compact .news-flow-item {
+      width: 200px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .news-flow-track {
+      animation: none;
+    }
+  }
+}

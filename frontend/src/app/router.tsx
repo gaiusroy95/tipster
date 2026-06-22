@@ -1,0 +1,99 @@
+/* eslint-disable react-refresh/only-export-components */
+import { lazy, Suspense, type LazyExoticComponent, type JSX } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { ROUTES } from '@/core/constants/routes'
+import { AuthLayout } from '@/shared/layouts/AuthLayout'
+import { MainLayout } from '@/shared/layouts/MainLayout'
+import { MinimalLayout } from '@/shared/layouts/MinimalLayout'
+import { ProtectedRoute, GuestRoute } from '@/app/guards'
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
+
+const PageLoader = () => (
+  <div className="space-y-4 p-4">
+    <Skeleton className="h-8 w-48" />
+    <Skeleton className="h-32 w-full" />
+  </div>
+)
+
+const withSuspense = (Component: LazyExoticComponent<() => JSX.Element>) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+)
+
+const OAuthCallbackPage = lazy(() => import('@/features/auth/pages/OAuthCallbackPage').then((m) => ({ default: m.OAuthCallbackPage })))
+const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const DashboardPage = lazy(() => import('@/features/arena/pages/TipsterHubPage').then((m) => ({ default: m.TipsterHubPage })))
+const WalletPage = lazy(() => import('@/features/wallet/pages/WalletPage').then((m) => ({ default: m.WalletPage })))
+const MatchDetailPage = lazy(() => import('@/features/fixtures/pages/MatchDetailPage').then((m) => ({ default: m.MatchDetailPage })))
+const BetSlipPage = lazy(() => import('@/features/betting/pages/BetSlipPage').then((m) => ({ default: m.BetSlipPage })))
+const ActiveBetsPage = lazy(() => import('@/features/bets/pages/ActiveBetsPage').then((m) => ({ default: m.ActiveBetsPage })))
+const BetHistoryPage = lazy(() => import('@/features/bets/pages/BetHistoryPage').then((m) => ({ default: m.BetHistoryPage })))
+const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })))
+const PublicProfilePage = lazy(() => import('@/features/profile/pages/PublicProfilePage').then((m) => ({ default: m.PublicProfilePage })))
+const SeasonsPage = lazy(() => import('@/features/seasons/pages/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
+const SeasonDetailPage = lazy(() => import('@/features/seasons/pages/SeasonDetailPage').then((m) => ({ default: m.SeasonDetailPage })))
+const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const ProfileEditPage = lazy(() => import('@/features/settings/pages/ProfileEditPage').then((m) => ({ default: m.ProfileEditPage })))
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const TermsPage = lazy(() => import('@/features/settings/pages/TermsPage').then((m) => ({ default: m.TermsPage })))
+const NotFoundPage = lazy(() => import('@/shared/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
+
+export const router = createBrowserRouter([
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: ROUTES.OAUTH_CALLBACK, element: withSuspense(OAuthCallbackPage) },
+    ],
+  },
+  {
+    element: (
+      <GuestRoute>
+        <AuthLayout />
+      </GuestRoute>
+    ),
+    children: [
+      { path: ROUTES.LOGIN, element: withSuspense(LoginPage) },
+      { path: ROUTES.REGISTER, element: withSuspense(RegisterPage) },
+      { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
+      { path: ROUTES.RESET_PASSWORD, element: withSuspense(ResetPasswordPage) },
+    ],
+  },
+  {
+    element: (
+      <ProtectedRoute>
+        <ErrorBoundary>
+          <MainLayout />
+        </ErrorBoundary>
+      </ProtectedRoute>
+    ),
+    children: [
+      { path: ROUTES.HOME, element: withSuspense(DashboardPage) },
+      { path: ROUTES.WALLET, element: withSuspense(WalletPage) },
+      { path: ROUTES.FIXTURES, element: <Navigate to={`${ROUTES.HOME}?tab=cup`} replace /> },
+      { path: ROUTES.MATCH, element: withSuspense(MatchDetailPage) },
+      { path: ROUTES.BET_SLIP, element: withSuspense(BetSlipPage) },
+      { path: ROUTES.BETS_ACTIVE, element: withSuspense(ActiveBetsPage) },
+      { path: ROUTES.BETS_HISTORY, element: withSuspense(BetHistoryPage) },
+      { path: ROUTES.LEADERBOARD, element: withSuspense(LeaderboardPage) },
+      { path: ROUTES.PLAYER, element: withSuspense(PublicProfilePage) },
+      { path: ROUTES.SEASONS, element: withSuspense(SeasonsPage) },
+      { path: ROUTES.SEASON, element: withSuspense(SeasonDetailPage) },
+      { path: ROUTES.NOTIFICATIONS, element: withSuspense(NotificationsPage) },
+      { path: ROUTES.PROFILE_EDIT, element: withSuspense(ProfileEditPage) },
+      { path: ROUTES.SETTINGS, element: withSuspense(SettingsPage) },
+    ],
+  },
+  {
+    element: <MinimalLayout />,
+    children: [
+      { path: ROUTES.TERMS, element: withSuspense(TermsPage) },
+    ],
+  },
+  { path: '*', element: withSuspense(NotFoundPage) },
+  { path: '/dashboard', element: <Navigate to={ROUTES.HOME} replace /> },
+])
