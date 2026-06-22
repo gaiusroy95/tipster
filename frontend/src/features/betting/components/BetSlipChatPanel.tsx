@@ -72,28 +72,29 @@ export function BetSlipChatPanel() {
         type="button"
         onClick={togglePanel}
         className={cn(
-          'pointer-events-auto flex items-center gap-2.5 rounded-2xl pl-3 pr-4 py-2.5 min-h-[48px]',
+          'pointer-events-auto flex items-center gap-2.5 rounded-2xl px-3 py-2.5 min-h-[52px]',
+          'w-[min(calc(100vw-1.5rem),300px)] min-w-[240px]',
           'bg-gradient-to-r from-accent-secondary to-indigo-500 text-white font-semibold text-sm shadow-glow-accent',
           'hover:opacity-95 transition-opacity border border-accent-secondary/30',
           isPanelOpen && 'ring-2 ring-accent-secondary/40',
         )}
         aria-expanded={isPanelOpen}
-        aria-label={`Bet slip, ${slipCount} selections`}
+        aria-label={`Bet slip, ${slipCount} selections, balance ${formatCredits(user.balance)}`}
       >
-        <BetSlipIcon size="sm" className="text-white" />
-        <span className="font-display">Bet slip</span>
+        <BetSlipIcon size="sm" className="text-white shrink-0" />
+        <span className="font-display shrink-0">Bet slip</span>
         {slipCount > 0 && (
-          <Badge variant="live" className="bg-accent-live text-white border-0 min-w-[22px]">
+          <Badge variant="live" className="bg-accent-live text-white border-0 min-w-[22px] shrink-0">
             {slipCount}
           </Badge>
         )}
-        <span className="font-mono text-xs tabular-nums opacity-90 hidden sm:inline">
+        <span className="font-mono text-sm sm:text-base font-bold tabular-nums flex-1 text-right min-w-[4.5rem] truncate">
           {formatCredits(user.balance)}
         </span>
         {isPanelOpen ? (
-          <ChevronDownIcon className="h-4 w-4 opacity-80" aria-hidden="true" />
+          <ChevronDownIcon className="h-4 w-4 opacity-80 shrink-0" aria-hidden="true" />
         ) : (
-          <ChevronUpIcon className="h-4 w-4 opacity-80" aria-hidden="true" />
+          <ChevronUpIcon className="h-4 w-4 opacity-80 shrink-0" aria-hidden="true" />
         )}
       </button>
     </div>

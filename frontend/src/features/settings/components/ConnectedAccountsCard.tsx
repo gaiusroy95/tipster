@@ -15,7 +15,7 @@ import { useToast } from '@/shared/components/ui/Toast'
 import { ApiError } from '@/core/types/api'
 import { cn } from '@/shared/utils/cn'
 
-export function ConnectedAccountsCard() {
+export function ConnectedAccountsCard({ className }: { className?: string }) {
   const { data, isLoading, isError, refetch } = useLinkedAccounts()
   const unlink = useUnlinkSocialAccount()
   const { toast } = useToast()
@@ -43,7 +43,7 @@ export function ConnectedAccountsCard() {
   }
 
   if (isLoading) {
-    return <Skeleton className="h-48 w-full max-w-lg" />
+    return <Skeleton className={cn('h-48 w-full', className)} />
   }
 
   if (isError || !data) {
@@ -53,12 +53,12 @@ export function ConnectedAccountsCard() {
   const linkedProviders = new Set(data.accounts.map((a) => a.provider))
 
   return (
-    <Card className="max-w-lg">
+    <Card className={cn('w-full max-w-lg', className)}>
       <CardHeader>
         <CardTitle>Connected accounts</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-text-muted">
+        <p className="text-sm text-text-muted leading-relaxed">
           Link social accounts for faster sign-in. Email and password sign-in remains available when linked.
         </p>
         {SOCIAL_PROVIDERS.map((provider) => {
@@ -66,13 +66,14 @@ export function ConnectedAccountsCard() {
           const account = data.accounts.find((a) => a.provider === provider.id)
           const isConnecting = connectingProvider === provider.id
           const isDisconnecting = unlink.isPending && unlink.variables === provider.id
+          const statusLabel = linked ? account?.email ?? 'Connected' : 'Not connected'
 
           return (
             <div
               key={provider.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border-default bg-bg-elevated px-3 py-3"
+              className="rounded-lg border border-border-default bg-bg-elevated p-3 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4"
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div
                   className={cn(
                     'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
@@ -83,10 +84,10 @@ export function ConnectedAccountsCard() {
                 >
                   <SocialProviderIcon provider={provider.id} className="h-5 w-5" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">{provider.name}</p>
-                  <p className="text-sm text-text-muted truncate">
-                    {linked ? account?.email ?? 'Connected' : 'Not connected'}
+                  <p className="text-sm text-text-muted break-all sm:break-words">
+                    {statusLabel}
                   </p>
                 </div>
               </div>
@@ -94,6 +95,7 @@ export function ConnectedAccountsCard() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="w-full sm:w-auto shrink-0"
                   isLoading={isDisconnecting}
                   onClick={() => handleDisconnect(provider.id)}
                 >
@@ -103,6 +105,7 @@ export function ConnectedAccountsCard() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="w-full sm:w-auto shrink-0"
                   isLoading={isConnecting}
                   onClick={() => handleConnect(provider.id)}
                 >

@@ -25,15 +25,15 @@ function Toggle({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center justify-between w-full py-3 min-h-[44px] text-left"
+      className="flex items-start justify-between gap-4 w-full py-3 min-h-[44px] text-left"
     >
-      <div>
+      <div className="min-w-0 flex-1 pr-2">
         <p className="font-medium">{label}</p>
-        {description && <p className="text-sm text-text-muted">{description}</p>}
+        {description && <p className="text-sm text-text-muted mt-0.5 leading-relaxed">{description}</p>}
       </div>
       <div
         className={cn(
-          'w-11 h-6 rounded-full transition-colors relative',
+          'w-11 h-6 rounded-full transition-colors relative shrink-0 mt-0.5',
           checked ? 'bg-accent-primary' : 'bg-bg-elevated border border-border-default',
         )}
       >
@@ -79,8 +79,8 @@ export function SettingsPage() {
   }
 
   return (
-    <PageShell title="Settings">
-      <Card className="max-w-lg">
+    <PageShell title="Settings" className="pb-24 xl:pb-6">
+      <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Notifications</CardTitle>
         </CardHeader>
@@ -100,9 +100,9 @@ export function SettingsPage() {
         </CardContent>
       </Card>
 
-      <ConnectedAccountsCard />
+      <ConnectedAccountsCard className="mt-6" />
 
-      <Card className="max-w-lg mt-6">
+      <Card className="w-full max-w-lg mt-6">
         <CardHeader>
           <CardTitle>Privacy</CardTitle>
         </CardHeader>
