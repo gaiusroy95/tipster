@@ -4,7 +4,10 @@ import { AppLogo } from '@/shared/components/AppLogo'
 
 export function AuthLayout() {
   const { pathname } = useLocation()
-  const useMarkLogo = pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER
+  const useMarkLogo =
+    pathname === ROUTES.LOGIN ||
+    pathname === ROUTES.REGISTER ||
+    pathname === ROUTES.FORGOT_PASSWORD
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6">
