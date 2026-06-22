@@ -9,6 +9,7 @@ import { rankTier } from '@/features/profile/lib/profileUtils'
 import { ROUTES, playerPath } from '@/core/constants/routes'
 import { OpenBetsIcon } from '@/features/profile/components/OpenBetsIcon'
 import {
+  PROFILE_ICON_EYE,
   PROFILE_ICON_GRAPH,
   PROFILE_ICON_MONEY_BAG,
 } from '@/core/constants/branding'
@@ -145,7 +146,7 @@ export function ProfileHeader({
               <SocialStat value={0} label="Posts" />
               <SocialStat value={0} label="Followers" />
               <SocialStat value={0} label="Following" />
-              <SocialStat value={0} label="Views" />
+              <SocialStat value={0} label="Views" iconSrc={PROFILE_ICON_EYE} />
             </div>
           </div>
         </div>
@@ -203,9 +204,20 @@ function ProfileActionButton({
   )
 }
 
-function SocialStat({ value, label }: { value: number | string; label: string }) {
+function SocialStat({
+  value,
+  label,
+  iconSrc,
+}: {
+  value: number | string
+  label: string
+  iconSrc?: string
+}) {
   return (
     <div className="flex flex-col items-center justify-center py-1 px-1 min-w-0">
+      {iconSrc && (
+        <ProfileBalanceIcon src={iconSrc} size="sm" className="h-5 w-5 mb-1" alt="" />
+      )}
       <span className="font-mono font-bold text-sm sm:text-base text-text-primary tabular-nums">
         {typeof value === 'number' ? value.toLocaleString() : value}
       </span>

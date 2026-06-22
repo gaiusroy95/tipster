@@ -2,12 +2,11 @@ import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import {
   ChevronRightIcon,
-  EyeIcon,
   FireIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
-import { PROFILE_ICON_OPEN_BETS } from '@/core/constants/branding'
+import { PROFILE_ICON_EYE, PROFILE_ICON_OPEN_BETS } from '@/core/constants/branding'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
 import { computeStreaks } from '@/features/profile/lib/profileUtils'
 import { formatCredits } from '@/shared/utils/formatCredits'
@@ -18,6 +17,7 @@ const STREAK_BONUS_TARGET = 5
 const STREAK_DISPLAY_SLOTS = 8
 const FORUM_VIEW_TARGET = 1000
 const FORUM_VIEW_REWARD = 2000
+const REWARD_MISSION_ICON_CLASS = 'h-10 w-10 shrink-0'
 
 interface ProfileRewardsWidgetProps { 
   profile: UserProfileStats
@@ -52,7 +52,7 @@ export function ProfileRewardsWidget({
       compact={variant === 'compact'}
     >
       <div className="flex items-center gap-3 min-w-0">
-        <ProfileBalanceIcon src={PROFILE_ICON_OPEN_BETS} size="sm" className="h-10 w-10 shrink-0" />
+        <ProfileBalanceIcon src={PROFILE_ICON_OPEN_BETS} className={REWARD_MISSION_ICON_CLASS} />
         <p className="font-semibold text-lg leading-tight text-accent-secondary">
           {isRanked ? `#${dailyRank}` : 'Not ranked'}
         </p>
@@ -71,8 +71,8 @@ export function ProfileRewardsWidget({
       }
       compact={variant === 'compact'}
     >
-      <div className="flex items-center gap-2 text-accent-secondary">
-        <EyeIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+      <div className="flex items-center gap-3 min-w-0 text-accent-secondary">
+        <ProfileBalanceIcon src={PROFILE_ICON_EYE} className={REWARD_MISSION_ICON_CLASS} alt="" />
         <p className="font-semibold text-base tabular-nums">
           {forumViews.toLocaleString()}
           <span className="text-text-muted font-normal"> / {FORUM_VIEW_TARGET.toLocaleString()} views</span>
