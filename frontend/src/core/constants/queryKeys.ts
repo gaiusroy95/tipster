@@ -37,6 +37,9 @@ export const queryKeys = {
   settings: {
     all: () => ['settings'] as const,
   },
+  achievements: {
+    all: () => ['achievements'] as const,
+  },
   news: {
     list: (sport?: string, limit?: number, offset?: number) =>
       ['news', sport, limit, offset] as const,

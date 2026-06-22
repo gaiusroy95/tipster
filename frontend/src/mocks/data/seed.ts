@@ -1,4 +1,5 @@
 import { bettingRules } from '@/core/config/bettingRules'
+import { getProfileAchievements, getUserAchievementProgress } from './achievementService'
 import type {
   User,
   League,
@@ -445,10 +446,8 @@ export const mockDb = {
         { date: '2026-04', profitLoss: 200, cumulative: 350 },
         { date: '2026-05', profitLoss: 100, cumulative: 450 },
       ],
-      achievements: [
-        { id: 'ach-1', name: 'First Bet', description: 'Placed your first virtual bet', earnedAt: pastHours(700) },
-        { id: 'ach-2', name: 'Hot Streak', description: 'Won 3 bets in a row', earnedAt: pastHours(200) },
-      ],
+      achievements: getProfileAchievements(this, userId),
+      achievementProgress: getUserAchievementProgress(this, userId),
     }
   },
 

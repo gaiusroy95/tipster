@@ -22,7 +22,10 @@ export function useUpdateSettings() {
       const res = await apiClient.patch<ApiResponse<UserSettings>>('/settings', data)
       return res.data.data
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.settings.all() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all() })
+    },
   })
 }
 
@@ -46,6 +49,7 @@ export function useUpdateProfile() {
       setUser(user)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(user.id) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all() })
     },
   })
 }

@@ -8,5 +8,6 @@ export const PROFILE_ICON_OPEN_BETS = '/assets/Icon/crown.png'
 export const PROFILE_ICON_CROWN = PROFILE_ICON_OPEN_BETS
 export const PROFILE_ICON_GRAPH = '/assets/Icon/graph.png'
 export const PROFILE_ICON_EYE = '/assets/Icon/eye.png'
+export const PROFILE_ICON_STREAK = '/assets/Icon/streak.png'
 
 export const BET_SLIP_EMPTY_ICON = '/assets/Icon/plus.svg'

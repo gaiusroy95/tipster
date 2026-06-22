@@ -1,4 +1,5 @@
 import type { MarketType, BetStatus, MatchStatus, NotificationType } from '@/core/constants/markets'
+import type { AchievementProgress } from '@/features/achievements/types/achievement'
 
 export type AuthProviderKind = 'email' | 'google' | 'facebook' | 'apple'
 
@@ -165,6 +166,7 @@ export interface UserProfileStats {
   leaguePerformance: { leagueId: string; leagueName: string; profitLoss: number; bets: number }[]
   performanceHistory: { date: string; profitLoss: number; cumulative: number }[]
   achievements: { id: string; name: string; description: string; earnedAt: string }[]
+  achievementProgress: AchievementProgress[]
 }
 
 export interface UserSettings {

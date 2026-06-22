@@ -8,8 +8,8 @@ import { countryFlagEmoji } from '@/features/profile/lib/countryFlag'
 import { rankTier } from '@/features/profile/lib/profileUtils'
 import { ROUTES, playerPath } from '@/core/constants/routes'
 import { OpenBetsIcon } from '@/features/profile/components/OpenBetsIcon'
+import { ProfileSocialStatsGrid } from '@/features/profile/components/ProfileSocialStats'
 import {
-  PROFILE_ICON_EYE,
   PROFILE_ICON_GRAPH,
   PROFILE_ICON_MONEY_BAG,
 } from '@/core/constants/branding'
@@ -142,12 +142,9 @@ export function ProfileHeader({
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-1 sm:gap-2 rounded-xl border border-border-default/60 bg-bg-primary/30 p-2 sm:p-3">
-              <SocialStat value={0} label="Posts" />
-              <SocialStat value={0} label="Followers" />
-              <SocialStat value={0} label="Following" />
-              <SocialStat value={0} label="Views" iconSrc={PROFILE_ICON_EYE} />
-            </div>
+            <ProfileSocialStatsGrid
+              className="rounded-xl border border-border-default/60 bg-bg-primary/30 p-2 sm:p-3"
+            />
           </div>
         </div>
       </div>
@@ -201,30 +198,6 @@ function ProfileActionButton({
       <Icon className="h-4 w-4 shrink-0 text-accent-secondary" aria-hidden="true" />
       {label}
     </button>
-  )
-}
-
-function SocialStat({
-  value,
-  label,
-  iconSrc,
-}: {
-  value: number | string
-  label: string
-  iconSrc?: string
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center py-1 px-1 min-w-0">
-      {iconSrc && (
-        <ProfileBalanceIcon src={iconSrc} size="sm" className="h-5 w-5 mb-1" alt="" />
-      )}
-      <span className="font-mono font-bold text-sm sm:text-base text-text-primary tabular-nums">
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </span>
-      <span className="text-[10px] sm:text-[11px] text-text-muted mt-0.5 truncate w-full text-center">
-        {label}
-      </span>
-    </div>
   )
 }
 

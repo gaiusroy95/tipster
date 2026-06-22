@@ -68,6 +68,8 @@ export function useLinkSocialAccount() {
       setUser(user)
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.linkedAccounts() })
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all() })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.detail(user.id) })
     },
   })
 }

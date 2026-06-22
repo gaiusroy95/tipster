@@ -23,6 +23,7 @@ import {
 } from '@/features/news/api/espnAdapter'
 import { getFallbackSportsNewsFeed } from '@/features/news/api/fallbackNews'
 import type { SportsNewsSport } from '@/features/news/types/news'
+import { getUserAchievementProgress, syncUserAchievements } from '@/mocks/data/achievementService'
 
 const tokens: Record<string, string> = {}
 
@@ -90,6 +91,7 @@ export const handlers = [
       createdAt: new Date().toISOString(),
     })
     mockDb.setTransactions(tx)
+    syncUserAchievements(mockDb, id)
     const token = `token-${id}`
     tokens[token] = id
     return json({ user, token })
@@ -171,6 +173,7 @@ export const handlers = [
     if (!user) {
       user = createSocialUser(provider, profile, mockDb)
       isNewUser = true
+      syncUserAchievements(mockDb, user.id)
     } else {
       user.authProviders = mergeAuthProviders(user.authProviders, provider)
       const links = mockDb.getSocialLinks(user.id)
@@ -224,6 +227,8 @@ export const handlers = [
       ...existingLinks,
       { provider, email: profile.email, linkedAt: new Date().toISOString() },
     ])
+
+    syncUserAchievements(mockDb, userId)
 
     return json({ user })
   }),
@@ -446,6 +451,8 @@ export const handlers = [
     })
     mockDb.setTransactions(tx)
 
+    syncUserAchievements(mockDb, userId)
+
     return json(mockDb.enrichBet(bet), 201)
   }),
 
@@ -489,6 +496,8 @@ export const handlers = [
       })
     }
     mockDb.setTransactions(tx)
+
+    syncUserAchievements(mockDb, userId)
 
     return json(mockDb.enrichBet(bet))
   }),
@@ -584,6 +593,7 @@ export const handlers = [
       user.signatureLink = body.signatureLink || undefined
     }
     if (body.signatureMode !== undefined) user.signatureMode = body.signatureMode
+    syncUserAchievements(mockDb, userId)
     return json(user)
   }),
 
@@ -633,7 +643,14 @@ export const handlers = [
     if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
     const body = (await request.json()) as Record<string, boolean>
     mockDb.settings[userId] = { ...mockDb.settings[userId], ...body }
+    syncUserAchievements(mockDb, userId)
     return json(mockDb.settings[userId])
+  }),
+
+  http.get(p('/achievements'), ({ request }) => {
+    const userId = getUserId(request)
+    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    return json(getUserAchievementProgress(mockDb, userId))
   }),
 
   // Catch-all — never passthrough /api to a missing backend

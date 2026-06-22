@@ -1,4 +1,5 @@
 import { LockClosedIcon } from '@heroicons/react/24/outline'
+import { AchievementsGrid } from '@/features/achievements/components/AchievementBadge'
 import { LEAGUE_MEDALS } from '@/features/profile/lib/profileUtils'
 import { cn } from '@/shared/utils/cn'
 import type { UserProfileStats } from '@/mocks/data/types'
@@ -61,25 +62,10 @@ export function ProfileMedalsGrid({ profile }: { profile: UserProfileStats }) {
 }
 
 export function ProfileAchievementsList({ profile }: { profile: UserProfileStats }) {
-  if (profile.achievements.length === 0) {
-    return (
-      <p className="text-sm text-text-muted py-8 text-center">
-        Place bets and climb the leaderboard to unlock achievements.
-      </p>
-    )
-  }
-
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {profile.achievements.map((a) => (
-        <div
-          key={a.id}
-          className="rounded-xl border border-accent-gold/30 bg-gradient-to-br from-accent-gold/10 to-transparent p-4"
-        >
-          <p className="font-display font-bold text-accent-gold">{a.name}</p>
-          <p className="text-sm text-text-muted mt-1">{a.description}</p>
-        </div>
-      ))}
-    </div>
+    <AchievementsGrid
+      achievements={profile.achievementProgress}
+      emptyMessage="Place bets and climb the leaderboard to unlock achievements."
+    />
   )
 }

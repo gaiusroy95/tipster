@@ -12,6 +12,7 @@ import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard'
 import { useBets } from '@/features/bets/hooks/useBets'
 import { ProfileRewardsWidget } from '@/features/profile/components/ProfileRewardsWidget'
+import { ProfileSocialStatsGrid } from '@/features/profile/components/ProfileSocialStats'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
 import { rankTier } from '@/features/profile/lib/profileUtils'
@@ -74,6 +75,7 @@ export function ProfileSidebarPanel() {
     leaguePerformance: [],
     performanceHistory: [],
     achievements: [],
+    achievementProgress: [],
   }
 
   return (
@@ -130,14 +132,7 @@ export function ProfileSidebarPanel() {
               />
             </div>
 
-            <div className="grid grid-cols-4 gap-1 text-center border-t border-border-default/60 pt-3">
-              {['Posts', 'Followers', 'Following', 'Views'].map((label) => (
-                <div key={label} className="py-1">
-                  <p className="font-mono font-bold text-text-primary text-sm">0</p>
-                  <p className="text-[10px] text-text-muted mt-0.5">{label}</p>
-                </div>
-              ))}
-            </div>
+            <ProfileSocialStatsGrid className="border-t border-border-default/60 pt-3" />
           </div>
         </section>
 

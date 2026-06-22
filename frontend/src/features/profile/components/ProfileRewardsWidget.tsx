@@ -6,7 +6,7 @@ import {
   InformationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
-import { PROFILE_ICON_EYE, PROFILE_ICON_OPEN_BETS } from '@/core/constants/branding'
+import { PROFILE_ICON_EYE, PROFILE_ICON_OPEN_BETS, PROFILE_ICON_STREAK } from '@/core/constants/branding'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
 import { computeStreaks } from '@/features/profile/lib/profileUtils'
 import { formatCredits } from '@/shared/utils/formatCredits'
@@ -130,9 +130,12 @@ export function ProfileRewardsWidget({
           )
         })}
       </div>
-      <p className="text-sm font-semibold text-accent-secondary tabular-nums">
-        {currentWin} win{currentWin !== 1 ? 's' : ''} / {STREAK_BONUS_TARGET} win streak
-      </p>
+      <div className="flex items-center gap-3 min-w-0 text-accent-secondary">
+        <ProfileBalanceIcon src={PROFILE_ICON_STREAK} className={REWARD_MISSION_ICON_CLASS} alt="" />
+        <p className="text-sm font-semibold tabular-nums">
+          {currentWin} win{currentWin !== 1 ? 's' : ''} / {STREAK_BONUS_TARGET} win streak
+        </p>
+      </div>
     </RewardMissionCard>
   )
 

@@ -14,6 +14,9 @@ import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
 import { cn } from '@/shared/utils/cn'
 import { ROUTES } from '@/core/constants/routes'
+import { FIXTURE_VIEWS } from '@/core/constants/sports'
+
+const BROWSE_MATCHES_PATH = `${ROUTES.HOME}?tab=cup&view=${FIXTURE_VIEWS.UPCOMING}`
 
 function calcReturn(stake: number, odds: number, marketType: string): number {
   if (marketType === 'malay') {
@@ -75,18 +78,31 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   }
 
   if (selections.length === 0) {
+    const closePanel = () => setPanelOpen(false)
+
     return (
       <div className={cn(compact ? 'py-8 px-2' : 'py-10', 'text-center')}>
         <div className="flex flex-col items-center">
-          <BetSlipEmptyIcon size="lg" className="mb-4" />
+          <Link
+            to={BROWSE_MATCHES_PATH}
+            onClick={closePanel}
+            className={cn(
+              'mb-4 rounded-full transition-transform',
+              'hover:scale-105 active:scale-95',
+              'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-secondary',
+            )}
+            aria-label="Browse matches to add a bet"
+          >
+            <BetSlipEmptyIcon size="lg" />
+          </Link>
           <h3 className="text-base font-semibold text-text-primary">Bet slip is empty</h3>
           <p className="mt-2 text-sm text-text-muted max-w-xs leading-relaxed">
             Pick odds on any match to build your slip.
           </p>
           <Link
-            to={`${ROUTES.HOME}?tab=cup`}
+            to={BROWSE_MATCHES_PATH}
             className="mt-5 text-sm font-semibold text-accent-secondary hover:underline"
-            onClick={() => setPanelOpen(false)}
+            onClick={closePanel}
           >
             Browse matches →
           </Link>
