@@ -390,16 +390,18 @@ export const handlers = [
 
     const betSize = getBetSize(body.stake)
     if (!betSize) {
-      return error('INVALID_STAKE', `Stake must be 1-${bettingRules.smallBetMax} (small) or ${bettingRules.bigBetMin}-${bettingRules.bigBetMax} (big)`, 400)
+      return error(
+        'INVALID_STAKE',
+        `Stake must be ${bettingRules.standardStake.toLocaleString()} or ${bettingRules.premiumStake.toLocaleString()} credits`,
+        400,
+      )
     }
     if (body.stake > user.balance) {
       return error('INSUFFICIENT_BALANCE', 'Insufficient virtual credits', 400)
     }
-    if (betSize === 'big') {
-      const count = mockDb.getTodayBigBetCount(userId)
-      if (count >= bettingRules.dailyBigBetLimit) {
-        return error('DAILY_BIG_BET_LIMIT', `Daily big bet limit (${bettingRules.dailyBigBetLimit}) reached`, 400)
-      }
+    const dailyCount = mockDb.getTodayBetCount(userId)
+    if (dailyCount >= bettingRules.dailyBetLimit) {
+      return error('DAILY_BET_LIMIT', `Daily bet limit (${bettingRules.dailyBetLimit}) reached`, 400)
     }
 
     const market = match.markets.find((m) => m.marketType === body.marketType)
@@ -429,7 +431,7 @@ export const handlers = [
     mockDb.setBets(bets)
 
     user.balance -= body.stake
-    if (betSize === 'big') mockDb.incrementBigBetCount(userId)
+    mockDb.incrementDailyBetCount(userId)
 
     const tx = mockDb.getTransactions()
     tx.unshift({
@@ -551,11 +553,72 @@ export const handlers = [
   http.patch(p('/profile'), async ({ request }) => {
     const userId = getUserId(request)
     if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
-    const body = (await request.json()) as { displayName?: string; username?: string; avatarUrl?: string }
+    const body = (await request.json()) as {
+      displayName?: string
+      username?: string
+      avatarUrl?: string | null
+      country?: string
+      signature?: string
+      signatureLink?: string
+      signatureMode?: 'text' | 'banner'
+    }
     const user = mockDb.getUser(userId)!
-    if (body.displayName) user.displayName = body.displayName
-    if (body.username) user.username = body.username
-    if (body.avatarUrl) user.avatarUrl = body.avatarUrl
+    if (body.displayName !== undefined) user.displayName = body.displayName
+    if (body.username !== undefined) user.username = body.username
+    if (body.avatarUrl !== undefined) {
+      user.avatarUrl = body.avatarUrl ?? undefined
+    }
+    if (body.country !== undefined) user.country = body.country
+    if (body.signature !== undefined) {
+      const postCount = user.postCount ?? 0
+      if (body.signature && postCount < 30) {
+        return error('SIGNATURE_LOCKED', 'Signatures require at least 30 posts', 403)
+      }
+      user.signature = body.signature || undefined
+    }
+    if (body.signatureLink !== undefined) {
+      const postCount = user.postCount ?? 0
+      if (body.signatureLink && postCount < 30) {
+        return error('SIGNATURE_LOCKED', 'Signatures require at least 30 posts', 403)
+      }
+      user.signatureLink = body.signatureLink || undefined
+    }
+    if (body.signatureMode !== undefined) user.signatureMode = body.signatureMode
+    return json(user)
+  }),
+
+  http.post(p('/profile/change-password'), async ({ request }) => {
+    const userId = getUserId(request)
+    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as { currentPassword: string; newPassword: string }
+    if (body.newPassword.length < 6) {
+      return error('VALIDATION', 'New password must be at least 6 characters', 400)
+    }
+    if (body.currentPassword.length < 6) {
+      return error('INVALID_PASSWORD', 'Current password is incorrect', 401)
+    }
+    if (body.newPassword === body.currentPassword) {
+      return error('VALIDATION', 'New password must differ from current password', 400)
+    }
+    return json({ message: 'Password updated successfully' })
+  }),
+
+  http.post(p('/profile/change-email'), async ({ request }) => {
+    const userId = getUserId(request)
+    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as { email: string; password: string }
+    if (!body.email?.includes('@')) {
+      return error('VALIDATION', 'Enter a valid email address', 400)
+    }
+    if (body.password.length < 6) {
+      return error('INVALID_PASSWORD', 'Password is incorrect', 401)
+    }
+    const existing = mockDb.getUserByEmail(body.email)
+    if (existing && existing.id !== userId) {
+      return error('EMAIL_EXISTS', 'Email is already in use', 409)
+    }
+    const user = mockDb.getUser(userId)!
+    user.email = body.email
     return json(user)
   }),
 

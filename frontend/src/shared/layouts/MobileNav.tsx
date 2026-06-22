@@ -3,13 +3,14 @@ import {
   BellIcon,
   Cog6ToothIcon,
   HomeIcon,
-  TicketIcon,
   TrophyIcon,
   UserIcon,
   WalletIcon,
   EllipsisHorizontalIcon,
   ChartBarIcon,
+  InboxStackIcon,
 } from '@heroicons/react/24/outline'
+import type { ComponentType, SVGProps } from 'react'
 import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 import { Modal } from '@/shared/components/ui/Modal'
@@ -17,6 +18,7 @@ import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
+import { useEditProfileDrawer } from '@/features/profile/context/EditProfileDrawerContext'
 
 interface MobileMoreMenuProps {
   open: boolean
@@ -27,14 +29,20 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const slipCount = useBetSlipStore((s) => s.selections.length)
+  const { open: openEditProfile } = useEditProfileDrawer()
 
-  const links = user
+  const links: Array<{
+    to: string
+    label: string
+    icon?: ComponentType<SVGProps<SVGSVGElement>>
+    imageSrc?: string
+    badge?: number
+  }> = user
     ? [
         { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
-        { to: ROUTES.BET_SLIP, label: 'Bet slip', icon: TicketIcon, badge: slipCount },
+        { to: ROUTES.BET_SLIP, label: 'Bet slip', icon: InboxStackIcon, badge: slipCount },
         { to: ROUTES.NOTIFICATIONS, label: 'Notifications', icon: BellIcon },
         { to: ROUTES.SETTINGS, label: 'Settings', icon: Cog6ToothIcon },
-        { to: ROUTES.PROFILE_EDIT, label: 'Edit profile', icon: UserIcon },
       ]
     : [
         { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
@@ -51,13 +59,30 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
             onClick={onClose}
             className="flex items-center gap-3 rounded-lg px-3 py-3 min-h-[48px] hover:bg-bg-elevated transition-colors"
           >
-            <item.icon className="h-5 w-5 text-text-muted shrink-0" aria-hidden="true" />
+            {item.imageSrc ? (
+              <img src={item.imageSrc} alt="" className="h-5 w-5 shrink-0 object-contain" />
+            ) : item.icon ? (
+              <item.icon className="h-5 w-5 text-text-muted shrink-0" aria-hidden="true" />
+            ) : null}
             <span className="font-medium flex-1">{item.label}</span>
             {'badge' in item && item.badge && item.badge > 0 ? (
               <Badge variant="live">{item.badge}</Badge>
             ) : null}
           </Link>
         ))}
+        {user ? (
+          <button
+            type="button"
+            onClick={() => {
+              openEditProfile()
+              onClose()
+            }}
+            className="flex items-center gap-3 rounded-lg px-3 py-3 min-h-[48px] hover:bg-bg-elevated transition-colors w-full text-left"
+          >
+            <UserIcon className="h-5 w-5 text-text-muted shrink-0" aria-hidden="true" />
+            <span className="font-medium flex-1">Edit profile</span>
+          </button>
+        ) : null}
         {user ? (
           <Button
             variant="secondary"

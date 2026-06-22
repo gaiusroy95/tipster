@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { PageShell } from '@/shared/layouts/PageShell'
-import { BetCard } from '@/shared/components/BetCard'
+import { ActiveBetCard } from '@/features/bets/components/ActiveBetCard'
+import { ActiveBetsSummary } from '@/features/bets/components/ActiveBetsSummary'
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
@@ -18,6 +19,7 @@ export function ActiveBetsPage() {
   const cancelBet = useCancelBet()
   const { toast } = useToast()
   const [cancelTarget, setCancelTarget] = useState<Bet | null>(null)
+  const bets = useMemo(() => data ?? [], [data])
 
   const handleCancel = async () => {
     if (!cancelTarget) return
@@ -34,7 +36,16 @@ export function ActiveBetsPage() {
   if (isLoading) {
     return (
       <PageShell title="Active bets">
-        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32" />)}</div>
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
+            ))}
+          </div>
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 rounded-2xl" />
+          ))}
+        </div>
       </PageShell>
     )
   }
@@ -49,18 +60,16 @@ export function ActiveBetsPage() {
 
   return (
     <PageShell title="Active bets" description="Open virtual bet positions">
-      {data?.length === 0 ? (
+      {bets.length === 0 ? (
         <EmptyState title="No active bets" description="Place a bet on upcoming fixtures to get started." />
       ) : (
-        <div className="space-y-4">
-          {data?.map((bet) => (
-            <div key={bet.id} className="space-y-2">
-              <BetCard bet={bet} />
-              <Button variant="danger" size="sm" onClick={() => setCancelTarget(bet)}>
-                Cancel bet
-              </Button>
-            </div>
-          ))}
+        <div className="space-y-5">
+          <ActiveBetsSummary bets={bets} />
+          <div className="space-y-3">
+            {bets.map((bet) => (
+              <ActiveBetCard key={bet.id} bet={bet} onCancel={() => setCancelTarget(bet)} />
+            ))}
+          </div>
         </div>
       )}
 
@@ -76,7 +85,7 @@ export function ActiveBetsPage() {
               <strong className="text-accent-loss font-mono">
                 {formatCredits(calculateCancellationPenalty(cancelTarget.stake))} credits
               </strong>
-              ({10}% of stake)
+              (10% of stake)
             </p>
             <p className="text-sm">
               Refund after penalty:{' '}

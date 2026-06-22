@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { TicketIcon } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
+import { BetSlipIcon } from '@/features/betting/components/BetSlipIcon'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
@@ -27,9 +27,7 @@ export function BetSlipStickyBar() {
         to={ROUTES.BET_SLIP}
         className="flex items-center gap-3 px-4 py-3 min-h-[52px] max-w-[1600px] mx-auto"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-primary/15 text-accent-primary">
-          <TicketIcon className="h-5 w-5" aria-hidden="true" />
-        </div>
+        <BetSlipIcon size="sm" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold truncate">
             {selection.homeTeam} vs {selection.awayTeam}

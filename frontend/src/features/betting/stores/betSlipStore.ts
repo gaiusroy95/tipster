@@ -15,10 +15,13 @@ export interface BetSelection {
 interface BetSlipState {
   selections: BetSelection[]
   stake: number
+  isPanelOpen: boolean
   addSelection: (selection: BetSelection) => void
   removeSelection: (matchId: string) => void
   clearSelections: () => void
   setStake: (stake: number) => void
+  setPanelOpen: (open: boolean) => void
+  togglePanel: () => void
   clear: () => void
 }
 
@@ -26,7 +29,8 @@ export const useBetSlipStore = create<BetSlipState>()(
   persist(
     (set) => ({
       selections: [],
-      stake: 100,
+      stake: 25000,
+      isPanelOpen: false,
 
       addSelection: (selection) =>
         set((state) => ({
@@ -45,8 +49,15 @@ export const useBetSlipStore = create<BetSlipState>()(
 
       setStake: (stake) => set({ stake }),
 
-      clear: () => set({ selections: [], stake: 100 }),
+      setPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
+
+      togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
+
+      clear: () => set({ selections: [], stake: 25000, isPanelOpen: false }),
     }),
-    { name: 'bet-slip-store' },
+    { name: 'bet-slip-store', partialize: (state) => ({
+      selections: state.selections,
+      stake: state.stake,
+    }) },
   ),
 )

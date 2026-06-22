@@ -27,7 +27,7 @@ export function RegisterPage() {
   const onSubmit = handleSubmit(async (data) => {
     try {
       await registerMutation.mutateAsync(data)
-      toast('Welcome! You received 10,000 virtual credits.', 'success')
+      toast('Welcome! You received 1,000,000 virtual credits.', 'success')
       navigate(ROUTES.HOME)
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : 'Registration failed'

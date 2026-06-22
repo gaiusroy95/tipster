@@ -220,9 +220,18 @@ function createDemoUser(id: string, displayName: string, username: string, balan
 
 const demoUsers: User[] = [
   {
-    ...createDemoUser('user-demo', 'Demo Player', 'demoplayer', bettingRules.initialBalance, 5),
+    ...createDemoUser(
+      'user-demo',
+      'Demo Player',
+      'demoplayer',
+      bettingRules.initialBalance - bettingRules.standardStake,
+      5,
+    ),
     authProviders: ['email', 'google'],
     primaryAuthProvider: 'email',
+    country: 'MY',
+    signatureMode: 'text',
+    postCount: 0,
   },
   createDemoUser('user-1', 'Alex Tipster', 'alextip', 12450, 1),
   createDemoUser('user-2', 'Sarah Pro', 'sarahpro', 11800, 2),
@@ -268,8 +277,8 @@ let bets: Bet[] = [
     selectionId: 'm2-home',
     selectionLabel: 'Liverpool',
     odds: 0.45,
-    stake: 300,
-    potentialReturn: 435,
+    stake: bettingRules.standardStake,
+    potentialReturn: Math.round(bettingRules.standardStake + bettingRules.standardStake * 0.45),
     status: 'active',
     betSize: 'small',
     placedAt: pastHours(1),
@@ -290,8 +299,8 @@ let transactions: WalletTransaction[] = [
     id: 'tx-2',
     userId: 'user-demo',
     type: 'bet_placed',
-    amount: -300,
-    balanceAfter: bettingRules.initialBalance - 300,
+    amount: -bettingRules.standardStake,
+    balanceAfter: bettingRules.initialBalance - bettingRules.standardStake,
     description: 'Bet placed on Liverpool vs Man City',
     createdAt: pastHours(1),
     betId: 'bet-1',
@@ -304,7 +313,7 @@ let notifications: Notification[] = [
     userId: 'user-demo',
     type: 'system',
     title: 'Welcome to Tipster Arena',
-    message: 'You received 10,000 virtual credits. Start placing bets on upcoming fixtures!',
+    message: 'You received 1,000,000 virtual credits. Start placing bets on upcoming fixtures!',
     read: false,
     createdAt: pastHours(720),
     link: '/fixtures',
@@ -339,7 +348,7 @@ const socialLinks: Record<string, import('./socialAuth').SocialLink[]> = {
   ],
 }
 
-const bigBetCounts: Record<string, { date: string; count: number }> = {}
+const dailyBetCounts: Record<string, { date: string; count: number }> = {}
 
 export const mockDb = {
   leagues,
@@ -352,7 +361,7 @@ export const mockDb = {
   transactions,
   notifications,
   settings,
-  bigBetCounts,
+  dailyBetCounts,
   socialLinks,
 
   getSocialLinks(userId: string) {
@@ -443,18 +452,18 @@ export const mockDb = {
     }
   },
 
-  getTodayBigBetCount(userId: string) {
+  getTodayBetCount(userId: string) {
     const today = new Date().toISOString().slice(0, 10)
-    const record = bigBetCounts[userId]
+    const record = dailyBetCounts[userId]
     if (!record || record.date !== today) return 0
     return record.count
   },
 
-  incrementBigBetCount(userId: string) {
+  incrementDailyBetCount(userId: string) {
     const today = new Date().toISOString().slice(0, 10)
-    const record = bigBetCounts[userId]
+    const record = dailyBetCounts[userId]
     if (!record || record.date !== today) {
-      bigBetCounts[userId] = { date: today, count: 1 }
+      dailyBetCounts[userId] = { date: today, count: 1 }
     } else {
       record.count += 1
     }

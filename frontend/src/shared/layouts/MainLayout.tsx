@@ -2,29 +2,29 @@ import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useState, type ReactNode } from 'react'
 import {
   HomeIcon,
-  TicketIcon,
   TrophyIcon,
   WalletIcon,
   BellIcon,
-  Cog6ToothIcon,
-  UserIcon,
   ChartBarIcon,
   Bars3Icon,
-  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
-import { formatCredits } from '@/shared/utils/formatCredits'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { SideDrawer } from '@/shared/components/ui/SideDrawer'
 import { SportsNavSidebar } from '@/features/fixtures/components/SportsNavSidebar'
 import { SportsNavDrawerProvider } from '@/features/fixtures/context/SportsNavDrawerContext'
-import { BetSlipStickyBar } from '@/features/betting/components/BetSlipStickyBar'
+import { EditProfileDrawerProvider } from '@/features/profile/context/EditProfileDrawerContext'
+import { EditProfileDrawer } from '@/features/profile/components/EditProfileDrawer'
+import { BetSlipChatPanel } from '@/features/betting/components/BetSlipChatPanel'
+import { ProfileSidebarPanel } from '@/features/profile/components/ProfileSidebarPanel'
+import { AccountMenuDrawer } from '@/features/profile/components/AccountMenuDrawer'
 import { MobileBottomNav, MobileMoreMenu } from '@/shared/layouts/MobileNav'
 import { AppLogo } from '@/shared/components/AppLogo'
+import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 
 const topNav = [
   {
@@ -73,7 +73,7 @@ function HeaderIconLink({
       to={to}
       aria-label={label}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-surface hover:text-text-primary',
+        'flex h-9 w-9 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary',
         className,
       )}
     >
@@ -85,21 +85,22 @@ function HeaderIconLink({
 export function MainLayout() {
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.logout)
   const slipCount = useBetSlipStore((s) => s.selections.length)
   const [moreOpen, setMoreOpen] = useState(false)
   const [sportsNavOpen, setSportsNavOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const pathname = location.pathname
   const search = location.search
 
   return (
+    <EditProfileDrawerProvider>
     <SportsNavDrawerProvider
       open={() => setSportsNavOpen(true)}
       close={() => setSportsNavOpen(false)}
     >
       <div className="min-h-screen">
         <header className="sticky top-0 z-40 border-b border-border-default/70 bg-bg-surface/95 backdrop-blur-md safe-area-pt">
-          <div className="max-w-[1600px] mx-auto flex items-center gap-3 sm:gap-4 min-h-14 sm:min-h-[60px] py-2 px-4 lg:px-6">
+          <div className="max-w-[1800px] mx-auto flex items-center gap-3 sm:gap-4 min-h-14 sm:min-h-[60px] py-2 px-4 lg:px-6">
             <div className="flex items-center gap-1.5 min-w-0 shrink-0">
               <button
                 type="button"
@@ -143,55 +144,33 @@ export function MainLayout() {
               </div>
             </nav>
 
-            <div className="flex items-center justify-end gap-2 shrink-0 ml-auto">
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 ml-auto">
               {user ? (
-                <div
-                  className="flex items-center gap-1 rounded-xl border border-border-default/60 bg-bg-elevated/40 p-1"
-                >
-                  <Link
-                    to={ROUTES.BET_SLIP}
-                    className="relative flex items-center gap-2 rounded-lg px-2.5 sm:px-3 py-1.5 text-sm font-semibold min-h-[36px] hover:bg-bg-surface transition-colors"
-                    aria-label={`Bet slip, balance ${formatCredits(user.balance)}`}
+                <>
+                  <HeaderIconLink to={ROUTES.NOTIFICATIONS} label="Notifications">
+                    <BellIcon className="h-[18px] w-[18px]" />
+                  </HeaderIconLink>
+                  <button
+                    type="button"
+                    onClick={() => setAccountOpen(true)}
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full hover:ring-2 hover:ring-accent-secondary/50 transition-shadow overflow-hidden"
+                    aria-label="Open account menu"
                   >
-                    <TicketIcon className="h-4 w-4 text-accent-primary shrink-0" aria-hidden="true" />
-                    <span className="font-mono text-xs sm:text-sm tabular-nums">
-                      {formatCredits(user.balance)}
-                    </span>
+                    <ProfileAvatar
+                      name={user.displayName}
+                      avatarUrl={user.avatarUrl}
+                      className="h-9 w-9 text-xs ring-2 ring-border-default/80"
+                    />
                     {slipCount > 0 && (
-                      <Badge variant="live" className="absolute -top-1.5 -right-1 min-w-[18px] h-[18px] text-[10px]">
+                      <Badge
+                        variant="live"
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-[10px] border-2 border-bg-surface"
+                      >
                         {slipCount}
                       </Badge>
                     )}
-                  </Link>
-                  <div className="hidden sm:block h-6 w-px bg-border-default/80 mx-0.5" aria-hidden="true" />
-                  <div className="flex items-center gap-0.5">
-                    <HeaderIconLink to={ROUTES.NOTIFICATIONS} label="Notifications">
-                      <BellIcon className="h-[18px] w-[18px]" />
-                    </HeaderIconLink>
-                    <HeaderIconLink
-                      to={ROUTES.SETTINGS}
-                      label="Settings"
-                      className="hidden sm:flex"
-                    >
-                      <Cog6ToothIcon className="h-[18px] w-[18px]" />
-                    </HeaderIconLink>
-                    <HeaderIconLink
-                      to={ROUTES.PROFILE_EDIT}
-                      label="Profile"
-                      className="hidden sm:flex"
-                    >
-                      <UserIcon className="h-[18px] w-[18px]" />
-                    </HeaderIconLink>
-                    <button
-                      type="button"
-                      onClick={() => logout()}
-                      className="hidden lg:flex h-9 w-9 items-center justify-center rounded-lg text-text-muted hover:bg-bg-surface hover:text-text-primary transition-colors"
-                      aria-label="Log out"
-                    >
-                      <ArrowRightOnRectangleIcon className="h-[18px] w-[18px]" />
-                    </button>
-                  </div>
-                </div>
+                  </button>
+                </>
               ) : (
                 <div className="flex items-center gap-2">
                   <Link
@@ -211,27 +190,23 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
-          <div className="flex gap-6 lg:gap-8">
+        <div className="max-w-[1800px] mx-auto px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+          <div className="flex gap-5 lg:gap-6">
             <aside className="hidden xl:block w-[240px] shrink-0">
               <SportsNavSidebar />
             </aside>
-            <main
-              className={cn(
-                'flex-1 min-w-0 xl:pb-0',
-                slipCount > 0
-                  ? 'pb-[calc(var(--layout-sticky-offset)+3.5rem)]'
-                  : 'pb-layout-nav',
-              )}
-            >
+            <main className="flex-1 min-w-0 pb-layout-nav xl:pb-0">
               <Outlet />
             </main>
+            <ProfileSidebarPanel />
           </div>
         </div>
 
-        <BetSlipStickyBar />
+        <BetSlipChatPanel />
         <MobileBottomNav onMoreOpen={() => setMoreOpen(true)} />
         <MobileMoreMenu open={moreOpen} onClose={() => setMoreOpen(false)} />
+        <AccountMenuDrawer open={accountOpen} onClose={() => setAccountOpen(false)} />
+        <EditProfileDrawer />
 
         <SideDrawer
           open={sportsNavOpen}
@@ -250,5 +225,6 @@ export function MainLayout() {
         </SideDrawer>
       </div>
     </SportsNavDrawerProvider>
+    </EditProfileDrawerProvider>
   )
 }

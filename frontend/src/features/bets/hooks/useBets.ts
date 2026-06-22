@@ -32,6 +32,7 @@ export function usePlaceBet() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.bets.all() })
+      await queryClient.invalidateQueries({ queryKey: ['profile'] })
       await queryClient.invalidateQueries({ queryKey: queryKeys.wallet.all() })
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() })
       const meRes = await apiClient.get<ApiResponse<{ balance: number } & Record<string, unknown>>>('/auth/me')
@@ -52,6 +53,7 @@ export function useCancelBet() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.bets.all() })
+      await queryClient.invalidateQueries({ queryKey: ['profile'] })
       await queryClient.invalidateQueries({ queryKey: queryKeys.wallet.all() })
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() })
       const meRes = await apiClient.get<ApiResponse<{ balance: number } & Record<string, unknown>>>('/auth/me')

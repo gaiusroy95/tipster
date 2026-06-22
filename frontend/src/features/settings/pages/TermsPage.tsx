@@ -18,9 +18,8 @@ export function TermsPage() {
 
         <h2 className="text-lg font-semibold text-text-primary">Competition rules</h2>
         <p>
-          Users compete on a seasonal leaderboard based on points, ROI, and profit/loss from virtual
-          bets. Betting rules include small and big bet limits and daily big bet caps as displayed in
-          the wallet section.
+          New accounts receive 1,000,000 virtual credits. Each bet must be exactly 25,000 or
+          100,000 credits, with a maximum of three bets per day.
         </p>
 
         <h2 className="text-lg font-semibold text-text-primary">Responsible participation</h2>

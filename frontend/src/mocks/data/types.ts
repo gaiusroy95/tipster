@@ -2,12 +2,19 @@ import type { MarketType, BetStatus, MatchStatus, NotificationType } from '@/cor
 
 export type AuthProviderKind = 'email' | 'google' | 'facebook' | 'apple'
 
+export type SignatureMode = 'text' | 'banner'
+
 export interface User {
   id: string
   email: string
   displayName: string
   username: string
   avatarUrl?: string
+  country?: string
+  signature?: string
+  signatureLink?: string
+  signatureMode?: SignatureMode
+  postCount?: number
   balance: number
   rank: number
   createdAt: string

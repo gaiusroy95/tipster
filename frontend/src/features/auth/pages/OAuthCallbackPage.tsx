@@ -62,7 +62,7 @@ export function OAuthCallbackPage() {
 
         const result = await completeAuth.mutateAsync(payload)
         if (result.isNewUser) {
-          toast('Welcome! You received 10,000 virtual credits.', 'success')
+          toast('Welcome! You received 1,000,000 virtual credits.', 'success')
         }
         navigate(ROUTES.HOME, { replace: true })
       } catch (e) {

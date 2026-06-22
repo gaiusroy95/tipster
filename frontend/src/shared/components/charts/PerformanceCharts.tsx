@@ -11,11 +11,11 @@ import {
 } from 'recharts'
 
 const chartColors = {
-  primary: '#00c853',
-  muted: '#8b9aab',
-  grid: '#2a3441',
-  win: '#22c55e',
-  loss: '#ef4444',
+  primary: '#6366f1',
+  muted: '#9b94b8',
+  grid: '#2a2640',
+  win: '#34d399',
+  loss: '#f87171',
 }
 
 interface PerformanceChartProps {
@@ -31,11 +31,11 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
         <YAxis tick={{ fill: chartColors.muted, fontSize: 11 }} />
         <Tooltip
           contentStyle={{
-            background: '#1a222d',
-            border: '1px solid #2a3441',
+            background: '#1a1728',
+            border: '1px solid #2a2640',
             borderRadius: '8px',
           }}
-          labelStyle={{ color: '#f0f4f8' }}
+          labelStyle={{ color: '#f4f2ff' }}
         />
         <Line
           type="monotone"
@@ -62,8 +62,8 @@ export function LeagueBarChart({ data }: LeagueBarChartProps) {
         <YAxis tick={{ fill: chartColors.muted, fontSize: 11 }} />
         <Tooltip
           contentStyle={{
-            background: '#1a222d',
-            border: '1px solid #2a3441',
+            background: '#1a1728',
+            border: '1px solid #2a2640',
             borderRadius: '8px',
           }}
         />
