@@ -12,11 +12,27 @@ async function unregisterStaleServiceWorkers() {
   await Promise.all(registrations.map((registration) => registration.unregister()))
 }
 
-async function bootstrap() {
-  if (env.enableMsw) {
+/**
+ * Local dev: API mocks run via Vite middleware (vite.config.ts).
+ * Production (e.g. Vercel): static hosting has no middleware — start the browser MSW worker.
+ */
+async function setupApiMocking() {
+  if (!env.enableMsw) return
+
+  if (env.isDev) {
     await unregisterStaleServiceWorkers()
+    return
   }
 
+  const { worker } = await import('@/mocks/browser')
+  await worker.start({
+    onUnhandledRequest: 'bypass',
+    quiet: true,
+  })
+}
+
+async function bootstrap() {
+  await setupApiMocking()
   await useAuthStore.getState().initialize()
 
   const root = document.getElementById('root')
