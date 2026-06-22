@@ -32,3 +32,8 @@ export function playerPath(userId: string) {
 export function seasonPath(seasonId: string) {
   return `/seasons/${seasonId}`
 }
+
+export function loginPath(redirect?: string) {
+  if (!redirect) return ROUTES.LOGIN
+  return `${ROUTES.LOGIN}?redirect=${encodeURIComponent(redirect)}`
+}

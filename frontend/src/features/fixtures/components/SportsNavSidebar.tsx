@@ -54,13 +54,28 @@ function NavItem({
   )
 }
 
-export function SportsNavSidebar() {
+export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { view, sportId, leagueId, setView, setSportId, setLeagueId } = useFixtureNavParams()
   const leagues = useLeagues(sportId)
   const leaderboard = useLeaderboard(undefined, 'points')
 
   const status = fixtureViewToStatus(view)
   const fixtures = useFixtures({ sportId, status, leagueId })
+
+  const handleView = (id: FixtureView) => {
+    setView(id)
+    onNavigate?.()
+  }
+
+  const handleSport = (id: string) => {
+    setSportId(id)
+    onNavigate?.()
+  }
+
+  const handleLeague = (id: string | undefined) => {
+    setLeagueId(id)
+    onNavigate?.()
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -70,7 +85,7 @@ export function SportsNavSidebar() {
             <NavItem
               key={item.id}
               active={view === item.id}
-              onClick={() => setView(item.id)}
+              onClick={() => handleView(item.id)}
             >
               <FixtureViewIcon view={item.id} />
               <span>{item.label}</span>
@@ -90,7 +105,7 @@ export function SportsNavSidebar() {
               <NavItem
                 key={sport.id}
                 active={active}
-                onClick={() => setSportId(sport.id)}
+                onClick={() => handleSport(sport.id)}
               >
                 <SportCategoryIcon sportId={sport.id} className="h-4 w-4 shrink-0 opacity-80" />
                 <span className="flex-1 truncate">{sport.name}</span>
@@ -107,14 +122,14 @@ export function SportsNavSidebar() {
             <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               Leagues
             </p>
-            <NavItem active={!leagueId} onClick={() => setLeagueId(undefined)}>
+            <NavItem active={!leagueId} onClick={() => handleLeague(undefined)}>
               <span className="flex-1">All leagues</span>
             </NavItem>
             {leagues.data.map((league) => (
               <NavItem
                 key={league.id}
                 active={leagueId === league.id}
-                onClick={() => setLeagueId(league.id)}
+                onClick={() => handleLeague(league.id)}
               >
                 <span className="flex-1 truncate text-sm">{league.name}</span>
                 <span className="text-xs text-text-muted truncate max-w-[72px]">{league.country}</span>
@@ -130,7 +145,11 @@ export function SportsNavSidebar() {
             <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               League tipsters
             </h3>
-            <Link to={ROUTES.LEADERBOARD} className="text-xs text-text-muted hover:text-text-primary">
+            <Link
+              to={ROUTES.LEADERBOARD}
+              onClick={() => onNavigate?.()}
+              className="text-xs text-text-muted hover:text-text-primary"
+            >
               See all
             </Link>
           </div>
@@ -159,7 +178,11 @@ export function SportsNavSidebar() {
         <section className="px-1">
           <div className="flex items-center justify-between mb-2 px-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">Top 100</h3>
-            <Link to={ROUTES.LEADERBOARD} className="text-xs text-text-muted hover:text-text-primary">
+            <Link
+              to={ROUTES.LEADERBOARD}
+              onClick={() => onNavigate?.()}
+              className="text-xs text-text-muted hover:text-text-primary"
+            >
               Full board
             </Link>
           </div>

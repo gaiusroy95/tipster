@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/stores/authStore'
-import { ROUTES } from '@/core/constants/routes'
+import { ROUTES, loginPath } from '@/core/constants/routes'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const token = useAuthStore((s) => s.token)
@@ -17,7 +17,8 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!token) {
-    return <Navigate to={ROUTES.LOGIN} replace state={{ from: location.pathname }} />
+    const redirect = location.pathname + location.search
+    return <Navigate to={loginPath(redirect)} replace />
   }
 
   return <>{children}</>

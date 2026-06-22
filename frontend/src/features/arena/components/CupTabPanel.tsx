@@ -4,7 +4,7 @@ import {
   fixtureViewToStatus,
   useFixtureNavParams,
 } from '@/features/fixtures/hooks/useFixtureNavParams'
-import { MobileSportsNavBar } from '@/features/fixtures/components/MobileSportsNavBar'
+import { MobileSportsNavTrigger } from '@/features/fixtures/components/MobileSportsNavTrigger'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
@@ -30,7 +30,7 @@ export function CupTabPanel() {
 
   return (
     <div>
-      <MobileSportsNavBar />
+      <MobileSportsNavTrigger className="mb-4" />
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold text-text-primary">{title}</h2>

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { lazy, Suspense, type LazyExoticComponent, type JSX } from 'react'
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { ROUTES } from '@/core/constants/routes'
 import { AuthLayout } from '@/shared/layouts/AuthLayout'
 import { MainLayout } from '@/shared/layouts/MainLayout'
@@ -65,27 +65,34 @@ export const router = createBrowserRouter([
   },
   {
     element: (
-      <ProtectedRoute>
-        <ErrorBoundary>
-          <MainLayout />
-        </ErrorBoundary>
-      </ProtectedRoute>
+      <ErrorBoundary>
+        <MainLayout />
+      </ErrorBoundary>
     ),
     children: [
       { path: ROUTES.HOME, element: withSuspense(DashboardPage) },
-      { path: ROUTES.WALLET, element: withSuspense(WalletPage) },
       { path: ROUTES.FIXTURES, element: <Navigate to={`${ROUTES.HOME}?tab=cup`} replace /> },
       { path: ROUTES.MATCH, element: withSuspense(MatchDetailPage) },
-      { path: ROUTES.BET_SLIP, element: withSuspense(BetSlipPage) },
-      { path: ROUTES.BETS_ACTIVE, element: withSuspense(ActiveBetsPage) },
-      { path: ROUTES.BETS_HISTORY, element: withSuspense(BetHistoryPage) },
       { path: ROUTES.LEADERBOARD, element: withSuspense(LeaderboardPage) },
       { path: ROUTES.PLAYER, element: withSuspense(PublicProfilePage) },
       { path: ROUTES.SEASONS, element: withSuspense(SeasonsPage) },
       { path: ROUTES.SEASON, element: withSuspense(SeasonDetailPage) },
-      { path: ROUTES.NOTIFICATIONS, element: withSuspense(NotificationsPage) },
-      { path: ROUTES.PROFILE_EDIT, element: withSuspense(ProfileEditPage) },
-      { path: ROUTES.SETTINGS, element: withSuspense(SettingsPage) },
+      {
+        element: (
+          <ProtectedRoute>
+            <Outlet />
+          </ProtectedRoute>
+        ),
+        children: [
+          { path: ROUTES.WALLET, element: withSuspense(WalletPage) },
+          { path: ROUTES.BET_SLIP, element: withSuspense(BetSlipPage) },
+          { path: ROUTES.BETS_ACTIVE, element: withSuspense(ActiveBetsPage) },
+          { path: ROUTES.BETS_HISTORY, element: withSuspense(BetHistoryPage) },
+          { path: ROUTES.NOTIFICATIONS, element: withSuspense(NotificationsPage) },
+          { path: ROUTES.PROFILE_EDIT, element: withSuspense(ProfileEditPage) },
+          { path: ROUTES.SETTINGS, element: withSuspense(SettingsPage) },
+        ],
+      },
     ],
   },
   {

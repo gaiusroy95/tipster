@@ -24,16 +24,22 @@ interface MobileMoreMenuProps {
 }
 
 export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
+  const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const slipCount = useBetSlipStore((s) => s.selections.length)
 
-  const links = [
-    { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
-    { to: ROUTES.BET_SLIP, label: 'Bet slip', icon: TicketIcon, badge: slipCount },
-    { to: ROUTES.NOTIFICATIONS, label: 'Notifications', icon: BellIcon },
-    { to: ROUTES.SETTINGS, label: 'Settings', icon: Cog6ToothIcon },
-    { to: ROUTES.PROFILE_EDIT, label: 'Edit profile', icon: UserIcon },
-  ]
+  const links = user
+    ? [
+        { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
+        { to: ROUTES.BET_SLIP, label: 'Bet slip', icon: TicketIcon, badge: slipCount },
+        { to: ROUTES.NOTIFICATIONS, label: 'Notifications', icon: BellIcon },
+        { to: ROUTES.SETTINGS, label: 'Settings', icon: Cog6ToothIcon },
+        { to: ROUTES.PROFILE_EDIT, label: 'Edit profile', icon: UserIcon },
+      ]
+    : [
+        { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
+        { to: ROUTES.LEADERBOARD, label: 'Rankings', icon: TrophyIcon },
+      ]
 
   return (
     <Modal open={open} onClose={onClose} title="More">
@@ -47,21 +53,32 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
           >
             <item.icon className="h-5 w-5 text-text-muted shrink-0" aria-hidden="true" />
             <span className="font-medium flex-1">{item.label}</span>
-            {item.badge && item.badge > 0 ? (
+            {'badge' in item && item.badge && item.badge > 0 ? (
               <Badge variant="live">{item.badge}</Badge>
             ) : null}
           </Link>
         ))}
-        <Button
-          variant="secondary"
-          className="w-full mt-4"
-          onClick={() => {
-            onClose()
-            logout()
-          }}
-        >
-          Log out
-        </Button>
+        {user ? (
+          <Button
+            variant="secondary"
+            className="w-full mt-4"
+            onClick={() => {
+              onClose()
+              logout()
+            }}
+          >
+            Log out
+          </Button>
+        ) : (
+          <div className="mt-4 space-y-2">
+            <Link to={ROUTES.LOGIN} onClick={onClose}>
+              <Button className="w-full">Sign in</Button>
+            </Link>
+            <Link to={ROUTES.REGISTER} onClick={onClose}>
+              <Button variant="secondary" className="w-full">Create account</Button>
+            </Link>
+          </div>
+        )}
       </nav>
     </Modal>
   )
