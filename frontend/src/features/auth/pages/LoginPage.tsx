@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/Card'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { CardContent } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/shared/components/ui/Input'
 import { Label, FieldError } from '@/shared/components/ui/Label'
@@ -13,6 +13,9 @@ import { useToast } from '@/shared/components/ui/Toast'
 
 import { SocialAuthButtons } from '@/features/auth/components/SocialAuthButtons'
 import { AuthDivider } from '@/features/auth/components/AuthDivider'
+import { AuthFormFooter } from '@/features/auth/components/AuthFormFooter'
+import { AuthCardHeader } from '@/features/auth/components/AuthCardHeader'
+import { AuthCard } from '@/features/auth/components/AuthCard'
 
 type LoginForm = { email: string; password: string }
 
@@ -38,11 +41,9 @@ export function LoginPage() {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <AuthCard>
+      <AuthCardHeader title="Sign in" subtitle="Welcome back to the arena" />
+      <CardContent className="px-6 pb-6">
         <SocialAuthButtons mode="login" />
         <AuthDivider label="Or continue with email" />
         <form onSubmit={onSubmit} className="space-y-4">
@@ -58,13 +59,8 @@ export function LoginPage() {
           </div>
           <Button type="submit" className="w-full" isLoading={login.isPending}>Sign in</Button>
         </form>
-        <div className="mt-4 text-center text-sm space-y-2">
-          <Link to={ROUTES.FORGOT_PASSWORD} className="text-accent-primary hover:underline">Forgot password?</Link>
-          <p className="text-text-muted">
-            No account? <Link to={ROUTES.REGISTER} className="text-accent-primary hover:underline">Register</Link>
-          </p>
-        </div>
+        <AuthFormFooter variant="login" />
       </CardContent>
-    </Card>
+    </AuthCard>
   )
 }

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Link, useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/Card'
+import { useNavigate } from 'react-router-dom'
+import { CardContent } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/shared/components/ui/Input'
 import { Label, FieldError } from '@/shared/components/ui/Label'
@@ -13,6 +13,9 @@ import { useToast } from '@/shared/components/ui/Toast'
 
 import { SocialAuthButtons } from '@/features/auth/components/SocialAuthButtons'
 import { AuthDivider } from '@/features/auth/components/AuthDivider'
+import { AuthFormFooter } from '@/features/auth/components/AuthFormFooter'
+import { AuthCardHeader } from '@/features/auth/components/AuthCardHeader'
+import { AuthCard } from '@/features/auth/components/AuthCard'
 
 type RegisterForm = { displayName: string; username: string; email: string; password: string }
 
@@ -36,11 +39,9 @@ export function RegisterPage() {
   })
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create account</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <AuthCard>
+      <AuthCardHeader title="Create account" subtitle="Join the virtual tipster league" />
+      <CardContent className="px-6 pb-6">
         <SocialAuthButtons mode="register" />
         <AuthDivider label="Or sign up with email" />
         <form onSubmit={onSubmit} className="space-y-4">
@@ -66,10 +67,8 @@ export function RegisterPage() {
           </div>
           <Button type="submit" className="w-full" isLoading={registerMutation.isPending}>Register</Button>
         </form>
-        <p className="mt-4 text-center text-sm text-text-muted">
-          Already have an account? <Link to={ROUTES.LOGIN} className="text-accent-primary hover:underline">Sign in</Link>
-        </p>
+        <AuthFormFooter variant="register" />
       </CardContent>
-    </Card>
+    </AuthCard>
   )
 }
