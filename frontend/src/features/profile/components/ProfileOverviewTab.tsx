@@ -1,3 +1,4 @@
+import { OverallRankPanel } from '@/features/profile/components/OverallRankPanel'
 import { ProfileRewardsSection } from '@/features/profile/components/ProfileRewardsSection'
 import { ProfileAllTimeStats } from '@/features/profile/components/ProfileRewardsSection'
 import { ProfileBalanceHistoryPanel } from '@/features/profile/components/ProfileBalanceHistoryPanel'
@@ -19,6 +20,8 @@ export function ProfileOverviewTab({
 }) {
   return (
     <div className="space-y-4 sm:space-y-5">
+      {profile.overallRank && <OverallRankPanel stats={profile.overallRank} />}
+
       {isOwnProfile && (
         <ProfileRewardsSection profile={profile} dashboard={dashboard} />
       )}

@@ -1,37 +1,32 @@
-import { Link } from 'react-router-dom'
-import { ROUTES } from '@/core/constants/routes'
+import { ContentPage } from '@/features/legal/pages/LegalPages'
 
 export function TermsPage() {
   return (
-    <div className="prose prose-invert max-w-none">
-      <h1 className="text-2xl font-bold mb-4">Terms of Service</h1>
-      <p className="text-text-muted mb-6">
-        Tipster Arena is a virtual sports betting competition platform. No real money is involved.
-      </p>
-
-      <section className="space-y-4 text-sm text-text-muted">
-        <h2 className="text-lg font-semibold text-text-primary">Virtual credits only</h2>
+    <ContentPage
+      title="Terms of Service"
+      description="Tipster Arena is a virtual sports betting competition platform. No real money is involved."
+    >
+      <section>
+        <h2 className="text-base font-semibold text-text-primary mb-2">Virtual credits only</h2>
         <p>
           All bets use virtual credits with no monetary value. Credits cannot be exchanged for cash
           or transferred. Physical prizes are awarded offline by administrators at season end.
         </p>
-
-        <h2 className="text-lg font-semibold text-text-primary">Competition rules</h2>
+      </section>
+      <section>
+        <h2 className="text-base font-semibold text-text-primary mb-2">Competition rules</h2>
         <p>
           New accounts receive 1,000,000 virtual credits. Each bet must be exactly 25,000 or
           100,000 credits, with a maximum of three bets per day.
         </p>
-
-        <h2 className="text-lg font-semibold text-text-primary">Responsible participation</h2>
+      </section>
+      <section>
+        <h2 className="text-base font-semibold text-text-primary mb-2">Responsible participation</h2>
         <p>
           This platform simulates sports betting for entertainment and skill competition. It is not
           a gambling service. Users must be 18+ to participate.
         </p>
       </section>
-
-      <Link to={ROUTES.LOGIN} className="inline-block mt-8 text-accent-primary hover:underline">
-        Back to sign in
-      </Link>
-    </div>
+    </ContentPage>
   )
 }

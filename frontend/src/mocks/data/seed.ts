@@ -1,5 +1,6 @@
 import { bettingRules } from '@/core/config/bettingRules'
 import { getProfileAchievements, getUserAchievementProgress } from './achievementService'
+import { buildOverallRankStats } from '@/features/profile/lib/buildOverallRankStats'
 import type {
   User,
   League,
@@ -255,6 +256,14 @@ const leaderboard: LeaderboardEntry[] = demoUsers
     form: (['W', 'W', 'L', 'W', 'D'] as const).slice(0, 5),
   }))
 
+const userRankMeta: Record<string, { bestRank: number; rankChange: number }> = {
+  'user-demo': { bestRank: 4, rankChange: 2 },
+  'user-1': { bestRank: 1, rankChange: 0 },
+  'user-2': { bestRank: 2, rankChange: 1 },
+  'user-3': { bestRank: 3, rankChange: -1 },
+  'user-4': { bestRank: 4, rankChange: 0 },
+}
+
 demoUsers.find((u) => u.id === 'user-demo')!.rank = 5
 leaderboard.push({
   userId: 'user-demo',
@@ -409,14 +418,20 @@ export const mockDb = {
     const wins = settled.filter((b) => b.status === 'won').length
     const losses = settled.filter((b) => b.status === 'lost').length
     const entry = leaderboard.find((e) => e.userId === userId)
+    const currentRank = entry?.rank ?? user.rank
+    const meta = userRankMeta[userId]
 
     return {
       userId,
       displayName: user.displayName,
       username: user.username,
       avatarUrl: user.avatarUrl,
-      rank: user.rank,
+      rank: currentRank,
       balance: user.balance,
+      overallRank: buildOverallRankStats(currentRank, entry?.points ?? 0, {
+        bestRank: meta?.bestRank ?? currentRank,
+        rankChange: meta?.rankChange ?? 0,
+      }),
       seasonStats: {
         points: entry?.points ?? 0,
         roi: entry?.roi ?? 0,

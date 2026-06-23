@@ -139,6 +139,19 @@ export interface Notification {
   link?: string
 }
 
+export interface OverallRankStats {
+  current: number
+  best: number
+  totalPlayers: number
+  rankChange: number
+  seasonPoints: number
+  percentile: number
+  tierLabel: string
+  ranksToNextTier: number
+  nextTierLabel: string
+  tierProgressPercent: number
+}
+
 export interface UserProfileStats {
   userId: string
   displayName: string
@@ -146,6 +159,7 @@ export interface UserProfileStats {
   avatarUrl?: string
   rank: number
   balance: number
+  overallRank?: OverallRankStats
   seasonStats: {
     points: number
     roi: number

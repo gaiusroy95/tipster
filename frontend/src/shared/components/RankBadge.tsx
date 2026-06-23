@@ -6,10 +6,30 @@ export const RANK_MEDAL_SRC = {
   3: '/assets/medal/bronze.png',
 } as const
 
+export const TIER_SHIELD_SRC = {
+  champion: '/assets/medal/champion.png',
+  expert: '/assets/medal/expert.png',
+  pro: '/assets/medal/pro.png',
+  rising: '/assets/medal/rising.png',
+} as const
+
+export type RankTierKey = keyof typeof TIER_SHIELD_SRC
+
 export type PodiumRank = 1 | 2 | 3
 
 export function isPodiumRank(rank: number): rank is PodiumRank {
   return rank === 1 || rank === 2 || rank === 3
+}
+
+export function getRankTierKey(rank: number): RankTierKey {
+  if (rank <= 10) return 'champion'
+  if (rank <= 50) return 'expert'
+  if (rank <= 200) return 'pro'
+  return 'rising'
+}
+
+export function getTierShieldSrc(rank: number): string {
+  return TIER_SHIELD_SRC[getRankTierKey(rank)]
 }
 
 export function getRankRowClass(rank: number, interactive = true): string {
@@ -31,6 +51,24 @@ export function getRankRowClass(rank: number, interactive = true): string {
       interactive && 'hover:from-amber-700/22',
     )
   }
+  if (rank <= 10) {
+    return cn(
+      'border-accent-gold/25 bg-gradient-to-r from-accent-gold/8 via-transparent to-transparent',
+      interactive && 'hover:from-accent-gold/12',
+    )
+  }
+  if (rank <= 50) {
+    return cn(
+      'border-accent-secondary/30 bg-gradient-to-r from-accent-secondary/8 via-transparent to-transparent',
+      interactive && 'hover:from-accent-secondary/12',
+    )
+  }
+  if (rank <= 200) {
+    return cn(
+      'border-accent-win/25 bg-gradient-to-r from-accent-win/8 via-transparent to-transparent',
+      interactive && 'hover:from-accent-win/12',
+    )
+  }
   return cn(
     'border-border-default bg-bg-surface',
     interactive && 'hover:bg-bg-elevated',
@@ -45,16 +83,74 @@ const medalSizeClass: Record<RankBadgeSize, string> = {
   lg: 'h-12 w-12',
 }
 
-const numericSizeClass: Record<RankBadgeSize, string> = {
-  sm: 'h-6 w-6 text-xs',
-  md: 'h-8 w-8 text-sm',
-  lg: 'h-9 w-9 text-sm',
+const shieldRankTextClass: Record<RankBadgeSize, string> = {
+  sm: 'text-[9px] leading-none',
+  md: 'text-[11px] leading-none',
+  lg: 'text-sm leading-none',
+}
+
+const shieldRankTextLargeClass: Record<RankBadgeSize, string> = {
+  sm: 'text-[7px] leading-none',
+  md: 'text-[9px] leading-none',
+  lg: 'text-[11px] leading-none',
 }
 
 interface RankBadgeProps {
   rank: number
   size?: RankBadgeSize
   className?: string
+}
+
+const shieldHexInsetClass = 'left-[27%] right-[27%] top-[23%] bottom-[39%]'
+
+function TierShieldBadge({
+  rank,
+  size,
+  className,
+}: {
+  rank: number
+  size: RankBadgeSize
+  className?: string
+}) {
+  const tier = getRankTierKey(rank)
+  const rankLabel = rank > 999 ? '999+' : String(rank)
+  const isWideRank = rank > 99
+
+  return (
+    <div
+      className={cn(
+        'relative flex shrink-0 items-center justify-center',
+        medalSizeClass[size],
+        className,
+      )}
+      aria-label={`Rank ${rank}`}
+    >
+      <img
+        src={TIER_SHIELD_SRC[tier]}
+        alt=""
+        className="h-full w-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+        width={48}
+        height={48}
+      />
+      <span
+        className={cn(
+          'absolute flex items-center justify-center',
+          shieldHexInsetClass,
+        )}
+      >
+        <span
+          className={cn(
+            'font-bold font-mono tabular-nums',
+            'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]',
+            tier === 'rising' && 'text-text-primary drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]',
+            isWideRank ? shieldRankTextLargeClass[size] : shieldRankTextClass[size],
+          )}
+        >
+          {rankLabel}
+        </span>
+      </span>
+    </div>
+  )
 }
 
 export function RankBadge({ rank, size = 'md', className }: RankBadgeProps) {
@@ -79,16 +175,5 @@ export function RankBadge({ rank, size = 'md', className }: RankBadgeProps) {
     )
   }
 
-  return (
-    <div
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-full font-bold font-mono bg-bg-elevated text-text-muted',
-        numericSizeClass[size],
-        className,
-      )}
-      aria-label={`Rank ${rank}`}
-    >
-      {rank}
-    </div>
-  )
+  return <TierShieldBadge rank={rank} size={size} className={className} />
 }

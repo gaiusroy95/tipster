@@ -41,6 +41,10 @@ const NotificationsPage = lazy(() => import('@/features/notifications/pages/Noti
 const ProfileEditPage = lazy(() => import('@/features/settings/pages/ProfileEditPage').then((m) => ({ default: m.ProfileEditPage })))
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const TermsPage = lazy(() => import('@/features/settings/pages/TermsPage').then((m) => ({ default: m.TermsPage })))
+const PrivacyPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.PrivacyPage })))
+const RulesPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.RulesPage })))
+const AboutPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.AboutPage })))
+const HelpPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.HelpPage })))
 const NotFoundPage = lazy(() => import('@/shared/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
 export const router = createBrowserRouter([
@@ -99,6 +103,10 @@ export const router = createBrowserRouter([
     element: <MinimalLayout />,
     children: [
       { path: ROUTES.TERMS, element: withSuspense(TermsPage) },
+      { path: ROUTES.PRIVACY, element: withSuspense(PrivacyPage) },
+      { path: ROUTES.RULES, element: withSuspense(RulesPage) },
+      { path: ROUTES.ABOUT, element: withSuspense(AboutPage) },
+      { path: ROUTES.HELP, element: withSuspense(HelpPage) },
     ],
   },
   { path: '*', element: withSuspense(NotFoundPage) },

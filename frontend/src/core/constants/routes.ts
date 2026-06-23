@@ -19,6 +19,10 @@ export const ROUTES = {
   PROFILE_EDIT: '/profile/edit',
   SETTINGS: '/settings',
   TERMS: '/terms',
+  PRIVACY: '/privacy',
+  RULES: '/rules',
+  ABOUT: '/about',
+  HELP: '/help',
 } as const;
 
 export function matchPath(matchId: string) {

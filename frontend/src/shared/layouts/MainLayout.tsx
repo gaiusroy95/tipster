@@ -23,6 +23,7 @@ import { AccountMenuDrawer } from '@/features/profile/components/AccountMenuDraw
 import { MobileBottomNav, MobileMoreMenu } from '@/shared/layouts/MobileNav'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
+import { SiteFooter } from '@/shared/components/SiteFooter'
 
 const topNav = [
   {
@@ -95,7 +96,7 @@ export function MainLayout() {
       open={() => setSportsNavOpen(true)}
       close={() => setSportsNavOpen(false)}
     >
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <header className="sticky top-0 z-40 border-b border-border-default/70 bg-bg-surface/95 backdrop-blur-md safe-area-pt">
           <div className="max-w-[1800px] mx-auto flex items-center gap-3 sm:gap-4 min-h-14 sm:min-h-[60px] py-2 px-4 lg:px-6">
             <div className="flex items-center gap-1.5 min-w-0 shrink-0">
@@ -179,7 +180,7 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div className="max-w-[1800px] mx-auto px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+        <div className="flex-1 max-w-[1800px] mx-auto w-full px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
           <div className="flex gap-5 lg:gap-6">
             <aside className="hidden xl:block w-[240px] shrink-0">
               <SportsNavSidebar />
@@ -190,6 +191,8 @@ export function MainLayout() {
             <ProfileSidebarPanel />
           </div>
         </div>
+
+        <SiteFooter variant="full" />
 
         <BetSlipChatPanel />
         <MobileBottomNav onMoreOpen={() => setMoreOpen(true)} />
