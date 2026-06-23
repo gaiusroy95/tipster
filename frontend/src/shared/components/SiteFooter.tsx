@@ -137,7 +137,7 @@ export function SiteFooter({ variant = 'full', className }: SiteFooterProps) {
         'relative mt-auto overflow-hidden',
         'border-t border-border-default/40',
         'bg-gradient-to-b from-bg-surface/40 via-bg-surface to-bg-primary',
-        'pb-layout-nav xl:pb-0 safe-area-pb',
+        'max-xl:pb-layout-nav',
         className,
       )}
       aria-label="Site footer"
@@ -155,7 +155,7 @@ export function SiteFooter({ variant = 'full', className }: SiteFooterProps) {
         aria-hidden="true"
       />
 
-      <div className="relative max-w-[1800px] mx-auto px-4 lg:px-6 py-12 lg:py-14">
+      <div className="relative max-w-[1800px] mx-auto px-4 lg:px-6 pt-10 lg:pt-12 pb-5 lg:pb-6">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 xl:gap-8">
           <div className="sm:col-span-2 xl:col-span-2 space-y-5">
             <Link to={ROUTES.HOME} className="inline-flex hover:opacity-90 transition-opacity">
@@ -189,7 +189,7 @@ export function SiteFooter({ variant = 'full', className }: SiteFooterProps) {
           />
         </div>
 
-        <div className="mt-12 lg:mt-14 pt-6 border-t border-border-default/40">
+        <div className="mt-8 lg:mt-10 pt-5 border-t border-border-default/40">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-text-muted/80">
               © {year} Tipster Arena. All rights reserved.

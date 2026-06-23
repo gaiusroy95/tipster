@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiClient } from '@/core/api/client'
-import type { ApiResponse } from '@/core/types/api'
-import type { League, Match, Team } from '@/mocks/data/types'
 import { queryKeys } from '@/core/constants/queryKeys'
+import {
+  fetchFixturesFromApi,
+  fetchLeaguesFromApi,
+  fetchMatchFromApi,
+} from '@/features/fixtures/api/sportsApi'
 
-export type MatchWithTeams = Match & { homeTeam: Team; awayTeam: Team; league: League }
+export type { MatchWithTeams } from '@/features/fixtures/types/fixture'
 
 export interface FixtureFilters {
   leagueId?: string
@@ -15,25 +17,16 @@ export interface FixtureFilters {
 export function useLeagues(sportId?: string) {
   return useQuery({
     queryKey: queryKeys.fixtures.leagues(sportId),
-    queryFn: async () => {
-      const params = sportId ? { sportId } : {}
-      const res = await apiClient.get<ApiResponse<League[]>>('/fixtures/leagues', { params })
-      return res.data.data
-    },
+    queryFn: () => fetchLeaguesFromApi(sportId),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
 export function useFixtures(filters?: FixtureFilters) {
   return useQuery({
     queryKey: queryKeys.fixtures.list(filters),
-    queryFn: async () => {
-      const params: Record<string, string> = {}
-      if (filters?.leagueId) params.leagueId = filters.leagueId
-      if (filters?.status) params.status = filters.status
-      if (filters?.sportId) params.sportId = filters.sportId
-      const res = await apiClient.get<ApiResponse<MatchWithTeams[]>>('/fixtures', { params })
-      return res.data.data
-    },
+    queryFn: () => fetchFixturesFromApi(filters),
+    staleTime: 30 * 1000,
   })
 }
 
@@ -41,9 +34,11 @@ export function useMatch(matchId: string) {
   return useQuery({
     queryKey: queryKeys.fixtures.detail(matchId),
     queryFn: async () => {
-      const res = await apiClient.get<ApiResponse<MatchWithTeams>>(`/fixtures/${matchId}`)
-      return res.data.data
+      const match = await fetchMatchFromApi(matchId)
+      if (!match) throw new Error('Match not found')
+      return match
     },
     enabled: !!matchId,
+    staleTime: 30 * 1000,
   })
 }

@@ -1,6 +1,7 @@
 import { MARKET_TYPES, type MarketType } from '@/core/constants/markets'
 
-export function formatMalayOdds(value: number): string {
+export function formatMalayOdds(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—'
   if (value === 0) return '0.00'
   if (value > 0) return `+${value.toFixed(2)}`
   return value.toFixed(2)
@@ -12,7 +13,8 @@ export function formatHandicap(value: number): string {
   return `${sign}${value}`
 }
 
-export function formatDecimalOdds(value: number): string {
+export function formatDecimalOdds(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '—'
   return value.toFixed(2)
 }
 

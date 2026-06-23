@@ -27,19 +27,20 @@ export function BettingOddsButton({
 }: BettingOddsButtonProps) {
   const displayOdds =
     marketType === 'malay' ? formatMalayOdds(value) : formatDecimalOdds(value)
+  const isDisabled = disabled || value == null || !Number.isFinite(value) || value <= 1
 
   if (variant === 'stacked') {
     return (
       <button
         type="button"
         onClick={onClick}
-        disabled={disabled}
+        disabled={isDisabled}
         className={cn(
           'flex flex-col items-center justify-center rounded-lg border px-3 py-2 min-h-[52px] min-w-[72px] transition-colors',
           selected
             ? 'border-cyan-400/60 bg-cyan-500/10 text-text-primary'
             : 'border-border-default bg-betting-btn hover:border-cyan-400/35 hover:bg-betting-btn-hover',
-          disabled && 'opacity-50 pointer-events-none',
+          isDisabled && 'opacity-50 pointer-events-none',
           className,
         )}
       >
@@ -53,13 +54,13 @@ export function BettingOddsButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       className={cn(
-        'flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 min-h-[40px] transition-colors',
+        'flex h-full min-h-[40px] w-full items-center justify-between gap-2 rounded-md border px-3 py-2 transition-colors',
         selected
           ? 'border-cyan-400/60 bg-cyan-500/10'
           : 'border-betting-btn-border bg-betting-btn hover:border-cyan-400/35 hover:bg-betting-btn-hover',
-        disabled && 'opacity-50 pointer-events-none',
+        isDisabled && 'opacity-50 pointer-events-none',
         className,
       )}
     >

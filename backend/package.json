@@ -1,0 +1,37 @@
+{
+  "name": "betting-freelancer-backend",
+  "version": "0.0.1",
+  "description": "Overtime sports and odds proxy API",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "free-port": "node scripts/free-port.mjs",
+    "prestart:dev": "node scripts/free-port.mjs",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:dev:clean": "npm run free-port && nest start --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
+  },
+  "dependencies": {
+    "@nestjs/cache-manager": "^3.0.1",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "axios": "^1.12.2",
+    "cache-manager": "^6.4.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "dotenv": "^17.2.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/node": "^22.10.7",
+    "typescript": "^5.7.3"
+  }
+}

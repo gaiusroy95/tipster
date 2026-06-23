@@ -9,6 +9,7 @@ interface OddsCellProps {
   onClick?: () => void
   className?: string
   variant?: BettingOddsButtonVariant
+  disabled?: boolean
 }
 
 export function OddsCell({
@@ -19,6 +20,7 @@ export function OddsCell({
   onClick,
   className,
   variant = 'stacked',
+  disabled,
 }: OddsCellProps) {
   return (
     <BettingOddsButton
@@ -29,6 +31,7 @@ export function OddsCell({
       onClick={onClick}
       className={className}
       variant={variant}
+      disabled={disabled}
     />
   )
 }

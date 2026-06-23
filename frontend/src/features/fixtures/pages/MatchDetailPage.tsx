@@ -100,7 +100,7 @@ export function MatchDetailPage() {
         </div>
       </div>
 
-      {canBet && market && (
+      {market && (
         <div className="mt-6">
           <Tabs tabs={marketTabs} activeTab={activeMarket} onChange={setActiveMarket} scrollable />
           <TabPanel active={true}>
@@ -123,6 +123,7 @@ export function MatchDetailPage() {
                     marketType={activeMarket as MarketType}
                     selected={selected}
                     variant="table"
+                    disabled={!canBet}
                     onClick={() => handleSelect(sel.id, sel.label, sel.value)}
                     className="min-w-[200px]"
                   />
@@ -131,6 +132,10 @@ export function MatchDetailPage() {
             </div>
           </TabPanel>
         </div>
+      )}
+
+      {!market && (
+        <p className="mt-6 text-text-muted text-sm">No odds available for this market.</p>
       )}
 
       {!canBet && (

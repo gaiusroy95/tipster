@@ -57,8 +57,10 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   const extraMarkets = match.markets.length * 127 + 382
   const detailPath = matchPath(match.id)
 
+  const hasOddsColumns = winner || hcp || ou
+
   const winnerColumn = winner ? (
-    <BettingMarketColumn title="Winner" rows={3} className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Winner" className="min-w-[100px] sm:min-w-[110px]">
       {winner.selections.map((sel) => (
         <BettingOddsButton
           key={sel.id}
@@ -66,15 +68,16 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           value={sel.value}
           marketType={MARKET_TYPES.WINNER}
           selected={isSelected(sel.id)}
+          disabled={!canBet}
           onClick={() => pickOdds(MARKET_TYPES.WINNER, sel)}
-          className="h-full"
+          className="h-full min-h-0"
         />
       ))}
     </BettingMarketColumn>
   ) : null
 
   const handicapColumn = hcp ? (
-    <BettingMarketColumn title="Handicap" rows={2} showInfo className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Handicap" showInfo className="min-w-[100px] sm:min-w-[110px]">
       {hcp.selections.slice(0, 2).map((sel) => (
         <BettingOddsButton
           key={sel.id}
@@ -82,15 +85,16 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           value={sel.value}
           marketType={MARKET_TYPES.HANDICAP}
           selected={isSelected(sel.id)}
+          disabled={!canBet}
           onClick={() => pickOdds(MARKET_TYPES.HANDICAP, sel)}
-          className="h-full"
+          className="h-full min-h-0"
         />
       ))}
     </BettingMarketColumn>
   ) : null
 
   const totalColumn = ou ? (
-    <BettingMarketColumn title="Total" rows={2} className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Total" className="min-w-[100px] sm:min-w-[110px]">
       {ou.selections.slice(0, 2).map((sel) => (
         <BettingOddsButton
           key={sel.id}
@@ -98,8 +102,9 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           value={sel.value}
           marketType={MARKET_TYPES.OVER_UNDER}
           selected={isSelected(sel.id)}
+          disabled={!canBet}
           onClick={() => pickOdds(MARKET_TYPES.OVER_UNDER, sel)}
-          className="h-full"
+          className="h-full min-h-0"
         />
       ))}
     </BettingMarketColumn>
@@ -150,7 +155,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           </div>
         </div>
 
-        {winner && hcp && ou && canBet && (
+        {hasOddsColumns && (
           <>
             {/* xs: winner only + link to full markets */}
             <div className="sm:hidden border-t border-border-default/60 p-4 space-y-3">

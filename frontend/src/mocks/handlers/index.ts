@@ -39,7 +39,18 @@ function getUserId(request: Request): string | null {
   const auth = request.headers.get('Authorization')
   if (!auth?.startsWith('Bearer ')) return null
   const token = auth.slice(7)
-  return tokens[token] ?? null
+  if (tokens[token]) return tokens[token]
+
+  // Tokens are deterministic (`token-<userId>`); restore after MSW handler reload.
+  if (token.startsWith('token-')) {
+    const userId = token.slice('token-'.length)
+    if (mockDb.getUser(userId)) {
+      tokens[token] = userId
+      return userId
+    }
+  }
+
+  return null
 }
 
 function malayReturn(stake: number, odds: number): number {
