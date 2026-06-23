@@ -1,53 +1,66 @@
-import { useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { PageShell } from '@/shared/layouts/PageShell'
-import { LiveBadge } from '@/shared/components/LiveBadge'
-import { OddsCell } from '@/shared/components/OddsCell'
-import { Tabs, TabPanel } from '@/shared/components/ui/Tabs'
-import { Button } from '@/shared/components/ui/Button'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
+import { Button } from '@/shared/components/ui/Button'
+import { MatchDetailHero } from '@/features/fixtures/components/MatchDetailHero'
+import {
+  getAvailableMarketTabs,
+  MatchDetailMarkets,
+} from '@/features/fixtures/components/MatchDetailMarkets'
 import { useMatch } from '@/features/fixtures/hooks/useFixtures'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
 import { useToast } from '@/shared/components/ui/Toast'
 import { ROUTES } from '@/core/constants/routes'
 import type { MarketType } from '@/core/constants/markets'
-import { formatMatchDate, formatMatchTime } from '@/shared/utils/formatDate'
-import { formatSelectionLabel } from '@/shared/utils/formatOdds'
 
-const marketTabs = [
-  { id: 'winner', label: 'Winner', shortLabel: 'Win' },
-  { id: 'malay', label: 'Malay', shortLabel: 'Malay' },
-  { id: 'handicap', label: 'Handicap', shortLabel: 'HCP' },
-  { id: 'over_under', label: 'Over/Under', shortLabel: 'O/U' },
-]
+function MatchDetailSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-5 w-32" />
+      <Skeleton className="h-52 w-full rounded-2xl" />
+      <Skeleton className="h-64 w-full rounded-2xl" />
+    </div>
+  )
+}
 
 export function MatchDetailPage() {
   const { matchId } = useParams<{ matchId: string }>()
   const { data: match, isLoading, isError, refetch } = useMatch(matchId ?? '')
-  const [activeMarket, setActiveMarket] = useState('winner')
+  const [activeMarket, setActiveMarket] = useState<MarketType>('winner')
   const addSelection = useBetSlipStore((s) => s.addSelection)
   const selections = useBetSlipStore((s) => s.selections)
   const { toast } = useToast()
 
+  const availableTabs = useMemo(
+    () => (match ? getAvailableMarketTabs(match.markets) : []),
+    [match],
+  )
+
+  useEffect(() => {
+    if (!availableTabs.length) return
+    if (!availableTabs.includes(activeMarket)) {
+      setActiveMarket(availableTabs[0])
+    }
+  }, [availableTabs, activeMarket])
+
   if (isLoading) {
-    return (
-      <PageShell title="Match">
-        <Skeleton className="h-48 w-full" />
-      </PageShell>
-    )
+    return <MatchDetailSkeleton />
   }
 
   if (isError || !match) {
     return (
-      <PageShell title="Match">
+      <div className="space-y-4">
         <QueryErrorFallback onRetry={() => refetch()} />
-      </PageShell>
+      </div>
     )
   }
 
-  const market = match.markets.find((m) => m.marketType === activeMarket)
   const canBet = match.status === 'scheduled' || match.status === 'live'
+  const matchSelectionIds = new Set(
+    selections.filter((s) => s.matchId === match.id).map((s) => s.selectionId),
+  )
+  const slipCount = selections.length
 
   const handleSelect = (selectionId: string, label: string, value: number) => {
     if (!canBet) {
@@ -58,7 +71,7 @@ export function MatchDetailPage() {
       matchId: match.id,
       homeTeam: match.homeTeam.name,
       awayTeam: match.awayTeam.name,
-      marketType: activeMarket as MarketType,
+      marketType: activeMarket,
       selectionId,
       selectionLabel: label,
       odds: value,
@@ -66,87 +79,30 @@ export function MatchDetailPage() {
     toast('Added to bet slip', 'success')
   }
 
-  const score =
-    match.status === 'live' || match.status === 'finished'
-      ? `${match.homeScore ?? 0} - ${match.awayScore ?? 0}`
-      : null
-
   return (
-    <PageShell title={`${match.homeTeam.name} vs ${match.awayTeam.name}`}>
-      <div className="rounded-xl border border-border-default bg-bg-surface p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-text-muted">{match.league.name}</span>
-          <LiveBadge status={match.status} minute={match.minute} />
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="text-center flex-1">
-            <p className="text-lg font-bold">{match.homeTeam.name}</p>
-            <p className="text-xs text-text-muted mt-1">{match.homeTeam.shortName}</p>
-          </div>
-          <div className="text-center px-4">
-            {score ? (
-              <p className="text-3xl font-mono font-bold">{score}</p>
-            ) : (
-              <div>
-                <p className="text-sm text-text-muted">{formatMatchDate(match.startTime)}</p>
-                <p className="text-xl font-mono font-bold">{formatMatchTime(match.startTime)}</p>
-              </div>
-            )}
-          </div>
-          <div className="text-center flex-1">
-            <p className="text-lg font-bold">{match.awayTeam.name}</p>
-            <p className="text-xs text-text-muted mt-1">{match.awayTeam.shortName}</p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-4 pb-4">
+      <MatchDetailHero match={match} />
 
-      {market && (
-        <div className="mt-6">
-          <Tabs tabs={marketTabs} activeTab={activeMarket} onChange={setActiveMarket} scrollable />
-          <TabPanel active={true}>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {market.selections.map((sel) => {
-                const selected = selections.some(
-                  (s) => s.matchId === match.id && s.selectionId === sel.id,
-                )
-                const displayLabel = formatSelectionLabel(
-                  activeMarket as MarketType,
-                  sel.label,
-                  sel.handicap,
-                  sel.line,
-                )
-                return (
-                  <OddsCell
-                    key={sel.id}
-                    label={displayLabel}
-                    value={sel.value}
-                    marketType={activeMarket as MarketType}
-                    selected={selected}
-                    variant="table"
-                    disabled={!canBet}
-                    onClick={() => handleSelect(sel.id, sel.label, sel.value)}
-                    className="min-w-[200px]"
-                  />
-                )
-              })}
-            </div>
-          </TabPanel>
-        </div>
-      )}
+      <MatchDetailMarkets
+        match={match}
+        activeMarket={activeMarket}
+        onMarketChange={setActiveMarket}
+        canBet={canBet}
+        selectedSelectionIds={matchSelectionIds}
+        slipCount={slipCount}
+        onSelect={handleSelect}
+      />
 
-      {!market && (
-        <p className="mt-6 text-text-muted text-sm">No odds available for this market.</p>
-      )}
-
-      {!canBet && (
-        <p className="mt-6 text-text-muted text-sm">Betting is closed for this match.</p>
-      )}
-
-      <div className="mt-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-text-muted">
+          Virtual credits only — odds refresh every 30 seconds.
+        </p>
         <Link to={ROUTES.BET_SLIP}>
-          <Button className="w-full sm:w-auto">View bet slip</Button>
+          <Button variant="primary" size="md" className="w-full sm:w-auto">
+            Open bet slip
+          </Button>
         </Link>
       </div>
-    </PageShell>
+    </div>
   )
 }
