@@ -5,7 +5,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { PROFILE_ICON_MONEY_BAG } from '@/core/constants/branding'
 import { ROUTES } from '@/core/constants/routes'
-import { OpenBetsIcon } from '@/features/profile/components/OpenBetsIcon'
+import { BetSlipIcon } from '@/features/betting/components/BetSlipIcon'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
@@ -43,7 +43,7 @@ export function WalletBalanceHero({ balance }: { balance: number }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 sm:ml-auto sm:shrink-0">
-            <WalletQuickLink to={ROUTES.BETS_ACTIVE} icon={<OpenBetsIcon size="sm" />} label="Open bets" />
+            <WalletQuickLink to={ROUTES.BETS_ACTIVE} icon={<BetSlipIcon size="sm" />} label="Open bets" />
             <WalletQuickLink
               to={ROUTES.BETS_HISTORY}
               icon={
