@@ -11,8 +11,6 @@ import {
 import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 import { useAuthStore } from '@/features/auth/stores/authStore'
-import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
-import { Badge } from '@/shared/components/ui/Badge'
 import { Button } from '@/shared/components/ui/Button'
 import { SideDrawer } from '@/shared/components/ui/SideDrawer'
 import { SportsNavSidebar } from '@/features/fixtures/components/SportsNavSidebar'
@@ -85,7 +83,6 @@ function HeaderIconLink({
 export function MainLayout() {
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
-  const slipCount = useBetSlipStore((s) => s.selections.length)
   const [moreOpen, setMoreOpen] = useState(false)
   const [sportsNavOpen, setSportsNavOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
@@ -153,7 +150,7 @@ export function MainLayout() {
                   <button
                     type="button"
                     onClick={() => setAccountOpen(true)}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full hover:ring-2 hover:ring-accent-secondary/50 transition-shadow overflow-hidden"
+                    className="flex h-9 w-9 items-center justify-center rounded-full hover:ring-2 hover:ring-accent-secondary/50 transition-shadow overflow-hidden"
                     aria-label="Open account menu"
                   >
                     <ProfileAvatar
@@ -161,14 +158,6 @@ export function MainLayout() {
                       avatarUrl={user.avatarUrl}
                       className="h-9 w-9 text-xs ring-2 ring-border-default/80"
                     />
-                    {slipCount > 0 && (
-                      <Badge
-                        variant="live"
-                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] text-[10px] border-2 border-bg-surface"
-                      >
-                        {slipCount}
-                      </Badge>
-                    )}
                   </button>
                 </>
               ) : (
