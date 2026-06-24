@@ -23,25 +23,22 @@ async function unregisterStaleServiceWorkers() {
 
 /**
  * Local dev: API mocks run via Vite middleware (vite.config.ts).
- * Production (e.g. Vercel): static hosting has no middleware — start the browser MSW worker.
+ * Production must never start the browser MSW worker — it breaks real OAuth/API.
  */
 async function setupApiMocking() {
-  if (!env.enableMsw) return
+  if (!env.isDev || !env.enableMsw) return
+  await unregisterStaleServiceWorkers()
+}
 
-  if (env.isDev) {
-    await unregisterStaleServiceWorkers()
-    return
-  }
-
-  const { worker } = await import('@/mocks/browser')
-  await worker.start({
-    onUnhandledRequest: 'bypass',
-    quiet: true,
-  })
+/** Drop stale mock service workers left from older production builds. */
+async function cleanupProductionServiceWorkers() {
+  if (env.isDev) return
+  await unregisterStaleServiceWorkers()
 }
 
 async function bootstrap() {
   normalizeDevOrigin()
+  await cleanupProductionServiceWorkers()
   await setupApiMocking()
   await useAuthStore.getState().initialize()
 

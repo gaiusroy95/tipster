@@ -32,7 +32,7 @@ function normalizeSportsApiBaseUrl(raw: string | undefined): string {
 export const env = {
   apiUrl: normalizeApiBaseUrl(import.meta.env.VITE_API_URL),
   sportsApiUrl: normalizeSportsApiBaseUrl(import.meta.env.VITE_SPORTS_API_URL),
-  enableMsw: import.meta.env.VITE_ENABLE_MSW === 'true',
+  enableMsw: import.meta.env.DEV && import.meta.env.VITE_ENABLE_MSW === 'true',
   isDev: import.meta.env.DEV,
   googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '',
   /** Google Identity Services popup — requires Authorized JavaScript origins in Google Cloud. */
