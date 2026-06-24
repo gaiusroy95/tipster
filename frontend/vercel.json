@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://tipster-wqhx.onrender.com/api/:path*"
+    },
+    {
+      "source": "/sports/:path*",
+      "destination": "https://tipster-wqhx.onrender.com/sports/:path*"
+    },
+    {
       "source": "/((?!api/|sports/|assets/|mockServiceWorker\\.js|favicon\\.svg|favicon\\.png).*)",
       "destination": "/index.html"
     }
