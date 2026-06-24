@@ -13,13 +13,13 @@ const tabs = [
 
 export type ArenaTabId = (typeof tabs)[number]['id']
 
-export function ArenaTabBar() {
+export function ArenaTabBar({ className }: { className?: string }) {
   const [params, setParams] = useSearchParams()
   const active = (params.get('tab') as ArenaTabId) || 'cup'
   const slipCount = useBetSlipStore((s) => s.selections.length)
 
   return (
-    <div className="border-b border-border-default mb-5">
+    <div className={cn('border-b border-border-default mb-5', className)}>
       <nav
         className={cn(
           'flex gap-1 overflow-x-auto scroll-snap-x',

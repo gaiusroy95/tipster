@@ -4,7 +4,7 @@ import { SPORTS_SLIDER_ITEMS } from '@/core/constants/sportSvgIcons'
 import { useFixtureNavParams } from '@/features/fixtures/hooks/useFixtureNavParams'
 import { cn } from '@/shared/utils/cn'
 
-export function SportsCategorySlider() {
+export function SportsCategorySlider({ className }: { className?: string }) {
   const { sportId, setSportId } = useFixtureNavParams()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -50,7 +50,7 @@ export function SportsCategorySlider() {
     )
 
   return (
-    <div className="mb-4 flex min-w-0 w-full max-w-full items-center gap-1.5 sm:gap-2">
+    <div className={cn('mb-4 flex min-w-0 w-full max-w-full items-center gap-1.5 sm:gap-2', className)}>
       <button
         type="button"
         onClick={() => scrollBy('left')}

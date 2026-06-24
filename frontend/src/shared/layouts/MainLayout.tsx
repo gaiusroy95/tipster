@@ -196,7 +196,7 @@ export function MainLayout() {
             <aside className="hidden xl:block w-[240px] shrink-0">
               <SportsNavSidebar />
             </aside>
-            <main className="flex-1 min-w-0 pb-layout-nav xl:pb-0">
+            <main className="flex-1 min-w-0">
               <Outlet />
             </main>
             <ProfileSidebarPanel />

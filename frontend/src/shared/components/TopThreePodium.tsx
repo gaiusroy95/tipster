@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { RANK_MEDAL_SRC, isPodiumRank } from '@/shared/components/RankBadge'
+import { RankBadge, isPodiumRank } from '@/shared/components/RankBadge'
 import { playerPath } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 
@@ -68,10 +68,10 @@ export function TopThreePodium({ entries }: { entries: PodiumEntry[] }) {
                   podiumGlow[rank],
                 )}
               >
-                <img
-                  src={RANK_MEDAL_SRC[rank]}
-                  alt=""
-                  className="h-full w-full object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+                <RankBadge
+                  rank={rank}
+                  size="xl"
+                  className="max-w-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
                 />
               </div>
               <p className="text-xs sm:text-sm font-semibold truncate w-full group-hover:text-accent-primary transition-colors">

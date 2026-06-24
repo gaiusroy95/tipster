@@ -8,34 +8,45 @@ import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { Button } from '@/shared/components/ui/Button'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
+import { getLeaderboardPreview } from '@/features/profile/lib/leaderboardPreview'
 import type { UserProfileStats } from '@/mocks/data/types'
+
+const PREVIEW_LIMIT = 20
 
 export function ProfileRankingPanel({ profile }: { profile: UserProfileStats }) {
   const leaderboard = useLeaderboard()
 
   const entries = leaderboard.data ?? []
   const totalPlayers = entries.length
-  const centerIndex = entries.findIndex((e) => e.userId === profile.userId)
-  const sliceStart = centerIndex >= 0 ? Math.max(0, centerIndex - 2) : 0
-  const nearby = entries.slice(sliceStart, sliceStart + 5)
+  const preview = getLeaderboardPreview(entries, profile.userId, PREVIEW_LIMIT)
 
   return (
     <ProfilePanelCard
       title={`${profile.displayName}'s ranking`}
-      subtitle={totalPlayers > 0 ? `Overall leaderboard · ${totalPlayers.toLocaleString()} tipsters` : 'Season standings'}
-      bodyClassName="space-y-2"
+      subtitle={
+        totalPlayers > 0
+          ? `Overall leaderboard · ${totalPlayers.toLocaleString()} tipsters`
+          : 'Season standings'
+      }
     >
       {leaderboard.isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        <div className="space-y-1.5">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-[52px] w-full rounded-xl" />
           ))}
         </div>
-      ) : nearby.length === 0 ? (
+      ) : preview.length === 0 ? (
         <p className="text-sm text-text-muted py-6 text-center">Leaderboard data is not available yet.</p>
       ) : (
-        <ul className="space-y-1.5" aria-label="Nearby leaderboard ranks">
-          {nearby.map((entry) => {
+        <ul
+          className={cn(
+            'space-y-1.5',
+            preview.length > 8 &&
+              'max-h-[min(32rem,70vh)] overflow-y-auto scrollbar-panel -mx-1 px-1',
+          )}
+          aria-label="Nearby leaderboard ranks"
+        >
+          {preview.map((entry) => {
             const isCurrent = entry.userId === profile.userId
             return (
               <li key={entry.userId}>
@@ -55,7 +66,12 @@ export function ProfileRankingPanel({ profile }: { profile: UserProfileStats }) 
                     className="h-8 w-8 text-[10px] shrink-0"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className={cn('text-sm font-semibold truncate', isCurrent && 'text-accent-secondary')}>
+                    <p
+                      className={cn(
+                        'text-sm font-semibold truncate',
+                        isCurrent && 'text-accent-secondary',
+                      )}
+                    >
                       {entry.displayName}
                     </p>
                     <div className="flex items-center gap-1 mt-0.5">
@@ -88,7 +104,7 @@ export function ProfileRankingPanel({ profile }: { profile: UserProfileStats }) 
           })}
         </ul>
       )}
-      <Link to={ROUTES.LEADERBOARD} className="block pt-2">
+      <Link to={ROUTES.LEADERBOARD} className="block pt-3">
         <Button variant="secondary" size="sm" className="w-full">View full leaderboard</Button>
       </Link>
     </ProfilePanelCard>

@@ -75,24 +75,27 @@ export function getRankRowClass(rank: number, interactive = true): string {
   )
 }
 
-type RankBadgeSize = 'sm' | 'md' | 'lg'
+type RankBadgeSize = 'sm' | 'md' | 'lg' | 'xl'
 
 const medalSizeClass: Record<RankBadgeSize, string> = {
   sm: 'h-7 w-7',
   md: 'h-9 w-9',
   lg: 'h-12 w-12',
+  xl: 'h-14 w-14 sm:h-16 sm:w-16',
 }
 
 const shieldRankTextClass: Record<RankBadgeSize, string> = {
   sm: 'text-[9px] leading-none',
   md: 'text-[11px] leading-none',
   lg: 'text-sm leading-none',
+  xl: 'text-sm leading-none',
 }
 
 const shieldRankTextLargeClass: Record<RankBadgeSize, string> = {
   sm: 'text-[7px] leading-none',
   md: 'text-[9px] leading-none',
   lg: 'text-[11px] leading-none',
+  xl: 'text-[11px] leading-none',
 }
 
 interface RankBadgeProps {
@@ -102,6 +105,34 @@ interface RankBadgeProps {
 }
 
 const shieldHexInsetClass = 'left-[27%] right-[27%] top-[23%] bottom-[39%]'
+
+/** Gold / silver / bronze medals — hex center sits lower (crown + ribbons). */
+const podiumHexInsetClass = 'left-[36%] right-[36%] top-[30%] bottom-[42%]'
+
+const podiumRankTextClass: Record<RankBadgeSize, string> = {
+  sm: 'text-[8px] leading-none',
+  md: 'text-[10px] leading-none',
+  lg: 'text-xs leading-none',
+  xl: 'text-sm sm:text-base leading-none',
+}
+
+function MedalRankOverlay({
+  insetClass,
+  rankLabel,
+  textClassName,
+}: {
+  insetClass: string
+  rankLabel: string
+  textClassName: string
+}) {
+  return (
+    <span className={cn('absolute flex items-center justify-center', insetClass)}>
+      <span className={cn('font-bold font-mono tabular-nums', textClassName)}>
+        {rankLabel}
+      </span>
+    </span>
+  )
+}
 
 function TierShieldBadge({
   rank,
@@ -132,23 +163,15 @@ function TierShieldBadge({
         width={48}
         height={48}
       />
-      <span
-        className={cn(
-          'absolute flex items-center justify-center',
-          shieldHexInsetClass,
+      <MedalRankOverlay
+        insetClass={shieldHexInsetClass}
+        rankLabel={rankLabel}
+        textClassName={cn(
+          isWideRank ? shieldRankTextLargeClass[size] : shieldRankTextClass[size],
+          'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]',
+          tier === 'rising' && 'text-text-primary drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]',
         )}
-      >
-        <span
-          className={cn(
-            'font-bold font-mono tabular-nums',
-            'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]',
-            tier === 'rising' && 'text-text-primary drop-shadow-[0_1px_1px_rgba(255,255,255,0.35)]',
-            isWideRank ? shieldRankTextLargeClass[size] : shieldRankTextClass[size],
-          )}
-        >
-          {rankLabel}
-        </span>
-      </span>
+      />
     </div>
   )
 }
@@ -170,6 +193,14 @@ export function RankBadge({ rank, size = 'md', className }: RankBadgeProps) {
           className="h-full w-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
           width={48}
           height={48}
+        />
+        <MedalRankOverlay
+          insetClass={podiumHexInsetClass}
+          rankLabel={String(rank)}
+          textClassName={cn(
+            podiumRankTextClass[size],
+            'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)]',
+          )}
         />
       </div>
     )

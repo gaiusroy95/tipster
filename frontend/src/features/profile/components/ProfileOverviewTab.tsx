@@ -26,12 +26,12 @@ export function ProfileOverviewTab({
         <ProfileRewardsSection profile={profile} dashboard={dashboard} />
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <ProfileAllTimeStats profile={profile} totalPlayers={totalPlayers} />
         <ProfileBalanceHistoryPanel profile={profile} isOwnProfile={isOwnProfile} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0 items-start">
         <ProfileRankingPanel profile={profile} />
         <ProfileAchievementsPanel profile={profile} />
       </div>

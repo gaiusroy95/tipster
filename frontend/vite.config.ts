@@ -78,6 +78,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
+      strictPort: true,
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',
@@ -89,6 +90,10 @@ export default defineConfig(({ mode }) => {
             }
             return undefined
           },
+        },
+        '/sports': {
+          target: 'http://127.0.0.1:3000',
+          changeOrigin: true,
         },
       },
       watch: {

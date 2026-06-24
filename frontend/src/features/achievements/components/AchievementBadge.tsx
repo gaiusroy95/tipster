@@ -1,5 +1,6 @@
 import { LockClosedIcon } from '@heroicons/react/24/outline'
 import { cn } from '@/shared/utils/cn'
+import { formatDateTime } from '@/shared/utils/formatDate'
 import type { AchievementProgress, AchievementTier } from '@/features/achievements/types/achievement'
 
 const TIER_LABEL: Record<AchievementTier, string> = {
@@ -95,11 +96,17 @@ export function AchievementProgressBar({
   )
 }
 
-export function AchievementCard({ achievement }: { achievement: AchievementProgress }) {
+export function AchievementCard({
+  achievement,
+  earnedAt,
+}: {
+  achievement: AchievementProgress
+  earnedAt?: string
+}) {
   return (
     <div
       className={cn(
-        'flex gap-3 rounded-xl border p-4 transition-colors',
+        'flex min-w-0 w-full gap-3 rounded-xl border p-3 sm:p-4 transition-colors',
         achievement.earned
           ? 'border-accent-gold/25 bg-gradient-to-br from-accent-gold/10 via-bg-elevated/20 to-transparent'
           : 'border-border-default/80 bg-bg-elevated/20 opacity-90',
@@ -110,12 +117,13 @@ export function AchievementCard({ achievement }: { achievement: AchievementProgr
         tier={achievement.tier}
         iconSlug={achievement.iconSlug}
         earned={achievement.earned}
+        className="shrink-0"
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-2 min-w-0">
           <p
             className={cn(
-              'font-display font-bold leading-tight',
+              'min-w-0 font-display font-bold leading-tight break-words',
               achievement.earned ? 'text-accent-gold' : 'text-text-primary',
             )}
           >
@@ -127,9 +135,12 @@ export function AchievementCard({ achievement }: { achievement: AchievementProgr
             </span>
           )}
         </div>
-        <p className="text-xs text-text-muted mt-1 leading-snug">{achievement.description}</p>
+        <p className="text-xs text-text-muted mt-1 leading-snug break-words">{achievement.description}</p>
         {achievement.requiresSettlement && !achievement.earned && (
           <p className="text-[10px] text-text-muted/80 mt-1">Requires settled bet results</p>
+        )}
+        {earnedAt && (
+          <p className="text-[10px] text-text-muted/80 mt-2">{earnedAt}</p>
         )}
         <AchievementProgressBar progress={achievement.progress} earned={achievement.earned} />
       </div>
@@ -140,9 +151,14 @@ export function AchievementCard({ achievement }: { achievement: AchievementProgr
 export function AchievementsGrid({
   achievements,
   emptyMessage = 'Place bets and complete profile goals to unlock achievements.',
+  layout = 'default',
+  showEarnedAt = false,
 }: {
   achievements: AchievementProgress[]
   emptyMessage?: string
+  /** `compact` — single column for narrow profile panels; `default` — responsive 2-col grid */
+  layout?: 'default' | 'compact'
+  showEarnedAt?: boolean
 }) {
   if (achievements.length === 0) {
     return <p className="text-sm text-text-muted py-8 text-center">{emptyMessage}</p>
@@ -151,12 +167,33 @@ export function AchievementsGrid({
   const earnedCount = achievements.filter((a) => a.earned).length
 
   return (
-    <div>
-      <p className="text-xs text-text-muted mb-4">
-        {earnedCount} of {achievements.length} unlocked
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {achievements.map((a) => <AchievementCard key={a.id} achievement={a} />)}
+    <div className="min-w-0">
+      {layout === 'compact' ? (
+        achievements.length > 0 && (
+          <p className="text-xs text-text-muted mb-3">
+            {achievements.length} milestone{achievements.length !== 1 ? 's' : ''} earned
+          </p>
+        )
+      ) : (
+        <p className="text-xs text-text-muted mb-4">
+          {earnedCount} of {achievements.length} unlocked
+        </p>
+      )}
+      <div
+        className={cn(
+          'grid min-w-0 gap-3 [&>*]:min-w-0',
+          layout === 'compact' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2',
+        )}
+      >
+        {achievements.map((a) => (
+          <AchievementCard
+            key={a.id}
+            achievement={a}
+            earnedAt={
+              showEarnedAt && a.earnedAt ? formatDateTime(a.earnedAt) : undefined
+            }
+          />
+        ))}
       </div>
     </div>
   )
