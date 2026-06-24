@@ -48,7 +48,7 @@ const TermsPage = lazy(() => import('@/features/settings/pages/TermsPage').then(
 const PrivacyPage = lazy(() => import('@/features/legal/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })))
 const RulesPage = lazy(() => import('@/features/legal/pages/RulesPage').then((m) => ({ default: m.RulesPage })))
 const AboutPage = lazy(() => import('@/features/legal/pages/AboutPage').then((m) => ({ default: m.AboutPage })))
-const HelpPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.HelpPage })))
+const HelpPage = lazy(() => import('@/features/legal/pages/HelpPage').then((m) => ({ default: m.HelpPage })))
 const ForumPage = lazy(() => import('@/features/forum/pages/ForumPage').then((m) => ({ default: m.ForumPage })))
 const ForumPostPage = lazy(() => import('@/features/forum/pages/ForumPostPage').then((m) => ({ default: m.ForumPostPage })))
 const NotFoundPage = lazy(() => import('@/shared/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
