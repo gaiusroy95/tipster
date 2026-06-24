@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: betting-freelancer-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    preDeployCommand: npx prisma migrate deploy
+    envVars:
+      - key: NODE_ENV
+        value: production

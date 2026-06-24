@@ -65,6 +65,19 @@ npm run build
 npm run start:prod
 ```
 
+`npm run build` runs `prisma generate` before TypeScript compile so the Prisma client matches `schema.prisma`.
+
+### Render (or similar PaaS)
+
+| Setting | Value |
+|---------|--------|
+| Root directory | `backend` |
+| Build command | `npm install && npm run build` |
+| Start command | `npm run start:prod` |
+| Release command (recommended) | `npx prisma migrate deploy` |
+
+Ensure `DATABASE_URL` and other env vars are set in the host dashboard. The release command applies pending migrations before each deploy.
+
 ## Environment variables
 
 | Variable | Required | Description |

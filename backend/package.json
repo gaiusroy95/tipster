@@ -5,7 +5,8 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && tsc",
     "free-port": "node scripts/free-port.mjs",
     "prestart:dev": "node scripts/free-port.mjs",
     "start:dev": "tsx watch src/index.ts",
@@ -19,6 +20,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "prisma": "^6.19.0",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -38,7 +40,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^8.0.1",
-    "prisma": "^6.19.0",
     "tsx": "^4.20.5",
     "typescript": "^5.7.3"
   }
