@@ -19,6 +19,8 @@ model User {
   authProviders       String[]  @default(["email"])
   primaryAuthProvider String    @default("email")
   emailVerifiedAt     DateTime?
+  registrationIp      String?
+  verifiedIp          String?
   country             String?
   signature           String?
   signatureLink       String?

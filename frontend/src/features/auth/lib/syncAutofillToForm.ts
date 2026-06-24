@@ -17,6 +17,6 @@ export function syncAutofillToForm<T extends FieldValues>(
     if (!input?.value) continue
 
     const value = trim ? input.value.trim() : input.value
-    setValue(name, value as T[Path<T>], { shouldValidate: false })
+    setValue(name, value as T[Path<T>], { shouldValidate: true, shouldDirty: true })
   }
 }

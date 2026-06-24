@@ -42,10 +42,18 @@ export function LoginPage() {
       const redirect = params.get('redirect') ?? ROUTES.HOME
       navigate(redirect)
     } catch (e) {
-      if (e instanceof ApiError && e.code === 'EMAIL_NOT_VERIFIED') {
-        navigate(`${ROUTES.REGISTER_PENDING}?email=${encodeURIComponent(data.email)}`, {
-          replace: true,
-        })
+      if (
+        e instanceof ApiError &&
+        (e.code === 'EMAIL_NOT_VERIFIED' || e.code === 'IP_VERIFICATION_REQUIRED')
+      ) {
+        const reason = e.code === 'IP_VERIFICATION_REQUIRED' ? 'ip' : 'email'
+        navigate(
+          `${ROUTES.REGISTER_PENDING}?email=${encodeURIComponent(data.email)}&reason=${reason}`,
+          { replace: true },
+        )
+        if (e.code === 'IP_VERIFICATION_REQUIRED') {
+          toast(e.message, 'error')
+        }
         return
       }
       const msg = e instanceof ApiError ? e.message : 'Login failed'
@@ -54,11 +62,12 @@ export function LoginPage() {
   })
 
   const onFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     syncAutofillToForm(event.currentTarget, [
       { id: 'login-email', name: 'email', trim: true },
       { id: 'login-password', name: 'password' },
     ], setValue)
-    submitLogin(event)
+    void submitLogin()
   }
 
   return (

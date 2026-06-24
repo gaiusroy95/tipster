@@ -192,7 +192,7 @@ export function MainLayout() {
         </header>
 
         <div className="flex-1 max-w-[1800px] mx-auto w-full px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
-          <div className="flex gap-5 lg:gap-6">
+          <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
             <aside className="hidden xl:block w-[240px] shrink-0">
               <SportsNavSidebar />
             </aside>

@@ -4,6 +4,7 @@ import { cn } from '@/shared/utils/cn'
 
 interface BettingMarketColumnProps {
   title: string
+  titleShort?: string
   showInfo?: boolean
   className?: string
   children: ReactNode
@@ -11,17 +12,22 @@ interface BettingMarketColumnProps {
 
 export function BettingMarketColumn({
   title,
+  titleShort,
   showInfo,
   className,
   children,
 }: BettingMarketColumnProps) {
   const childCount = Children.count(children)
   const rowCount = childCount >= 3 ? 3 : 2
+  const short = titleShort ?? title
 
   return (
     <div className={cn('flex min-w-0 flex-col self-stretch', className)}>
       <div className="mb-1.5 flex shrink-0 items-center gap-1 px-0.5 min-w-0">
-        <span className="truncate text-[10px] font-bold uppercase tracking-widest text-text-muted">
+        <span className="truncate text-[10px] font-bold uppercase tracking-wide text-text-muted sm:hidden">
+          {short}
+        </span>
+        <span className="truncate text-[10px] font-bold uppercase tracking-widest text-text-muted hidden sm:inline">
           {title}
         </span>
         {showInfo && (

@@ -5,6 +5,7 @@ import { Input } from '@/shared/components/ui/Input'
 import { Label } from '@/shared/components/ui/Label'
 import { ROUTES } from '@/core/constants/routes'
 import { useResendVerification } from '@/features/auth/hooks/useAuth'
+import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
 import { AuthCardHeader } from '@/features/auth/components/AuthCardHeader'
 import { AuthFormFooter } from '@/features/auth/components/AuthFormFooter'
@@ -14,6 +15,8 @@ import { useState } from 'react'
 export function RegisterPendingPage() {
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') ?? ''
+  const reason = searchParams.get('reason')
+  const isIpReverify = reason === 'ip'
   const [emailInput, setEmailInput] = useState(email)
   const resend = useResendVerification()
   const { toast } = useToast()
@@ -23,11 +26,16 @@ export function RegisterPendingPage() {
       toast('Enter your email address', 'error')
       return
     }
-    const result = await resend.mutateAsync({ email: emailInput.trim() })
-    toast('Verification email sent if your account is pending.', 'success')
-    if (result.devVerificationUrl) {
-      console.info('[dev] Verification link:', result.devVerificationUrl)
-      toast('Dev: check console for verification link (SMTP not configured)', 'success')
+    try {
+      const result = await resend.mutateAsync({ email: emailInput.trim() })
+      toast('Verification email sent if your account is pending.', 'success')
+      if (result.devVerificationUrl) {
+        console.info('[dev] Verification link:', result.devVerificationUrl)
+        toast('Dev: check console for verification link', 'success')
+      }
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Could not resend verification email'
+      toast(msg, 'error')
     }
   }
 
@@ -35,13 +43,26 @@ export function RegisterPendingPage() {
     <AuthCard>
       <AuthCardHeader
         title="Check your email"
-        subtitle="We sent you a verification link"
+        subtitle={
+          isIpReverify
+            ? 'Verify your email for this location'
+            : 'We sent you a verification link'
+        }
       />
       <CardContent className="px-6 pb-6 space-y-5">
         <p className="text-sm text-text-muted leading-relaxed">
-          Click the link in the email to verify your account and receive your{' '}
-          <span className="text-text-primary font-medium">1,000,000 virtual credits</span>.
-          The link expires in 24 hours.
+          {isIpReverify ? (
+            <>
+              You are signing in from a new location. Click the link in the email we sent to
+              verify this device before continuing.
+            </>
+          ) : (
+            <>
+              Click the link in the email to verify your account and receive your{' '}
+              <span className="text-text-primary font-medium">1,000,000 virtual credits</span>.
+              The link expires in 24 hours.
+            </>
+          )}
         </p>
 
         {email && (

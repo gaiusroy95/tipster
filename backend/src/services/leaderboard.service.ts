@@ -121,6 +121,42 @@ export const leaderboardService = {
     });
   },
 
+  async recordBetSettled(
+    userId: string,
+    seasonId: string,
+    outcome: 'won' | 'lost' | 'void',
+    profitLossDelta: number,
+  ) {
+    const participant = await this.ensureParticipant(userId, seasonId);
+
+    const wins = participant.wins + (outcome === 'won' ? 1 : 0);
+    const losses = participant.losses + (outcome === 'lost' ? 1 : 0);
+    const voids = participant.voids + (outcome === 'void' ? 1 : 0);
+    const settledCount = wins + losses;
+    const winRate =
+      settledCount > 0
+        ? Math.round((wins / settledCount) * 1000) / 10
+        : participant.winRate;
+    const profitLoss = participant.profitLoss + profitLossDelta;
+    const points = Math.max(0, participant.points + profitLossDelta);
+    const formLetter = outcome === 'won' ? 'W' : outcome === 'lost' ? 'L' : 'V';
+    const form = [formLetter, ...participant.form].slice(0, 5);
+
+    await prisma.seasonParticipant.update({
+      where: { userId_seasonId: { userId, seasonId } },
+      data: {
+        wins,
+        losses,
+        voids,
+        winRate,
+        profitLoss,
+        points,
+        form,
+        roi: this.computeRoi(profitLoss, participant.totalBets),
+      },
+    });
+  },
+
   computeRoi(profitLoss: number, totalBets: number): number {
     if (totalBets === 0) return 0;
     const base = totalBets * 25000;

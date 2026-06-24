@@ -8,7 +8,7 @@ import {
   utcDateKey,
 } from '../constants/betting.constants';
 import {
-  resolveBetSelection,
+  resolveBetSelectionFromMarket,
   isMatchFinished,
 } from '../lib/bet-selection-resolver';
 import { sportsService } from './sports.service';
@@ -18,7 +18,50 @@ import { leaderboardService } from './leaderboard.service';
 import { notificationService } from './notification.service';
 import { achievementService } from './achievement.service';
 
+const IDEMPOTENT_BET_WINDOW_MS = 2 * 60 * 1000;
+
+async function runPostBetPlacementEffects(
+  userId: string,
+  betId: string,
+  seasonId: string | undefined,
+  selectionLabel: string,
+): Promise<void> {
+  if (seasonId) {
+    await leaderboardService.recordBetPlaced(userId, seasonId);
+    void leaderboardService.recomputeRanks(seasonId).catch((error) => {
+      console.error('[bet] background rank recompute failed:', error);
+    });
+  }
+
+  await notificationService.create({
+    userId,
+    type: 'bet_result',
+    title: 'Bet placed successfully',
+    message: `Your bet on ${selectionLabel} is now active.`,
+    link: '/bets/active',
+    data: { betId },
+  });
+
+  await achievementService.syncUserAchievements(userId);
+}
+
 export const betService = {
+  async getDailyBetUsage(userId: string) {
+    const dateKey = utcDateKey();
+    const usage = await prisma.dailyBetUsage.findUnique({
+      where: { userId_date: { userId, date: dateKey } },
+    });
+    const betsUsed = usage?.count ?? 0;
+    const tomorrow = new Date(`${dateKey}T00:00:00.000Z`);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+    return {
+      betsUsed,
+      betsLimit: BETTING_RULES.dailyBetLimit,
+      resetsAt: tomorrow.toISOString(),
+    };
+  },
+
   async listBets(userId: string, status?: string) {
     const bets = await prisma.bet.findMany({
       where: {
@@ -43,16 +86,21 @@ export const betService = {
       stake: number;
     },
   ) {
-    const market = await sportsService.getMarketOrNull(10, body.matchId);
-    if (!market) {
-      throw new ApiException('NOT_FOUND', 'Match not found', 404);
-    }
-    if (isMatchFinished(market)) {
-      throw new ApiException(
-        'MATCH_FINISHED',
-        'Cannot bet on finished match',
-        400,
-      );
+    const recentDuplicate = await prisma.bet.findFirst({
+      where: {
+        userId,
+        matchId: body.matchId,
+        selectionId: body.selectionId,
+        stake: body.stake,
+        status: 'active',
+        placedAt: {
+          gte: new Date(Date.now() - IDEMPOTENT_BET_WINDOW_MS),
+        },
+      },
+      orderBy: { placedAt: 'desc' },
+    });
+    if (recentDuplicate) {
+      return toBetDto(recentDuplicate);
     }
 
     const betSize = getBetSize(body.stake);
@@ -86,8 +134,20 @@ export const betService = {
       );
     }
 
-    const resolved = await resolveBetSelection(
-      body.matchId,
+    const market = await sportsService.getMarketOrNull(10, body.matchId);
+    if (!market) {
+      throw new ApiException('NOT_FOUND', 'Match not found', 404);
+    }
+    if (isMatchFinished(market)) {
+      throw new ApiException(
+        'MATCH_FINISHED',
+        'Cannot bet on finished match',
+        400,
+      );
+    }
+
+    const resolved = resolveBetSelectionFromMarket(
+      market,
       body.marketType,
       body.selectionId,
     );
@@ -149,23 +209,18 @@ export const betService = {
       return createdBet;
     });
 
-    if (activeSeason) {
-      await leaderboardService.recordBetPlaced(userId, activeSeason.id);
-      await leaderboardService.recomputeRanks(activeSeason.id);
-    }
+    const betDto = toBetDto(bet);
 
-    await notificationService.create({
+    void runPostBetPlacementEffects(
       userId,
-      type: 'bet_result',
-      title: 'Bet placed successfully',
-      message: `Your bet on ${resolved.selectionLabel} is now active.`,
-      link: '/bets/active',
-      data: { betId: bet.id },
+      bet.id,
+      activeSeason?.id,
+      resolved.selectionLabel,
+    ).catch((error) => {
+      console.error('[bet] post-placement effects failed:', error);
     });
 
-    await achievementService.syncUserAchievements(userId);
-
-    return toBetDto(bet);
+    return betDto;
   },
 
   async cancelBet(userId: string, betId: string) {
@@ -235,10 +290,14 @@ export const betService = {
         activeSeason.id,
         penalty,
       );
-      await leaderboardService.recomputeRanks(activeSeason.id);
+      void leaderboardService.recomputeRanks(activeSeason.id).catch((error) => {
+        console.error('[bet] background rank recompute failed:', error);
+      });
     }
 
-    await achievementService.syncUserAchievements(userId);
+    void achievementService.syncUserAchievements(userId).catch((error) => {
+      console.error('[bet] achievement sync failed:', error);
+    });
 
     return toBetDto(updatedBet);
   },

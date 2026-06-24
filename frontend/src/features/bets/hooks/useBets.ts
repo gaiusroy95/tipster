@@ -3,7 +3,11 @@ import { apiClient } from '@/core/api/client'
 import type { ApiResponse } from '@/core/types/api'
 import type { Bet } from '@/mocks/data/types'
 import { queryKeys } from '@/core/constants/queryKeys'
-import { useAuthStore } from '@/features/auth/stores/authStore'
+import {
+  findRecentMatchingBet,
+  syncBetStateAfterPlacement,
+  type PlaceBetPayload,
+} from '@/features/bets/lib/syncBetState'
 
 export function useBets(status?: string) {
   return useQuery({
@@ -16,51 +20,56 @@ export function useBets(status?: string) {
   })
 }
 
-export function usePlaceBet() {
-  const queryClient = useQueryClient()
-  const setUser = useAuthStore((s) => s.setUser)
-
-  return useMutation({
-    mutationFn: async (data: {
-      matchId: string
-      marketType: string
-      selectionId: string
-      stake: number
-    }) => {
-      const res = await apiClient.post<ApiResponse<Bet>>('/bets', data)
+export function useDailyBetLimit() {
+  return useQuery({
+    queryKey: queryKeys.bets.dailyLimit(),
+    queryFn: async () => {
+      const res = await apiClient.get<
+        ApiResponse<{ betsUsed: number; betsLimit: number; resetsAt: string }>
+      >('/bets/daily-limit')
       return res.data.data
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.bets.all() })
-      await queryClient.invalidateQueries({ queryKey: ['profile'] })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all() })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.wallet.all() })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() })
-      const meRes = await apiClient.get<ApiResponse<{ balance: number } & Record<string, unknown>>>('/auth/me')
-      const user = useAuthStore.getState().user
-      if (user) setUser({ ...user, balance: meRes.data.data.balance as number })
+  })
+}
+
+export function usePlaceBet() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: PlaceBetPayload) => {
+      const res = await apiClient.post<ApiResponse<Bet>>('/bets', data, {
+        timeout: 30000,
+      })
+      return res.data.data
+    },
+    onSuccess: () => {
+      syncBetStateAfterPlacement(queryClient)
     },
   })
 }
 
 export function useCancelBet() {
   const queryClient = useQueryClient()
-  const setUser = useAuthStore((s) => s.setUser)
 
   return useMutation({
     mutationFn: async (betId: string) => {
-      const res = await apiClient.post<ApiResponse<Bet>>(`/bets/${betId}/cancel`)
+      const res = await apiClient.post<ApiResponse<Bet>>(`/bets/${betId}/cancel`, undefined, {
+        timeout: 30000,
+      })
       return res.data.data
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.bets.all() })
-      await queryClient.invalidateQueries({ queryKey: ['profile'] })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all() })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.wallet.all() })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() })
-      const meRes = await apiClient.get<ApiResponse<{ balance: number } & Record<string, unknown>>>('/auth/me')
-      const user = useAuthStore.getState().user
-      if (user) setUser({ ...user, balance: meRes.data.data.balance as number })
+    onSuccess: () => {
+      syncBetStateAfterPlacement(queryClient)
     },
   })
+}
+
+export async function reconcileBetPlacement(
+  payload: PlaceBetPayload,
+  queryClient: ReturnType<typeof useQueryClient>,
+): Promise<boolean> {
+  const bet = await findRecentMatchingBet(payload)
+  if (!bet) return false
+  syncBetStateAfterPlacement(queryClient)
+  return true
 }

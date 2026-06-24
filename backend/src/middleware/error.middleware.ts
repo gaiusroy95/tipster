@@ -35,6 +35,24 @@ export function errorMiddleware(
   }
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      const fields = (err.meta as { target?: string[] } | undefined)?.target ?? [];
+      if (fields.includes('email')) {
+        res.status(409).json({
+          code: 'EMAIL_EXISTS',
+          message: 'Email already registered',
+        });
+        return;
+      }
+      if (fields.includes('username')) {
+        res.status(409).json({
+          code: 'USERNAME_EXISTS',
+          message: 'Username is already taken',
+        });
+        return;
+      }
+    }
+
     if (err.code === 'P2021') {
       const table = (err.meta as { table?: string } | undefined)?.table ?? '';
       const message =

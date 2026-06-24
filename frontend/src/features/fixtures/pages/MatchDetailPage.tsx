@@ -10,6 +10,7 @@ import {
 } from '@/features/fixtures/components/MatchDetailMarkets'
 import { useMatch } from '@/features/fixtures/hooks/useFixtures'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
+import { useRequireAuthForBet } from '@/features/betting/hooks/useRequireAuthForBet'
 import { useToast } from '@/shared/components/ui/Toast'
 import { ROUTES } from '@/core/constants/routes'
 import type { MarketType } from '@/core/constants/markets'
@@ -30,6 +31,7 @@ export function MatchDetailPage() {
   const [activeMarket, setActiveMarket] = useState<MarketType>('winner')
   const addSelection = useBetSlipStore((s) => s.addSelection)
   const selections = useBetSlipStore((s) => s.selections)
+  const requireAuthForBet = useRequireAuthForBet()
   const { toast } = useToast()
 
   const availableTabs = useMemo(
@@ -63,6 +65,7 @@ export function MatchDetailPage() {
   const slipCount = selections.length
 
   const handleSelect = (selectionId: string, label: string, value: number) => {
+    if (!requireAuthForBet()) return
     if (!canBet) {
       toast('Cannot bet on this match', 'error')
       return

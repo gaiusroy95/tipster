@@ -1,27 +1,36 @@
 import { z } from 'zod';
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_MIN_LENGTH,
+  emailField,
+  loginPasswordField,
+  passwordField,
+  usernameField,
+} from '../auth/auth.validation';
 
 export const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  displayName: z.string().min(2),
-  username: z
+  email: emailField,
+  password: passwordField,
+  displayName: z
     .string()
-    .min(3)
-    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+    .trim()
+    .min(DISPLAY_NAME_MIN_LENGTH, `Display name must be at least ${DISPLAY_NAME_MIN_LENGTH} characters`)
+    .max(DISPLAY_NAME_MAX_LENGTH, `Display name must be at most ${DISPLAY_NAME_MAX_LENGTH} characters`),
+  username: usernameField,
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: emailField,
+  password: loginPasswordField,
 });
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().email(),
+  email: emailField,
 });
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  password: z.string().min(6),
+  password: passwordField,
 });
 
 export const verifyEmailSchema = z.object({
@@ -29,5 +38,13 @@ export const verifyEmailSchema = z.object({
 });
 
 export const resendVerificationSchema = z.object({
-  email: z.string().email(),
+  email: emailField,
+});
+
+export const checkUsernameSchema = z.object({
+  username: usernameField,
+});
+
+export const checkEmailSchema = z.object({
+  email: emailField,
 });

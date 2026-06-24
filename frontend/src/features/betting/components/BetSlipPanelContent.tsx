@@ -5,7 +5,8 @@ import { Label, FieldError } from '@/shared/components/ui/Label'
 import { Modal } from '@/shared/components/ui/Modal'
 import { BetSlipEmptyIcon } from '@/features/betting/components/BetSlipEmptyIcon'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
-import { usePlaceBet } from '@/features/bets/hooks/useBets'
+import { usePlaceBet, useDailyBetLimit, reconcileBetPlacement } from '@/features/bets/hooks/useBets'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { bettingRules, getBetSize, getStakeLabel, isValidStake } from '@/core/config/bettingRules'
 import { formatCredits } from '@/shared/utils/formatCredits'
@@ -35,6 +36,8 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   const setPanelOpen = useBetSlipStore((s) => s.setPanelOpen)
   const balance = useAuthStore((s) => s.user?.balance ?? 0)
   const placeBet = usePlaceBet()
+  const queryClient = useQueryClient()
+  const { data: dailyLimit } = useDailyBetLimit()
   const { toast } = useToast()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [stakeError, setStakeError] = useState<string | undefined>()
@@ -42,6 +45,10 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   const selection = selections[0]
   const betSize = getBetSize(stake)
   const potentialReturn = selection ? calcReturn(stake, selection.odds, selection.marketType) : 0
+
+  const betsUsed = dailyLimit?.betsUsed ?? 0
+  const betsLimit = dailyLimit?.betsLimit ?? bettingRules.dailyBetLimit
+  const dailyLimitReached = betsUsed >= betsLimit
 
   const validateStake = (): boolean => {
     if (!isValidStake(stake)) {
@@ -54,24 +61,41 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
       setStakeError('Insufficient virtual credits')
       return false
     }
+    if (dailyLimitReached) {
+      setStakeError(`Daily bet limit reached (${betsLimit}/${betsLimit})`)
+      return false
+    }
     setStakeError(undefined)
     return true
   }
 
+  const finishSuccessfulPlacement = () => {
+    clear()
+    setConfirmOpen(false)
+    setPanelOpen(false)
+    toast('Bet placed successfully!', 'success')
+  }
+
   const handlePlaceBet = async () => {
     if (!selection || !validateStake()) return
+
+    const payload = {
+      matchId: selection.matchId,
+      marketType: selection.marketType,
+      selectionId: selection.selectionId,
+      stake,
+    }
+
     try {
-      await placeBet.mutateAsync({
-        matchId: selection.matchId,
-        marketType: selection.marketType,
-        selectionId: selection.selectionId,
-        stake,
-      })
-      clear()
-      setConfirmOpen(false)
-      setPanelOpen(false)
-      toast('Bet placed successfully!', 'success')
+      await placeBet.mutateAsync(payload)
+      finishSuccessfulPlacement()
     } catch (e) {
+      const recovered = await reconcileBetPlacement(payload, queryClient)
+      if (recovered) {
+        finishSuccessfulPlacement()
+        return
+      }
+
       const msg = e instanceof ApiError ? e.message : 'Failed to place bet'
       toast(msg, 'error')
     }
@@ -162,8 +186,12 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
             </div>
             <FieldError message={stakeError} />
             <p className="text-[11px] text-text-muted mt-2 leading-relaxed">
-              Balance {formatCredits(balance)} · Max {bettingRules.dailyBetLimit} bets per day · Stakes are
-              {formatCredits(bettingRules.standardStake)} or {formatCredits(bettingRules.premiumStake)} only
+              Balance {formatCredits(balance)} ·{' '}
+              <span className={cn(dailyLimitReached && 'text-accent-loss font-medium')}>
+                {betsUsed} of {betsLimit} bets today
+              </span>{' '}
+              · Stakes are {formatCredits(bettingRules.standardStake)} or{' '}
+              {formatCredits(bettingRules.premiumStake)} only
             </p>
           </div>
 
@@ -183,7 +211,7 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
             onClick={() => {
               if (validateStake()) setConfirmOpen(true)
             }}
-            disabled={!selection}
+            disabled={!selection || dailyLimitReached}
           >
             Place virtual bet
           </Button>
@@ -207,7 +235,12 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
             <Button variant="secondary" className="flex-1" onClick={() => setConfirmOpen(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" isLoading={placeBet.isPending} onClick={handlePlaceBet}>
+            <Button
+              className="flex-1"
+              isLoading={placeBet.isPending}
+              disabled={placeBet.isPending}
+              onClick={handlePlaceBet}
+            >
               Confirm
             </Button>
           </div>

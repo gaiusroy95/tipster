@@ -40,6 +40,20 @@ export function useRegister() {
   })
 }
 
+export async function checkUsernameAvailable(username: string): Promise<boolean> {
+  const res = await apiClient.get<ApiResponse<{ available: boolean }>>('/auth/check-username', {
+    params: { username },
+  })
+  return res.data.data.available
+}
+
+export async function checkEmailAvailable(email: string): Promise<boolean> {
+  const res = await apiClient.get<ApiResponse<{ available: boolean }>>('/auth/check-email', {
+    params: { email },
+  })
+  return res.data.data.available
+}
+
 export function useVerifyEmail() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()

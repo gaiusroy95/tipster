@@ -19,6 +19,7 @@ export const queryKeys = {
   bets: {
     all: () => ['bets'] as const,
     list: (status?: string) => ['bets', 'list', status] as const,
+    dailyLimit: () => ['bets', 'daily-limit'] as const,
   },
   leaderboard: {
     all: (search?: string, sort?: string) => ['leaderboard', search, sort] as const,

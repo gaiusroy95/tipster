@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 import type { User } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+import { prisma, withDbRetry } from '../lib/prisma';
 import { ApiException } from '../lib/api-exception';
+import { isIpReverification, needsEmailVerification } from '../auth/email-verification.policy';
 import { toUserDto, type UserDto } from '../auth/user.mapper';
 import { signToken } from '../middleware/auth.middleware';
 import { mailService } from './mail.service';
@@ -23,6 +24,8 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const VERIFY_TOKEN_BYTES = 32;
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
+const isNonProduction = process.env.NODE_ENV !== 'production';
+
 type RegisterInput = z.infer<typeof registerSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
 type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
@@ -31,16 +34,30 @@ type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 
 export const authService = {
-  async register(dto: RegisterInput): Promise<{
+  async checkUsernameAvailability(username: string): Promise<{ available: boolean }> {
+    const available = await usersService.isUsernameAvailable(username);
+    return { available };
+  },
+
+  async checkEmailAvailability(email: string): Promise<{ available: boolean }> {
+    const available = await usersService.isEmailAvailable(email);
+    return { available };
+  },
+
+  async register(
+    dto: RegisterInput,
+    clientIp: string,
+  ): Promise<{
     message: string;
     email: string;
     devVerificationUrl?: string;
   }> {
     const email = dto.email.toLowerCase();
+    const username = dto.username.toLowerCase();
 
     const existing = await usersService.findByEmail(email);
     if (existing) {
-      if (!existing.emailVerifiedAt) {
+      if (!existing.emailVerifiedAt || needsEmailVerification(existing, clientIp)) {
         throw new ApiException(
           'EMAIL_PENDING_VERIFICATION',
           'This email is registered but not verified. Check your inbox or resend the verification email.',
@@ -50,18 +67,21 @@ export const authService = {
       throw new ApiException('EMAIL_EXISTS', 'Email already registered', 409);
     }
 
-    if (await usersService.findByUsername(dto.username)) {
+    if (!(await usersService.isUsernameAvailable(username))) {
       throw new ApiException('USERNAME_EXISTS', 'Username is already taken', 409);
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-    const user = await usersService.createWithEmailAuth({
-      email,
-      username: dto.username,
-      displayName: dto.displayName,
-      passwordHash,
-      emailVerifiedAt: null,
-    });
+    const user = await withDbRetry(() =>
+      usersService.createWithEmailAuth({
+        email,
+        username,
+        displayName: dto.displayName,
+        passwordHash,
+        emailVerifiedAt: null,
+        registrationIp: clientIp,
+      }),
+    );
 
     const verifyUrl = await this.issueVerificationToken(user.id, user.email);
 
@@ -70,54 +90,82 @@ export const authService = {
       email: user.email,
     };
 
-    if (process.env.NODE_ENV === 'development' && !mailService.isConfigured()) {
+    if (isNonProduction) {
       response.devVerificationUrl = verifyUrl;
     }
 
     return response;
   },
 
-  async verifyEmail(dto: VerifyEmailInput): Promise<{ user: UserDto; token: string; message: string }> {
-    const tokenHash = hashToken(dto.token);
-    const record = await prisma.emailVerificationToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
+  async verifyEmail(
+    dto: VerifyEmailInput,
+    clientIp: string,
+  ): Promise<{ user: UserDto; token: string; message: string }> {
+    return withDbRetry(async () => {
+      const tokenHash = hashToken(dto.token);
+      const record = await prisma.emailVerificationToken.findUnique({
+        where: { tokenHash },
+        include: { user: true },
+      });
+
+      if (!record || record.usedAt || record.expiresAt < new Date()) {
+        throw new ApiException('INVALID_VERIFY_TOKEN', 'Invalid or expired verification link', 400);
+      }
+
+      const user = record.user;
+      const wasVerified = Boolean(user.emailVerifiedAt);
+
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: user.id },
+          data: {
+            emailVerifiedAt: new Date(),
+            verifiedIp: clientIp,
+          },
+        }),
+        prisma.emailVerificationToken.update({
+          where: { id: record.id },
+          data: { usedAt: new Date() },
+        }),
+        prisma.emailVerificationToken.updateMany({
+          where: { userId: user.id, usedAt: null },
+          data: { usedAt: new Date() },
+        }),
+        ...(!wasVerified
+          ? [
+              prisma.notification.create({
+                data: {
+                  userId: user.id,
+                  type: 'system',
+                  title: 'Welcome to Tipster Arena',
+                  message:
+                    'Your email is verified. You received 1,000,000 virtual credits — start placing bets on upcoming fixtures!',
+                  link: '/',
+                },
+              }),
+            ]
+          : []),
+      ]);
+
+      const updated = await usersService.findById(user.id);
+      if (!updated) {
+        throw new ApiException('NOT_FOUND', 'User not found', 404);
+      }
+
+      return {
+        user: toUserDto(updated),
+        token: signToken(updated.id),
+        message: wasVerified
+          ? 'Email verified for this location. You can sign in now.'
+          : 'Email verified successfully. Welcome to Tipster Arena!',
+      };
     });
-
-    if (!record || record.usedAt || record.expiresAt < new Date()) {
-      throw new ApiException('INVALID_VERIFY_TOKEN', 'Invalid or expired verification link', 400);
-    }
-
-    const user = record.user;
-
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerifiedAt: user.emailVerifiedAt ?? new Date() },
-      }),
-      prisma.emailVerificationToken.update({
-        where: { id: record.id },
-        data: { usedAt: new Date() },
-      }),
-      prisma.emailVerificationToken.updateMany({
-        where: { userId: user.id, usedAt: null },
-        data: { usedAt: new Date() },
-      }),
-    ]);
-
-    const updated = await usersService.findById(user.id);
-    if (!updated) {
-      throw new ApiException('NOT_FOUND', 'User not found', 404);
-    }
-
-    return {
-      user: toUserDto(updated),
-      token: signToken(updated.id),
-      message: 'Email verified successfully. Welcome to Tipster Arena!',
-    };
   },
 
-  async resendVerification(dto: ResendVerificationInput): Promise<{
+  async resendVerification(
+    dto: ResendVerificationInput,
+    clientIp: string,
+  ): Promise<{
     message: string;
     devVerificationUrl?: string;
   }> {
@@ -126,11 +174,11 @@ export const authService = {
       return { message: 'If the email is registered and unverified, a new link has been sent.' };
     }
 
-    if (user.emailVerifiedAt) {
+    if (!user.passwordHash) {
       return { message: 'If the email is registered and unverified, a new link has been sent.' };
     }
 
-    if (!user.passwordHash) {
+    if (!needsEmailVerification(user, clientIp)) {
       return { message: 'If the email is registered and unverified, a new link has been sent.' };
     }
 
@@ -140,44 +188,57 @@ export const authService = {
       message: 'If the email is registered and unverified, a new link has been sent.',
     };
 
-    if (process.env.NODE_ENV === 'development' && !mailService.isConfigured()) {
+    if (isNonProduction) {
       response.devVerificationUrl = verifyUrl;
     }
 
     return response;
   },
 
-  async login(dto: LoginInput): Promise<{ user: UserDto; token: string }> {
-    const user = await usersService.findByEmail(dto.email);
-    if (!user) {
-      throw new ApiException('INVALID_CREDENTIALS', 'Invalid email or password', 401);
-    }
+  async login(dto: LoginInput, clientIp: string): Promise<{ user: UserDto; token: string }> {
+    return withDbRetry(async () => {
+      const user = await usersService.findByEmail(dto.email);
+      if (!user) {
+        throw new ApiException('INVALID_CREDENTIALS', 'Invalid email or password', 401);
+      }
 
-    if (!user.passwordHash) {
-      throw new ApiException(
-        'INVALID_CREDENTIALS',
-        'Sign in with Google or set a password first',
-        401,
-      );
-    }
+      if (!user.passwordHash) {
+        throw new ApiException(
+          'INVALID_CREDENTIALS',
+          'Sign in with Google or set a password first',
+          401,
+        );
+      }
 
-    const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!valid) {
-      throw new ApiException('INVALID_CREDENTIALS', 'Invalid email or password', 401);
-    }
+      const valid = await bcrypt.compare(dto.password, user.passwordHash);
+      if (!valid) {
+        throw new ApiException('INVALID_CREDENTIALS', 'Invalid email or password', 401);
+      }
 
-    if (!user.emailVerifiedAt) {
-      throw new ApiException(
-        'EMAIL_NOT_VERIFIED',
-        'Please verify your email before signing in. Check your inbox for the verification link.',
-        403,
-      );
-    }
+      if (needsEmailVerification(user, clientIp)) {
+        if (isIpReverification(user, clientIp)) {
+          void this.issueVerificationToken(user.id, user.email).catch((error) => {
+            console.error('[auth] Failed to issue IP reverification token:', error);
+          });
+          throw new ApiException(
+            'IP_VERIFICATION_REQUIRED',
+            'You are signing in from a new location. Verify your email again to continue.',
+            403,
+          );
+        }
 
-    return {
-      user: toUserDto(user),
-      token: signToken(user.id),
-    };
+        throw new ApiException(
+          'EMAIL_NOT_VERIFIED',
+          'Please verify your email before signing in. Check your inbox for the verification link.',
+          403,
+        );
+      }
+
+      return {
+        user: toUserDto(user),
+        token: signToken(user.id),
+      };
+    });
   },
 
   async forgotPassword(dto: ForgotPasswordInput): Promise<{ message: string }> {
@@ -202,7 +263,9 @@ export const authService = {
       ]);
 
       const resetUrl = `${getFrontendUrl()}/auth/reset-password?token=${encodeURIComponent(rawToken)}`;
-      await mailService.sendPasswordResetEmail(user.email, resetUrl);
+      void mailService.sendPasswordResetEmail(user.email, resetUrl).catch((error) => {
+        console.error('[auth] Failed to send password reset email:', error);
+      });
     }
 
     return { message: 'Reset link sent if email exists' };
@@ -244,22 +307,26 @@ export const authService = {
     const tokenHash = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + VERIFY_TOKEN_TTL_MS);
 
-    await prisma.$transaction([
-      prisma.emailVerificationToken.updateMany({
-        where: { userId, usedAt: null },
-        data: { usedAt: new Date() },
-      }),
-      prisma.emailVerificationToken.create({
-        data: {
-          userId,
-          tokenHash,
-          expiresAt,
-        },
-      }),
-    ]);
+    await withDbRetry(() =>
+      prisma.$transaction([
+        prisma.emailVerificationToken.updateMany({
+          where: { userId, usedAt: null },
+          data: { usedAt: new Date() },
+        }),
+        prisma.emailVerificationToken.create({
+          data: {
+            userId,
+            tokenHash,
+            expiresAt,
+          },
+        }),
+      ]),
+    );
 
     const verifyUrl = `${getFrontendUrl()}/auth/verify-email?token=${encodeURIComponent(rawToken)}`;
-    await mailService.sendVerificationEmail(email, verifyUrl);
+    void mailService.sendVerificationEmail(email, verifyUrl).catch((error) => {
+      console.error('[auth] Failed to send verification email:', error);
+    });
     return verifyUrl;
   },
 };

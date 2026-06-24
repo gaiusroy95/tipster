@@ -68,6 +68,16 @@ apiRouter.get(
   }),
 );
 
+apiRouter.get(
+  '/bets/daily-limit',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const data = await betService.getDailyBetUsage(user.id);
+    res.json({ data });
+  }),
+);
+
 apiRouter.post(
   '/bets',
   requireAuth,

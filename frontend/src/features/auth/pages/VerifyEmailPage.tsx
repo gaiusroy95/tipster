@@ -1,14 +1,70 @@
-import { useEffect, useRef } from 'react'
+import { type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  EnvelopeOpenIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline'
 import { CardContent } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { ROUTES } from '@/core/constants/routes'
 import { useVerifyEmail } from '@/features/auth/hooks/useAuth'
 import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
-import { AuthCardHeader } from '@/features/auth/components/AuthCardHeader'
-import { AuthFormFooter } from '@/features/auth/components/AuthFormFooter'
 import { AuthCard } from '@/features/auth/components/AuthCard'
+import { cn } from '@/shared/utils/cn'
+import { useEffect } from 'react'
+
+/** One verification attempt per token (prevents Strict Mode / effect re-run failures). */
+const handledVerifyTokens = new Set<string>()
+
+function VerifyEmailShell({
+  icon,
+  iconTone = 'primary',
+  title,
+  subtitle,
+  children,
+}: {
+  icon: ReactNode
+  iconTone?: 'primary' | 'warning'
+  title: string
+  subtitle: string
+  children?: ReactNode
+}) {
+  return (
+    <AuthCard className="border-border-default/60">
+      <CardContent className="px-8 py-10 text-center">
+        <div
+          className={cn(
+            'mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl ring-1',
+            iconTone === 'primary' &&
+              'bg-accent-primary/10 ring-accent-primary/25 text-accent-primary',
+            iconTone === 'warning' &&
+              'bg-accent-loss/10 ring-accent-loss/25 text-accent-loss',
+          )}
+        >
+          {icon}
+        </div>
+        <h1 className="text-xl font-display font-semibold tracking-tight text-text-primary">
+          {title}
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-text-muted">{subtitle}</p>
+        {children ? <div className="mt-8">{children}</div> : null}
+      </CardContent>
+    </AuthCard>
+  )
+}
+
+function VerifyingSpinner() {
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative h-10 w-10" aria-hidden="true">
+        <div className="absolute inset-0 rounded-full border-2 border-border-default/80" />
+        <div className="absolute inset-0 animate-spin rounded-full border-2 border-accent-primary border-t-transparent" />
+      </div>
+      <p className="text-sm text-text-muted">This usually takes a few seconds…</p>
+    </div>
+  )
+}
 
 export function VerifyEmailPage() {
   const navigate = useNavigate()
@@ -16,11 +72,10 @@ export function VerifyEmailPage() {
   const verifyToken = searchParams.get('token')
   const verify = useVerifyEmail()
   const { toast } = useToast()
-  const startedRef = useRef(false)
 
   useEffect(() => {
-    if (!verifyToken || startedRef.current) return
-    startedRef.current = true
+    if (!verifyToken || handledVerifyTokens.has(verifyToken)) return
+    handledVerifyTokens.add(verifyToken)
 
     verify
       .mutateAsync({ token: verifyToken })
@@ -29,6 +84,9 @@ export function VerifyEmailPage() {
         navigate(ROUTES.HOME, { replace: true })
       })
       .catch((e) => {
+        if (e instanceof ApiError && e.code === 'INVALID_VERIFY_TOKEN') {
+          handledVerifyTokens.delete(verifyToken)
+        }
         const msg = e instanceof ApiError ? e.message : 'Verification failed'
         toast(msg, 'error')
       })
@@ -36,44 +94,55 @@ export function VerifyEmailPage() {
 
   if (!verifyToken) {
     return (
-      <AuthCard>
-        <AuthCardHeader
-          title="Verify email"
-          subtitle="This verification link is invalid or has expired"
-        />
-        <CardContent className="px-6 pb-6 space-y-4">
-          <p className="text-sm text-text-muted">
-            Register again or request a new verification email from the sign-in page.
-          </p>
+      <VerifyEmailShell
+        icon={<ExclamationTriangleIcon className="h-7 w-7" strokeWidth={1.75} />}
+        iconTone="warning"
+        title="Link expired"
+        subtitle="This verification link is invalid or has expired."
+      >
+        <p className="mb-6 text-sm text-text-muted">
+          Register again or request a new verification email from the sign-in page.
+        </p>
+        <Button type="button" className="w-full" onClick={() => navigate(ROUTES.LOGIN)}>
+          Back to sign in
+        </Button>
+      </VerifyEmailShell>
+    )
+  }
+
+  if (verify.isError) {
+    const message =
+      verify.error instanceof ApiError ? verify.error.message : 'Verification failed'
+
+    return (
+      <VerifyEmailShell
+        icon={<ExclamationTriangleIcon className="h-7 w-7" strokeWidth={1.75} />}
+        iconTone="warning"
+        title="Verification failed"
+        subtitle={message}
+      >
+        <div className="flex flex-col gap-3">
+          <Button type="button" className="w-full" onClick={() => navigate(ROUTES.LOGIN)}>
+            Back to sign in
+          </Button>
           <Link
-            to={ROUTES.LOGIN}
+            to={ROUTES.REGISTER}
             className="text-sm font-medium text-accent-secondary hover:underline"
           >
-            Back to sign in
+            Create a new account
           </Link>
-          <AuthFormFooter variant="back-to-login" />
-        </CardContent>
-      </AuthCard>
+        </div>
+      </VerifyEmailShell>
     )
   }
 
   return (
-    <AuthCard>
-      <AuthCardHeader title="Verify email" subtitle="Confirming your email address…" />
-      <CardContent className="py-10 text-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-accent-primary border-t-transparent" />
-        <p className="text-text-muted text-sm">Verifying your account…</p>
-        {verify.isError && (
-          <div className="mt-6 space-y-3">
-            <p className="text-sm text-accent-loss">
-              {verify.error instanceof ApiError ? verify.error.message : 'Verification failed'}
-            </p>
-            <Button type="button" variant="secondary" onClick={() => navigate(ROUTES.LOGIN)}>
-              Back to sign in
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </AuthCard>
+    <VerifyEmailShell
+      icon={<EnvelopeOpenIcon className="h-7 w-7" strokeWidth={1.75} />}
+      title="Verify email"
+      subtitle="Confirming your email address…"
+    >
+      <VerifyingSpinner />
+    </VerifyEmailShell>
   )
 }

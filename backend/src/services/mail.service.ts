@@ -9,6 +9,9 @@ function createTransport() {
     host: process.env.MAIL_HOST,
     port: Number(process.env.MAIL_PORT ?? 587),
     secure: process.env.MAIL_SECURE === 'true',
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
     auth: {
       user: process.env.MAIL_USER,
       pass: process.env.MAIL_PASS,

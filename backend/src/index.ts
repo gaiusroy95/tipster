@@ -4,6 +4,9 @@ import { connectPrisma, disconnectPrisma } from './lib/prisma';
 import { verifyOAuthSchema } from './lib/verify-schema';
 import { seasonService } from './services/season.service';
 import { leaderboardService } from './services/leaderboard.service';
+import { betSettlementService } from './services/bet-settlement.service';
+
+const SETTLEMENT_INTERVAL_MS = 2 * 60 * 1000;
 
 function logGoogleOAuthStatus(): void {
   const hasId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
@@ -27,11 +30,22 @@ async function bootstrap() {
   const app = createApp();
   const port = Number(process.env.PORT ?? 3001);
 
+  void betSettlementService.settlePendingBets().catch((error) => {
+    console.error('[bet-settlement] Startup settlement failed:', error);
+  });
+
+  const settlementTimer = setInterval(() => {
+    void betSettlementService.settlePendingBets().catch((error) => {
+      console.error('[bet-settlement] Periodic settlement failed:', error);
+    });
+  }, SETTLEMENT_INTERVAL_MS);
+
   const server = app.listen(port, () => {
     console.log(`API running on http://localhost:${port}`);
   });
 
   const shutdown = async () => {
+    clearInterval(settlementTimer);
     server.close();
     await disconnectPrisma();
     process.exit(0);

@@ -50,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
           set({ user: data.data, token, isInitialized: true })
         } catch {
           setAuthToken(null)
+          sessionStorage.removeItem(TOKEN_KEY)
           set({ user: null, token: null, isInitialized: true })
         }
       },

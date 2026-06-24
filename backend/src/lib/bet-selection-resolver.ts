@@ -1,5 +1,11 @@
 import type { Market } from '../types/overtime';
 import { sportsService } from '../services/sports.service';
+import {
+  coerceDecimalOdds,
+  decimalToMalay,
+  isValidDecimalOdds,
+  isValidMalayOdds,
+} from '../utils/overtime-odds.util';
 
 interface BuiltSelection {
   id: string;
@@ -17,21 +23,6 @@ export interface ResolvedSelection {
   matchStartTime: Date | null;
   sportId: string | null;
   isLive: boolean;
-}
-
-function coerceDecimalOdds(odd: { decimal?: number } | undefined): number {
-  if (!odd) return 0;
-  const d = odd.decimal;
-  return typeof d === 'number' && d > 1 ? d : 0;
-}
-
-function decimalToMalay(decimal: number): number {
-  if (decimal >= 2) return decimal - 1;
-  return -(1 / (decimal - 1));
-}
-
-function isValidOddsValue(value: number): boolean {
-  return Number.isFinite(value) && value !== 0;
 }
 
 function selectionId(
@@ -61,115 +52,213 @@ function enrichChild(child: Market, parent: Market): Market {
   };
 }
 
-function buildSelectionsForMarket(market: Market): BuiltSelection[] {
-  const gameId = market.gameId;
-  const selections: BuiltSelection[] = [];
+function classifyMarketKind(market: Market): string | null {
+  const typeId = market.typeId;
+  if (typeId === 0) return 'winner';
+  if (typeId === 10001) return 'handicap';
+  if (typeId === 10002) return 'over_under';
 
-  if (market.odds?.length) {
-    const labels =
-      market.odds.length >= 3
-        ? [market.homeTeam, 'Draw', market.awayTeam]
-        : [market.homeTeam, market.awayTeam];
+  const key = (market.type ?? '').toLowerCase();
+  if (key.includes('winner') && !key.includes('period') && !key.includes('half')) {
+    return 'winner';
+  }
+  if (key.includes('spread') || key.includes('handicap')) return 'handicap';
+  if (key.includes('total') || key.includes('overunder') || key.includes('over_under')) {
+    return 'over_under';
+  }
+  return null;
+}
 
-    market.odds.forEach((odd, index) => {
-      const value = coerceDecimalOdds(odd);
-      if (isValidOddsValue(value)) {
-        selections.push({
-          id: selectionId(gameId, 'winner', index),
-          label: labels[index] ?? `Option ${index + 1}`,
-          value,
-          marketType: 'winner',
-        });
-      }
+function addWinnerSelections(
+  market: Market,
+  gameId: string,
+  selections: BuiltSelection[],
+): Market | null {
+  if (!market.odds?.length) return null;
+
+  const labels =
+    market.odds.length >= 3
+      ? [market.homeTeam, 'Draw', market.awayTeam]
+      : [market.homeTeam, market.awayTeam];
+
+  let added = false;
+  market.odds.forEach((odd, index) => {
+    const value = coerceDecimalOdds(odd);
+    if (!isValidDecimalOdds(value)) return;
+
+    const id = selectionId(gameId, 'winner', index);
+    if (selections.some((s) => s.id === id)) return;
+
+    selections.push({
+      id,
+      label: labels[index] ?? `Option ${index + 1}`,
+      value,
+      marketType: 'winner',
     });
+    added = true;
+  });
 
-    const homeDecimal = coerceDecimalOdds(market.odds[0]);
-    const awayDecimal = coerceDecimalOdds(
-      market.odds[market.odds.length >= 3 ? 2 : 1],
-    );
-    if (isValidOddsValue(homeDecimal) && isValidOddsValue(awayDecimal)) {
+  return added ? market : null;
+}
+
+function addHandicapSelections(
+  market: Market,
+  gameId: string,
+  selections: BuiltSelection[],
+): void {
+  if (market.line == null || !market.odds?.length || market.odds.length < 2) return;
+
+  const line = market.line;
+  const awayLine = -line;
+  const homeDecimal = coerceDecimalOdds(market.odds[0]);
+  const awayDecimal = coerceDecimalOdds(market.odds[1]);
+
+  if (isValidDecimalOdds(homeDecimal)) {
+    const id = selectionId(gameId, 'handicap', 0, line);
+    if (!selections.some((s) => s.id === id)) {
       selections.push({
-        id: selectionId(gameId, 'malay', 0),
-        label: market.homeTeam,
-        value: decimalToMalay(homeDecimal),
-        marketType: 'malay',
-      });
-      selections.push({
-        id: selectionId(gameId, 'malay', 1),
-        label: market.awayTeam,
-        value: decimalToMalay(awayDecimal),
-        marketType: 'malay',
+        id,
+        label: `${market.homeTeam} ${line}`,
+        value: homeDecimal,
+        marketType: 'handicap',
       });
     }
   }
-
-  for (const child of market.childMarkets ?? []) {
-    const enriched = enrichChild(child, market);
-
-    if (enriched.line != null && enriched.odds?.length >= 2) {
-      const line = enriched.line;
-      const awayLine = -line;
-      const homeDecimal = coerceDecimalOdds(enriched.odds[0]);
-      const awayDecimal = coerceDecimalOdds(enriched.odds[1]);
-
-      const typeLower = enriched.type?.toLowerCase() ?? '';
-      const isTotal =
-        typeLower.includes('total') ||
-        typeLower.includes('over') ||
-        enriched.typeId === 10001;
-
-      if (isTotal) {
-        if (isValidOddsValue(homeDecimal)) {
-          selections.push({
-            id: selectionId(gameId, 'over_under', 0, line),
-            label: `Over ${line}`,
-            value: homeDecimal,
-            marketType: 'over_under',
-          });
-        }
-        if (isValidOddsValue(awayDecimal)) {
-          selections.push({
-            id: selectionId(gameId, 'over_under', 1, line),
-            label: `Under ${line}`,
-            value: awayDecimal,
-            marketType: 'over_under',
-          });
-        }
-      } else {
-        if (isValidOddsValue(homeDecimal)) {
-          selections.push({
-            id: selectionId(gameId, 'handicap', 0, line),
-            label: `${enriched.homeTeam} ${line}`,
-            value: homeDecimal,
-            marketType: 'handicap',
-          });
-        }
-        if (isValidOddsValue(awayDecimal)) {
-          selections.push({
-            id: selectionId(gameId, 'handicap', 1, awayLine),
-            label: `${enriched.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
-            value: awayDecimal,
-            marketType: 'handicap',
-          });
-        }
-      }
+  if (isValidDecimalOdds(awayDecimal)) {
+    const id = selectionId(gameId, 'handicap', 1, awayLine);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
+        value: awayDecimal,
+        marketType: 'handicap',
+      });
     }
+  }
+}
+
+function addOverUnderSelections(
+  market: Market,
+  gameId: string,
+  selections: BuiltSelection[],
+): void {
+  if (market.line == null || !market.odds?.length || market.odds.length < 2) return;
+
+  const line = market.line;
+  const overDecimal = coerceDecimalOdds(market.odds[0]);
+  const underDecimal = coerceDecimalOdds(market.odds[1]);
+
+  if (isValidDecimalOdds(overDecimal)) {
+    const id = selectionId(gameId, 'over_under', 0, line);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `Over ${line}`,
+        value: overDecimal,
+        marketType: 'over_under',
+      });
+    }
+  }
+  if (isValidDecimalOdds(underDecimal)) {
+    const id = selectionId(gameId, 'over_under', 1, line);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `Under ${line}`,
+        value: underDecimal,
+        marketType: 'over_under',
+      });
+    }
+  }
+}
+
+function addMalaySelections(
+  winnerMarket: Market,
+  gameId: string,
+  selections: BuiltSelection[],
+): void {
+  if (!winnerMarket.odds?.length) return;
+
+  const homeDecimal = coerceDecimalOdds(winnerMarket.odds[0]);
+  const awayDecimal = coerceDecimalOdds(
+    winnerMarket.odds[winnerMarket.odds.length >= 3 ? 2 : 1],
+  );
+  if (!isValidDecimalOdds(homeDecimal) || !isValidDecimalOdds(awayDecimal)) return;
+
+  const homeMalay = decimalToMalay(homeDecimal);
+  const awayMalay = decimalToMalay(awayDecimal);
+  if (!isValidMalayOdds(homeMalay) || !isValidMalayOdds(awayMalay)) return;
+
+  const homeId = selectionId(gameId, 'malay', 0);
+  const awayId = selectionId(gameId, 'malay', 1);
+
+  if (!selections.some((s) => s.id === homeId)) {
+    selections.push({
+      id: homeId,
+      label: winnerMarket.homeTeam,
+      value: homeMalay,
+      marketType: 'malay',
+    });
+  }
+  if (!selections.some((s) => s.id === awayId)) {
+    selections.push({
+      id: awayId,
+      label: winnerMarket.awayTeam,
+      value: awayMalay,
+      marketType: 'malay',
+    });
+  }
+}
+
+function buildSelectionsForMarket(market: Market): BuiltSelection[] {
+  const gameId = market.gameId;
+  const selections: BuiltSelection[] = [];
+  const childMarkets = (market.childMarkets ?? []).map((child) =>
+    enrichChild(child, market),
+  );
+  const candidates = [market, ...childMarkets];
+
+  let winnerSource: Market | null = null;
+  let hasWinner = false;
+  let hasHandicap = false;
+  let hasOverUnder = false;
+
+  for (const candidate of candidates) {
+    const kind = classifyMarketKind(candidate);
+    if (!kind) continue;
+
+    if (kind === 'winner' && !hasWinner) {
+      const source = addWinnerSelections(candidate, gameId, selections);
+      if (source) {
+        winnerSource = source;
+        hasWinner = true;
+      }
+    } else if (kind === 'handicap' && !hasHandicap) {
+      const before = selections.length;
+      addHandicapSelections(candidate, gameId, selections);
+      if (selections.length > before) hasHandicap = true;
+    } else if (kind === 'over_under' && !hasOverUnder) {
+      const before = selections.length;
+      addOverUnderSelections(candidate, gameId, selections);
+      if (selections.length > before) hasOverUnder = true;
+    }
+  }
+
+  if (winnerSource) {
+    addMalaySelections(winnerSource, gameId, selections);
   }
 
   return selections;
 }
 
-export async function resolveBetSelection(
-  matchId: string,
+export function resolveBetSelectionFromMarket(
+  market: Market,
   marketType: string,
-  selectionId: string,
-): Promise<ResolvedSelection | null> {
-  const market = await sportsService.getMarketOrNull(10, matchId);
-  if (!market) return null;
-
+  selectionIdValue: string,
+): ResolvedSelection | null {
   const selections = buildSelectionsForMarket(market);
   const match = selections.find(
-    (s) => s.id === selectionId && s.marketType === marketType,
+    (s) => s.id === selectionIdValue && s.marketType === marketType,
   );
   if (!match) return null;
 
@@ -183,6 +272,16 @@ export async function resolveBetSelection(
     sportId: market.sport ?? null,
     isLive: market.statusCode === 'ongoing',
   };
+}
+
+export async function resolveBetSelection(
+  matchId: string,
+  marketType: string,
+  selectionIdValue: string,
+): Promise<ResolvedSelection | null> {
+  const market = await sportsService.getMarketOrNull(10, matchId);
+  if (!market) return null;
+  return resolveBetSelectionFromMarket(market, marketType, selectionIdValue);
 }
 
 export function isMatchFinished(market: Market): boolean {

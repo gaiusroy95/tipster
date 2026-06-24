@@ -9,6 +9,7 @@ import { Network } from '../types/web3';
 import { getMinMaturity } from '../utils/overtime.util';
 import { ApiException } from '../lib/api-exception';
 import { MemoryCache } from '../lib/memory-cache';
+import { cacheGameScoresFromLiveMarkets } from '../lib/game-score-cache';
 
 const cache = new MemoryCache();
 
@@ -71,6 +72,13 @@ export const sportsService = {
 
     if (removed.length > 0) {
       void sportsService.archiveFinishedGames(removed);
+      void import('./bet-settlement.service')
+        .then(({ betSettlementService }) =>
+          betSettlementService.settleBetsForMatches(removed),
+        )
+        .catch((error) => {
+          console.error('[bet-settlement] Failed after live transition:', error);
+        });
     }
   },
 
@@ -323,6 +331,7 @@ export const sportsService = {
       };
 
       sportsService.trackLiveGameTransitions(merged.markets.map((market) => market.gameId));
+      cacheGameScoresFromLiveMarkets(merged.markets);
 
       cache.set(cacheKey, merged, 30 * 1000);
       return merged;

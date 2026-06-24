@@ -8,6 +8,7 @@ import { LiveBadge } from '@/shared/components/LiveBadge'
 import { BettingOddsButton } from '@/shared/components/BettingOddsButton'
 import { BettingMarketColumn } from '@/shared/components/BettingMarketColumn'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
+import { useRequireAuthForBet } from '@/features/betting/hooks/useRequireAuthForBet'
 import { useToast } from '@/shared/components/ui/Toast'
 import { formatMatchDate, formatMatchTime } from '@/shared/utils/formatDate'
 import { formatSelectionLabel } from '@/shared/utils/formatOdds'
@@ -23,6 +24,7 @@ interface MatchFixtureCardProps {
 }
 
 const GRID_COLUMN_CLASS = 'min-w-0 w-full'
+const SCROLL_COLUMN_CLASS = 'w-[104px] shrink-0'
 const DESKTOP_COLUMN_CLASS = 'min-w-0 flex-1 basis-0'
 
 function winnerDisplayLabel(label: string, match: MatchWithTeams): string {
@@ -42,7 +44,7 @@ function MatchMetaActions({
 }) {
   if (layout === 'column') {
     return (
-      <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-border-default/50 px-2 py-4 xl:w-[80px] xl:border-t-0 xl:border-l">
+      <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-border-default/50 px-2 py-4 xl:w-[80px] xl:min-w-[80px] xl:border-t-0 xl:border-l">
         <div className="flex min-w-0 items-center gap-1 text-accent-primary">
           <FireIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span className="text-[10px] font-bold whitespace-nowrap xl:text-xs">+10% XP</span>
@@ -65,24 +67,26 @@ function MatchMetaActions({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2 border-t border-border-default/50 bg-bg-elevated/25 px-3 py-2.5">
-      <div className="flex min-w-0 items-center gap-1.5 rounded-full border border-accent-primary/25 bg-accent-primary/10 px-2.5 py-1 text-accent-primary">
-        <FireIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-        <span className="text-[11px] font-bold whitespace-nowrap">+10% XP</span>
+    <div className="border-t border-border-default/50 bg-bg-elevated/25 px-3 py-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:py-2.5">
+      <div className="flex min-w-0 items-center justify-between gap-2 sm:contents">
+        <div className="flex min-w-0 items-center gap-1.5 rounded-full border border-accent-primary/25 bg-accent-primary/10 px-2.5 py-1.5 text-accent-primary shrink-0">
+          <FireIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span className="text-[11px] font-bold whitespace-nowrap">+10% XP</span>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border-default/60 bg-bg-surface px-2.5 py-1.5 text-xs font-mono text-text-muted whitespace-nowrap">
+          <span>+{extraMarkets}</span>
+          <ChevronDownIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        </div>
       </div>
 
       <Link
         to={detailPath}
-        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border-default/80 bg-bg-surface px-3 py-2 text-xs font-semibold text-accent-secondary min-h-[36px] hover:border-accent-secondary/40 transition-colors"
+        className="flex w-full sm:w-auto sm:shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border-default/80 bg-bg-surface px-3 py-2.5 text-xs font-semibold text-accent-secondary min-h-[40px] hover:border-accent-secondary/40 transition-colors"
       >
         All markets
-        <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden="true" />
+        <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       </Link>
-
-      <div className="flex shrink-0 items-center gap-0.5 rounded-md border border-border-default/60 bg-bg-surface px-2 py-1.5 text-xs font-mono text-text-muted whitespace-nowrap">
-        <span>+{extraMarkets}</span>
-        <ChevronDownIcon className="h-3.5 w-3.5" aria-hidden="true" />
-      </div>
     </div>
   )
 }
@@ -90,6 +94,7 @@ function MatchMetaActions({
 export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardProps) {
   const addSelection = useBetSlipStore((s) => s.addSelection)
   const selections = useBetSlipStore((s) => s.selections)
+  const requireAuthForBet = useRequireAuthForBet()
   const { toast } = useToast()
 
   const winner = match.markets.find((m) => m.marketType === MARKET_TYPES.WINNER)
@@ -98,7 +103,11 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   const canBet = match.status === 'scheduled' || match.status === 'live'
 
   const pickOdds = (marketType: MarketType, selection: OddsSelection) => {
-    if (!canBet) return
+    if (!requireAuthForBet()) return
+    if (!canBet) {
+      toast('Cannot bet on this match', 'error')
+      return
+    }
     addSelection({
       matchId: match.id,
       homeTeam: match.homeTeam.name,
@@ -126,7 +135,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
 
   const buildColumns = (columnClass: string) => {
     const winnerColumn = winner ? (
-      <BettingMarketColumn title="Winner" className={columnClass}>
+      <BettingMarketColumn title="Winner" titleShort="Win" className={columnClass}>
         {winner.selections.map((sel) => (
           <BettingOddsButton
             key={sel.id}
@@ -145,7 +154,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
     ) : null
 
     const handicapColumn = hcp ? (
-      <BettingMarketColumn title="Handicap" showInfo className={columnClass}>
+      <BettingMarketColumn title="Handicap" titleShort="HCP" showInfo className={columnClass}>
         {hcp.selections.slice(0, 2).map((sel) => (
           <BettingOddsButton
             key={sel.id}
@@ -199,11 +208,17 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   }
 
   const gridColumns = buildColumns(GRID_COLUMN_CLASS)
+  const scrollColumns = buildColumns(SCROLL_COLUMN_CLASS)
   const desktopColumns = buildColumns(DESKTOP_COLUMN_CLASS)
   const mobileOddsColumns = [
     gridColumns.winnerColumn,
     gridColumns.handicapColumn,
     gridColumns.totalColumn,
+  ].filter(Boolean)
+  const mobileScrollColumns = [
+    scrollColumns.winnerColumn,
+    scrollColumns.handicapColumn,
+    scrollColumns.totalColumn,
   ].filter(Boolean)
   const mobileGridCols =
     mobileOddsColumns.length >= 3 ? 'grid-cols-3' : mobileOddsColumns.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
@@ -220,13 +235,15 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           className={cn(
             'flex min-w-0 flex-col p-4',
             featured && 'bg-gradient-to-br from-accent-primary/8 via-transparent to-transparent',
-            'xl:max-w-[min(38%,220px)] xl:shrink-0 xl:border-r xl:border-border-default/50',
+            'xl:w-[220px] xl:min-w-[220px] xl:max-w-[220px] xl:shrink-0 xl:border-r xl:border-border-default/50',
           )}
         >
-          {featured && (
+          {featured ? (
             <span className="mb-2 inline-flex items-center rounded-md border border-accent-primary/30 bg-accent-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-primary">
               Featured
             </span>
+          ) : (
+            <span className="mb-2 hidden xl:block h-[22px]" aria-hidden="true" />
           )}
           <div className="mb-3 space-y-1 text-xs font-medium text-text-muted leading-snug">
             <p className="line-clamp-2">{match.league.name}</p>
@@ -261,16 +278,26 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
 
         {hasOddsColumns && (
           <>
-            {/* Mobile / tablet: equal 3-column odds grid + bottom action bar */}
+            {/* Small phones: scrollable odds columns */}
             <div className="xl:hidden min-w-0 border-t border-border-default/50">
-              <div className={cn('grid gap-2 p-3 min-w-0', mobileGridCols)}>
+              <div
+                className="sm:hidden flex gap-2 p-2 overflow-x-auto horizontal-scroll-strip scroll-snap-x"
+              >
+                {mobileScrollColumns.map((col, i) => (
+                  <div key={i} className="scroll-snap-item shrink-0">{col}</div>
+                ))}
+              </div>
+
+              {/* Tablet: equal grid */}
+              <div className={cn('hidden sm:grid xl:hidden gap-2 p-3 min-w-0', mobileGridCols)}>
                 {mobileOddsColumns}
               </div>
+
               <MatchMetaActions detailPath={detailPath} extraMarkets={extraMarkets} layout="bar" />
             </div>
 
-            {/* Desktop: odds row + side meta column */}
-            <div className="hidden xl:flex min-w-0 flex-1 items-stretch gap-2 p-3 min-h-[152px] overflow-hidden">
+            {/* Wide desktop: odds row + side meta column */}
+            <div className="hidden xl:flex min-w-0 flex-1 items-stretch gap-2 p-3 pl-2 min-h-[152px] overflow-hidden">
               {desktopColumns.winnerColumn}
               {desktopColumns.handicapColumn}
               {desktopColumns.totalColumn}
@@ -278,7 +305,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
           </>
         )}
 
-        <div className="hidden xl:flex">
+        <div className="hidden xl:flex shrink-0">
           <MatchMetaActions detailPath={detailPath} extraMarkets={extraMarkets} layout="column" />
         </div>
       </div>

@@ -33,6 +33,12 @@ apiClient.interceptors.response.use(
     if (error.response?.data) {
       throw new ApiError(error.response.status, error.response.data)
     }
+    if (error.code === 'ECONNABORTED') {
+      throw new ApiError(0, {
+        code: 'TIMEOUT',
+        message: 'Request timed out. Please wait a moment and try again.',
+      })
+    }
     throw new ApiError(0, { code: 'NETWORK_ERROR', message: 'Network error. Please try again.' })
   },
 )
