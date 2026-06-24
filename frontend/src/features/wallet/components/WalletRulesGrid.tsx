@@ -33,11 +33,11 @@ const rules = [
 
 export function WalletRulesGrid() {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-1 min-[420px]:grid-cols-2 xl:grid-cols-3 gap-3">
       {rules.map((rule) => (
         <div
           key={rule.label}
-          className="flex items-start gap-3 rounded-xl border border-border-default bg-bg-elevated/40 px-4 py-3.5"
+          className="flex min-w-0 items-start gap-3 rounded-xl border border-border-default bg-bg-elevated/40 px-4 py-3.5"
         >
           <div
             className={cn(
@@ -47,11 +47,11 @@ export function WalletRulesGrid() {
           >
             <rule.icon className="h-[18px] w-[18px]" aria-hidden="true" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">
               {rule.label}
             </p>
-            <p className="mt-0.5 font-mono text-lg font-bold tabular-nums text-text-primary">
+            <p className="mt-0.5 font-mono text-base sm:text-lg font-bold tabular-nums text-text-primary break-words">
               {rule.value}
             </p>
             <p className="mt-0.5 text-[11px] text-text-muted leading-snug">{rule.sub}</p>

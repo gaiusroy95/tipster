@@ -49,8 +49,8 @@ export function WalletPage() {
   }
 
   return (
-    <PageShell header={walletHeader}>
-      <div className="space-y-5">
+    <PageShell header={walletHeader} className="min-w-0">
+      <div className="space-y-5 min-w-0">
         <WalletBalanceHero balance={data.balance} />
         <WalletRulesGrid />
 

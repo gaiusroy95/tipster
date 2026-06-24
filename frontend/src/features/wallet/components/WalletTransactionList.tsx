@@ -93,7 +93,7 @@ function WalletTransactionRow({ tx }: { tx: WalletTransaction }) {
     : formatDateTime(tx.createdAt)
 
   return (
-    <div className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-bg-elevated/30 transition-colors">
+    <div className="flex items-start gap-3 sm:items-center sm:gap-4 px-4 sm:px-5 py-3.5 hover:bg-bg-elevated/30 transition-colors">
       <div
         className={cn(
           'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border',
@@ -115,10 +115,10 @@ function WalletTransactionRow({ tx }: { tx: WalletTransaction }) {
         </div>
       </div>
 
-      <div className="text-right shrink-0">
+      <div className="text-right shrink-0 min-w-[4.5rem] sm:min-w-[5.5rem]">
         <p
           className={cn(
-            'font-mono text-sm sm:text-base font-bold tabular-nums',
+            'font-mono text-xs sm:text-sm md:text-base font-bold tabular-nums whitespace-nowrap',
             positive ? 'text-accent-win' : 'text-accent-loss',
           )}
         >

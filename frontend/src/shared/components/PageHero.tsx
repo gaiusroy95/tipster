@@ -91,19 +91,26 @@ export function PageHero({ variant, title, description, extra, className }: Page
         aria-hidden="true"
       />
 
-      <div className="relative flex flex-col gap-4 p-5 sm:p-7 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-start gap-4 sm:items-center sm:gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-accent-secondary/30 bg-gradient-to-br from-accent-secondary/15 to-accent-secondary/5">
-            <BanknotesIcon className="h-7 w-7 text-accent-secondary" aria-hidden="true" />
+      <div
+        className={cn(
+          'relative flex flex-col gap-4 p-5 sm:p-7',
+          'sm:flex-row sm:items-start sm:gap-5',
+          'xl:flex-col xl:items-stretch',
+          '2xl:flex-row 2xl:items-center 2xl:justify-between',
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-start gap-4 sm:gap-5">
+          <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl border border-accent-secondary/30 bg-gradient-to-br from-accent-secondary/15 to-accent-secondary/5">
+            <BanknotesIcon className="h-6 w-6 sm:h-7 sm:w-7 text-accent-secondary" aria-hidden="true" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-accent-secondary/25 bg-accent-secondary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-accent-secondary">
               Arena wallet
             </span>
-            <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
+            <h1 className="mt-2 font-display text-xl sm:text-2xl 2xl:text-3xl font-bold text-text-primary tracking-tight">
               {title}
             </h1>
-            <p className="mt-1.5 text-sm sm:text-base text-text-muted leading-relaxed max-w-xl">
+            <p className="mt-1.5 text-sm text-text-muted leading-relaxed max-w-xl">
               {description}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
