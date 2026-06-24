@@ -16,10 +16,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
 import { LegalCallout } from '@/features/legal/components/LegalCallout'
-import { LegalDocumentLayout } from '@/features/legal/components/LegalDocumentLayout'
-import { LegalPageHero, LegalRelatedLinks } from '@/features/legal/components/LegalPageHero'
-import { LegalSection } from '@/features/legal/components/LegalSection'
-import { LegalSummaryGrid } from '@/features/legal/components/LegalSummaryGrid'
+import { InfoPageShell } from '@/features/legal/components/InfoPageShell'
+import { InfoPageHero, InfoRelatedLinks } from '@/features/legal/components/InfoPageHero'
+import { InfoSection } from '@/features/legal/components/InfoSection'
+import { InfoSummaryGrid } from '@/features/legal/components/InfoSummaryGrid'
 
 const LAST_UPDATED = '2026-06-24'
 
@@ -40,18 +40,20 @@ const TOC = [
 
 export function PrivacyPage() {
   return (
-    <LegalDocumentLayout
+    <InfoPageShell
+      variant="privacy"
       hero={
-        <LegalPageHero
-          eyebrow="Privacy"
+        <InfoPageHero
+          variant="privacy"
           title="Privacy Policy"
           description="How Tipster Arena collects, uses, and protects information when you compete with virtual credits — written in plain language, not legalese."
           lastUpdated={LAST_UPDATED}
           readingMinutes={7}
         />
       }
-      summary={
-        <LegalSummaryGrid
+      intro={
+        <InfoSummaryGrid
+          variant="privacy"
           items={[
             {
               icon: NoSymbolIcon,
@@ -81,8 +83,9 @@ export function PrivacyPage() {
         />
       }
       tocItems={[...TOC]}
-      relatedLinks={
-        <LegalRelatedLinks
+      footer={
+        <InfoRelatedLinks
+          variant="privacy"
           links={[
             {
               label: 'Terms of Service',
@@ -109,7 +112,7 @@ export function PrivacyPage() {
         participate in the forum. We do not process real-money payments or gambling transactions.
       </LegalCallout>
 
-      <LegalSection id="overview" index={1} title="Overview" icon={ShieldCheckIcon}>
+      <InfoSection variant="privacy" id="overview" index={1} title="Overview" icon={ShieldCheckIcon}>
         <p>
           This Privacy Policy describes how Tipster Arena (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;the
           platform&rdquo;) handles information when you visit the site, create an account, or use our features.
@@ -121,9 +124,9 @@ export function PrivacyPage() {
           </Link>
           . If you disagree, please discontinue use of the platform.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="collect" index={2} title="Information we collect" icon={CircleStackIcon}>
+      <InfoSection variant="privacy" id="collect" index={2} title="Information we collect" icon={CircleStackIcon}>
         <p>We collect information in three broad categories:</p>
         <div className="overflow-hidden rounded-xl border border-border-default/70 not-prose">
           <table className="w-full text-left text-sm">
@@ -187,9 +190,9 @@ export function PrivacyPage() {
           Each category supports a specific platform feature — we do not collect financial or payment-card data
           because Tipster Arena does not handle real-money wagers.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="use" index={3} title="How we use your information" icon={Cog6ToothIcon}>
+      <InfoSection variant="privacy" id="use" index={3} title="How we use your information" icon={Cog6ToothIcon}>
         <p>We use collected information to:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>Authenticate you and maintain your session securely.</li>
@@ -204,9 +207,9 @@ export function PrivacyPage() {
           We do <strong className="text-text-primary">not</strong> use your data for real-money gambling, credit
           scoring, or selling lists to third-party marketers.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="sharing" index={4} title="Sharing & service providers" icon={ServerStackIcon}>
+      <InfoSection variant="privacy" id="sharing" index={4} title="Sharing & service providers" icon={ServerStackIcon}>
         <p>
           We do not sell your personal information. We share data only when necessary to operate the platform:
         </p>
@@ -236,9 +239,9 @@ export function PrivacyPage() {
           Public leaderboard entries, forum posts, and profiles marked public may be visible to other users and
           visitors as part of the competition experience.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="cookies" index={5} title="Cookies & local storage" icon={DevicePhoneMobileIcon}>
+      <InfoSection variant="privacy" id="cookies" index={5} title="Cookies & local storage" icon={DevicePhoneMobileIcon}>
         <p>
           We use browser storage to keep you signed in and remember preferences. This typically includes:
         </p>
@@ -260,9 +263,9 @@ export function PrivacyPage() {
           You can clear site data through your browser, but you will need to sign in again. We do not use
           third-party advertising cookies.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="security" index={6} title="How we protect data" icon={LockClosedIcon}>
+      <InfoSection variant="privacy" id="security" index={6} title="How we protect data" icon={LockClosedIcon}>
         <p>Security measures include:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>Passwords stored as one-way hashes — never in plain text.</li>
@@ -275,9 +278,9 @@ export function PrivacyPage() {
           No system is 100% secure. Use a strong unique password, enable 2FA, and contact us if you suspect
           unauthorized access.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="retention" index={7} title="How long we keep data" icon={ClockIcon}>
+      <InfoSection variant="privacy" id="retention" index={7} title="How long we keep data" icon={ClockIcon}>
         <p>
           We retain information for as long as your account is active and as needed to provide the service, comply
           with legal obligations, resolve disputes, and enforce agreements.
@@ -287,9 +290,9 @@ export function PrivacyPage() {
           <li>Security logs and verification tokens expire automatically after their purpose is served.</li>
           <li>Forum content may remain visible after account closure if required for community continuity — contact us for removal requests.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="choices" index={8} title="Your choices & rights" icon={UserCircleIcon}>
+      <InfoSection variant="privacy" id="choices" index={8} title="Your choices & rights" icon={UserCircleIcon}>
         <p>You can take the following actions directly in the app:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>
@@ -317,26 +320,26 @@ export function PrivacyPage() {
           </Link>
           . We will respond within a reasonable timeframe subject to applicable law.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="children" index={9} title="Age requirement" icon={EyeIcon}>
+      <InfoSection variant="privacy" id="children" index={9} title="Age requirement" icon={EyeIcon}>
         <p>
           Tipster Arena is intended for users aged <strong className="text-text-primary">18 and older</strong>. We
           do not knowingly collect personal information from anyone under 18. If you believe a minor has registered,
           contact us so we can take appropriate action.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="transfers" index={10} title="International hosting" icon={GlobeAltIcon}>
+      <InfoSection variant="privacy" id="transfers" index={10} title="International hosting" icon={GlobeAltIcon}>
         <p>
           Our infrastructure may process and store data in countries other than where you live (for example, cloud
           regions used by our database and hosting providers). By using the platform, you understand that your
           information may be transferred to facilities with different data-protection laws, and we apply appropriate
           safeguards consistent with this policy.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="changes" index={11} title="Changes to this policy" icon={BellIcon}>
+      <InfoSection variant="privacy" id="changes" index={11} title="Changes to this policy" icon={BellIcon}>
         <p>
           We may update this Privacy Policy when we add features, change providers, or meet new legal requirements.
           The &ldquo;Last updated&rdquo; date at the top reflects the latest revision.
@@ -345,9 +348,9 @@ export function PrivacyPage() {
           Material changes may be communicated via in-app notification or email. Continued use after an update
           means you accept the revised policy.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="contact" index={12} title="Contact us" icon={ShieldCheckIcon}>
+      <InfoSection variant="privacy" id="contact" index={12} title="Contact us" icon={ShieldCheckIcon}>
         <p>
           Questions about privacy, data access, or this policy? Visit the{' '}
           <Link to={ROUTES.HELP} className="text-accent-secondary hover:underline font-medium">
@@ -363,7 +366,7 @@ export function PrivacyPage() {
           This policy applies to Tipster Arena only. Third-party sites linked from our platform (social providers,
           external media URLs in forum posts) have their own privacy practices.
         </LegalCallout>
-      </LegalSection>
-    </LegalDocumentLayout>
+      </InfoSection>
+    </InfoPageShell>
   )
 }

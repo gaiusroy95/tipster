@@ -4,12 +4,10 @@ import {
   BellAlertIcon,
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
-  CurrencyDollarIcon,
   LifebuoyIcon,
   LockClosedIcon,
   ScaleIcon,
   ShieldCheckIcon,
-  SparklesIcon,
   TrophyIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline'
@@ -17,12 +15,9 @@ import { bettingRules } from '@/core/config/bettingRules'
 import { ROUTES } from '@/core/constants/routes'
 import { FORUM_VIEW_REWARD, FORUM_VIEW_TARGET } from '@/features/forum/types/forum'
 import { LegalCallout } from '@/features/legal/components/LegalCallout'
-import {
-  LegalDocumentLayout,
-} from '@/features/legal/components/LegalDocumentLayout'
-import { LegalPageHero, LegalRelatedLinks } from '@/features/legal/components/LegalPageHero'
-import { LegalSection } from '@/features/legal/components/LegalSection'
-import { LegalSummaryGrid } from '@/features/legal/components/LegalSummaryGrid'
+import { InfoPageShell } from '@/features/legal/components/InfoPageShell'
+import { InfoPageHero, InfoRelatedLinks } from '@/features/legal/components/InfoPageHero'
+import { InfoSection, InfoSummaryStrip } from '@/features/legal/components/InfoSection'
 
 const LAST_UPDATED = '2026-06-24'
 
@@ -44,48 +39,32 @@ const formatCredits = (n: number) => n.toLocaleString()
 
 export function TermsPage() {
   return (
-    <LegalDocumentLayout
+    <InfoPageShell
+      variant="terms"
       hero={
-        <LegalPageHero
+        <InfoPageHero
+          variant="terms"
           title="Terms of Service"
           description="Clear rules for participating in Tipster Arena — a virtual sports prediction competition with no real-money wagering."
           lastUpdated={LAST_UPDATED}
           readingMinutes={6}
         />
       }
-      summary={
-        <LegalSummaryGrid
+      intro={
+        <InfoSummaryStrip
+          variant="terms"
           items={[
-            {
-              icon: CurrencyDollarIcon,
-              title: 'Virtual credits only',
-              description: 'No deposits, withdrawals, or cash value. Credits exist solely for in-app competition.',
-              accent: 'gold',
-            },
-            {
-              icon: ShieldCheckIcon,
-              title: '18+ required',
-              description: 'You must meet the minimum age to create an account and place virtual bets.',
-              accent: 'live',
-            },
-            {
-              icon: TrophyIcon,
-              title: 'Skill competition',
-              description: 'Rankings reflect prediction performance over a season — not gambling outcomes.',
-              accent: 'win',
-            },
-            {
-              icon: SparklesIcon,
-              title: 'Transparent limits',
-              description: `Fixed stakes, daily bet caps, and published rules — no hidden mechanics.`,
-              accent: 'secondary',
-            },
+            { label: 'Currency', value: 'Virtual credits only' },
+            { label: 'Minimum age', value: '18+ required' },
+            { label: 'Competition', value: 'Skill-based rankings' },
+            { label: 'Stakes', value: 'Fixed & published limits' },
           ]}
         />
       }
       tocItems={[...TOC]}
-      relatedLinks={
-        <LegalRelatedLinks
+      footer={
+        <InfoRelatedLinks
+          variant="terms"
           links={[
             {
               label: 'Privacy Policy',
@@ -112,7 +91,7 @@ export function TermsPage() {
         administrators at season end.
       </LegalCallout>
 
-      <LegalSection id="agreement" index={1} title="Agreement to these terms" icon={ScaleIcon}>
+      <InfoSection variant="terms" id="agreement" index={1} title="Agreement to these terms" icon={ScaleIcon}>
         <p>
           By creating an account, signing in, or using any part of Tipster Arena, you agree to these Terms of
           Service and our{' '}
@@ -129,9 +108,9 @@ export function TermsPage() {
           </Link>{' '}
           — where they conflict, the more specific rule applies for competition mechanics.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="eligibility" index={2} title="Eligibility" icon={UserGroupIcon}>
+      <InfoSection variant="terms" id="eligibility" index={2} title="Eligibility" icon={UserGroupIcon}>
         <p>
           You must be at least <strong className="text-text-primary">18 years old</strong> to register and
           participate. You are responsible for ensuring that use of the platform is lawful in your jurisdiction.
@@ -145,9 +124,9 @@ export function TermsPage() {
           We may suspend or terminate accounts that violate eligibility requirements or attempt to circumvent
           platform limits.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="virtual-credits" index={3} title="Virtual credits" icon={BanknotesIcon}>
+      <InfoSection variant="terms" id="virtual-credits" index={3} title="Virtual credits" icon={BanknotesIcon}>
         <p>
           New accounts receive{' '}
           <strong className="text-text-primary">{formatCredits(bettingRules.initialBalance)} virtual credits</strong>{' '}
@@ -159,9 +138,9 @@ export function TermsPage() {
           <li>Credit balances, transaction history, and bet outcomes are recorded for leaderboard and profile statistics.</li>
           <li>Administrators may adjust balances in cases of technical errors, abuse, or policy violations.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="betting" index={4} title="Betting rules" icon={ClipboardDocumentListIcon}>
+      <InfoSection variant="terms" id="betting" index={4} title="Betting rules" icon={ClipboardDocumentListIcon}>
         <p>Virtual bets follow fixed, published limits so every participant competes on equal terms:</p>
         <div className="overflow-hidden rounded-xl border border-border-default/70">
           <table className="w-full text-left text-sm">
@@ -200,9 +179,9 @@ export function TermsPage() {
           market or fixture. Void or postponed events are handled according to standard settlement policies
           published in the Arena Rules.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="seasons" index={5} title="Seasons & prizes" icon={TrophyIcon}>
+      <InfoSection variant="terms" id="seasons" index={5} title="Seasons & prizes" icon={TrophyIcon}>
         <p>
           Tipster Arena runs seasonal competitions with leaderboards tracking points, ROI, profit/loss, and
           consistency. Season dates, scoring, and prize tiers are displayed on the Seasons page.
@@ -212,9 +191,9 @@ export function TermsPage() {
           <li>Physical or offline prizes are awarded by administrators — not through an in-app cash-out flow.</li>
           <li>Prize eligibility, delivery, and tax obligations (if any) are handled outside the platform wallet.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="forum" index={6} title="Forum & view rewards" icon={ChatBubbleLeftRightIcon}>
+      <InfoSection variant="terms" id="forum" index={6} title="Forum & view rewards" icon={ChatBubbleLeftRightIcon}>
         <p>
           The community forum lets you publish tips, analysis, polls, and media. Forum content must comply with
           our conduct standards below.
@@ -229,9 +208,9 @@ export function TermsPage() {
           We may remove content, withhold rewards, or restrict posting for spam, harassment, or policy violations.
           View counts exclude self-views by the author.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="conduct" index={7} title="Community conduct" icon={BellAlertIcon}>
+      <InfoSection variant="terms" id="conduct" index={7} title="Community conduct" icon={BellAlertIcon}>
         <p>You agree not to:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>Post unlawful, harassing, hateful, or sexually explicit content.</li>
@@ -243,9 +222,9 @@ export function TermsPage() {
           Public profiles, forum posts, and leaderboard entries may be visible to other users according to your
           settings. You retain responsibility for content you publish.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="security" index={8} title="Account security" icon={LockClosedIcon}>
+      <InfoSection variant="terms" id="security" index={8} title="Account security" icon={LockClosedIcon}>
         <p>
           You are responsible for safeguarding your login credentials. We support email verification, optional
           two-factor authentication, and social sign-in providers where enabled.
@@ -255,9 +234,9 @@ export function TermsPage() {
           <li>Re-verification may be required when signing in from a new location or device.</li>
           <li>Trusted devices may be remembered for 30 days when 2FA is enabled.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="privacy" index={9} title="Privacy & data" icon={ShieldCheckIcon}>
+      <InfoSection variant="terms" id="privacy" index={9} title="Privacy & data" icon={ShieldCheckIcon}>
         <p>
           We process account data to operate the competition — including authentication, bet history,
           leaderboard standings, notifications, and settings. We do not sell personal information.
@@ -273,9 +252,9 @@ export function TermsPage() {
           </Link>
           .
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="changes" index={10} title="Changes to these terms" icon={ClipboardDocumentListIcon}>
+      <InfoSection variant="terms" id="changes" index={10} title="Changes to these terms" icon={ClipboardDocumentListIcon}>
         <p>
           We may update these terms to reflect new features, legal requirements, or competition changes. The
           &ldquo;Last updated&rdquo; date at the top of this page will change when we do.
@@ -284,9 +263,9 @@ export function TermsPage() {
           Continued use after updates constitutes acceptance. Material changes may also be communicated via
           in-app notification or email where appropriate.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="contact" index={11} title="Contact & support" icon={LifebuoyIcon}>
+      <InfoSection variant="terms" id="contact" index={11} title="Contact & support" icon={LifebuoyIcon}>
         <p>
           For help getting started, account questions, or reporting abuse, visit the{' '}
           <Link to={ROUTES.HELP} className="text-accent-secondary hover:underline font-medium">
@@ -303,7 +282,7 @@ export function TermsPage() {
           extent permitted by law, we disclaim warranties and limit liability for indirect or consequential
           damages arising from platform use.
         </LegalCallout>
-      </LegalSection>
-    </LegalDocumentLayout>
+      </InfoSection>
+    </InfoPageShell>
   )
 }

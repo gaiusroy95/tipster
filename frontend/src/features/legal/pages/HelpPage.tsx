@@ -4,10 +4,7 @@ import {
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon,
   KeyIcon,
-  LifebuoyIcon,
-  QuestionMarkCircleIcon,
   RocketLaunchIcon,
-  ShieldCheckIcon,
   TicketIcon,
   TrophyIcon,
   UserCircleIcon,
@@ -22,10 +19,9 @@ import { ROUTES, loginPath } from '@/core/constants/routes'
 import { FORUM_VIEW_REWARD, FORUM_VIEW_TARGET } from '@/features/forum/types/forum'
 import { HelpFaqItem, HelpFaqList } from '@/features/legal/components/HelpFaq'
 import { LegalCallout } from '@/features/legal/components/LegalCallout'
-import { LegalDocumentLayout } from '@/features/legal/components/LegalDocumentLayout'
-import { LegalPageHero, LegalRelatedLinks } from '@/features/legal/components/LegalPageHero'
-import { LegalSection } from '@/features/legal/components/LegalSection'
-import { LegalSummaryGrid } from '@/features/legal/components/LegalSummaryGrid'
+import { InfoPageShell } from '@/features/legal/components/InfoPageShell'
+import { InfoPageHero, InfoRelatedLinks } from '@/features/legal/components/InfoPageHero'
+import { InfoSection } from '@/features/legal/components/InfoSection'
 import { cn } from '@/shared/utils/cn'
 
 const LAST_UPDATED = '2026-06-24'
@@ -57,12 +53,12 @@ function QuickLinkCard({
   return (
     <a
       href={href}
-      className="group rounded-xl border border-border-default/70 bg-bg-surface p-4 shadow-card transition-all hover:border-accent-secondary/35 hover:shadow-glow-accent"
+      className="group rounded-xl border border-border-default/70 bg-bg-surface p-4 transition-all hover:border-accent-live/40 hover:shadow-card"
     >
-      <div className="mb-3 inline-flex rounded-lg border border-accent-secondary/25 bg-accent-secondary/10 p-2 text-accent-secondary">
+      <div className="mb-3 inline-flex rounded-lg border border-accent-live/25 bg-accent-live/10 p-2 text-accent-live">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </div>
-      <p className="font-display text-sm font-bold text-text-primary group-hover:text-accent-secondary transition-colors">
+      <p className="font-display text-sm font-bold text-text-primary group-hover:text-accent-live transition-colors">
         {title}
       </p>
       <p className="mt-1 text-xs text-text-muted leading-relaxed">{description}</p>
@@ -78,7 +74,7 @@ function StepGuide({ steps }: { steps: { title: string; body: string; link?: { t
           <span
             className={cn(
               'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-bold',
-              'border-accent-secondary/30 bg-accent-secondary/10 text-accent-secondary',
+              'border-accent-live/30 bg-accent-live/10 text-accent-live',
             )}
             aria-hidden="true"
           >
@@ -106,77 +102,49 @@ export function HelpPage() {
   const penalty25k = calculateCancellationPenalty(bettingRules.standardStake)
 
   return (
-    <LegalDocumentLayout
+    <InfoPageShell
+      variant="help"
       hero={
-        <LegalPageHero
-          eyebrow="Support"
+        <InfoPageHero
+          variant="help"
           title="Help Center"
           description="Guides, FAQs, and quick answers for getting the most out of Tipster Arena — from your first bet to the top of the leaderboard."
           lastUpdated={LAST_UPDATED}
           readingMinutes={6}
+          extra={
+            <div className="grid gap-3 sm:grid-cols-2 not-prose">
+              <QuickLinkCard
+                icon={RocketLaunchIcon}
+                title="Quick start"
+                description="New here? Start with account setup and your first bet."
+                href="#quick-start"
+              />
+              <QuickLinkCard
+                icon={TicketIcon}
+                title="Betting"
+                description="Stakes, limits, cancellation, and settlement."
+                href="#betting"
+              />
+              <QuickLinkCard
+                icon={UserCircleIcon}
+                title="Account"
+                description="Profile, 2FA, social login, and settings."
+                href="#account"
+              />
+              <QuickLinkCard
+                icon={WrenchScrewdriverIcon}
+                title="Troubleshooting"
+                description="Common issues and how to fix them."
+                href="#troubleshooting"
+              />
+            </div>
+          }
         />
       }
-      summary={
-        <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 not-prose">
-            <QuickLinkCard
-              icon={RocketLaunchIcon}
-              title="Quick start"
-              description="New here? Start with account setup and your first bet."
-              href="#quick-start"
-            />
-            <QuickLinkCard
-              icon={TicketIcon}
-              title="Betting"
-              description="Stakes, limits, cancellation, and settlement."
-              href="#betting"
-            />
-            <QuickLinkCard
-              icon={UserCircleIcon}
-              title="Account"
-              description="Profile, 2FA, social login, and settings."
-              href="#account"
-            />
-            <QuickLinkCard
-              icon={WrenchScrewdriverIcon}
-              title="Troubleshooting"
-              description="Common issues and how to fix them."
-              href="#troubleshooting"
-            />
-          </div>
-          <LegalSummaryGrid
-            items={[
-              {
-                icon: QuestionMarkCircleIcon,
-                title: 'FAQ-first',
-                description: 'Expand any question below for a direct answer — no digging through docs.',
-                accent: 'secondary',
-              },
-              {
-                icon: LifebuoyIcon,
-                title: 'Self-service',
-                description: 'Most tasks — profile, wallet, bets — are handled inside the app.',
-                accent: 'win',
-              },
-              {
-                icon: ShieldCheckIcon,
-                title: 'Virtual only',
-                description: 'No payment support needed — all credits are virtual with no cash value.',
-                accent: 'gold',
-              },
-              {
-                icon: ChatBubbleLeftRightIcon,
-                title: 'Community help',
-                description: 'Forum and public profiles let you learn from other tipsters.',
-                accent: 'live',
-              },
-            ]}
-          />
-        </>
-      }
       tocItems={[...TOC]}
-      relatedLinks={
-        <LegalRelatedLinks
+      footer={
+        <InfoRelatedLinks
+          variant="help"
           links={[
             {
               label: 'Arena Rules',
@@ -202,7 +170,7 @@ export function HelpPage() {
         involves deposits, withdrawals, or real-money gambling — that is outside what this platform offers.
       </LegalCallout>
 
-      <LegalSection id="quick-start" index={1} title="Quick start" icon={RocketLaunchIcon}>
+      <InfoSection variant="help" id="quick-start" index={1} title="Quick start" icon={RocketLaunchIcon}>
         <p>New to the arena? Follow these steps to place your first virtual bet:</p>
         <StepGuide
           steps={[
@@ -233,9 +201,9 @@ export function HelpPage() {
             },
           ]}
         />
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="betting" index={2} title="Betting FAQ" icon={TicketIcon}>
+      <InfoSection variant="help" id="betting" index={2} title="Betting FAQ" icon={TicketIcon}>
         <HelpFaqList>
           <HelpFaqItem question={`What stake sizes can I use?`}>
             Only <strong className="text-text-primary">{fmt(bettingRules.standardStake)}</strong> (
@@ -266,9 +234,9 @@ export function HelpPage() {
             before retrying.
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="wallet" index={3} title="Wallet & credits" icon={BanknotesIcon}>
+      <InfoSection variant="help" id="wallet" index={3} title="Wallet & credits" icon={BanknotesIcon}>
         <HelpFaqList>
           <HelpFaqItem question="Can I buy or withdraw credits?">
             No. Credits are virtual with no cash value. There are no deposits, purchases, or withdrawals.
@@ -287,9 +255,9 @@ export function HelpPage() {
             from Bet History and see Troubleshooting below.
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="rankings" index={4} title="Rankings & profile" icon={TrophyIcon}>
+      <InfoSection variant="help" id="rankings" index={4} title="Rankings & profile" icon={TrophyIcon}>
         <HelpFaqList>
           <HelpFaqItem question="How does the leaderboard work?">
             Rankings use season statistics — points, ROI, profit/loss, and win rate. Only{' '}
@@ -310,9 +278,9 @@ export function HelpPage() {
             page for the current schedule.
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="forum" index={5} title="Forum" icon={ChatBubbleLeftRightIcon}>
+      <InfoSection variant="help" id="forum" index={5} title="Forum" icon={ChatBubbleLeftRightIcon}>
         <HelpFaqList>
           <HelpFaqItem question="How do I create a post?">
             Go to <Link to={ROUTES.FORUM} className="text-accent-secondary hover:underline font-medium">Forum</Link>,
@@ -330,9 +298,9 @@ export function HelpPage() {
             <Link to={ROUTES.TERMS} className="text-accent-secondary hover:underline font-medium">Terms of Service</Link>.
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="account" index={6} title="Account & security" icon={KeyIcon}>
+      <InfoSection variant="help" id="account" index={6} title="Account & security" icon={KeyIcon}>
         <HelpFaqList>
           <HelpFaqItem question="How do I change my password or profile?">
             Open <Link to={ROUTES.SETTINGS} className="text-accent-secondary hover:underline font-medium">Settings</Link>{' '}
@@ -359,9 +327,9 @@ export function HelpPage() {
             to receive a reset link by email. Links expire after a limited time.
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="troubleshooting" index={7} title="Troubleshooting" icon={WrenchScrewdriverIcon}>
+      <InfoSection variant="help" id="troubleshooting" index={7} title="Troubleshooting" icon={WrenchScrewdriverIcon}>
         <HelpFaqList>
           <HelpFaqItem question="Fixtures or odds are not loading">
             Refresh the page and check your connection. Sports data comes from external providers — brief outages
@@ -388,9 +356,9 @@ export function HelpPage() {
             you are using a modern browser (Chrome, Firefox, Safari, Edge).
           </HelpFaqItem>
         </HelpFaqList>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="more-help" index={8} title="Still need help?" icon={Cog6ToothIcon}>
+      <InfoSection variant="help" id="more-help" index={8} title="Still need help?" icon={Cog6ToothIcon}>
         <p>
           Most answers live in this Help Center and our policy pages. For deeper detail, review:
         </p>
@@ -416,7 +384,7 @@ export function HelpPage() {
           Account-specific issues (wrong settlement, suspected abuse, deletion requests) — gather your username,
           bet ID if relevant, and a short description before reaching out through your project support channel.
         </LegalCallout>
-      </LegalSection>
-    </LegalDocumentLayout>
+      </InfoSection>
+    </InfoPageShell>
   )
 }

@@ -15,10 +15,10 @@ import { bettingRules, getStakeLabel } from '@/core/config/bettingRules'
 import { ROUTES } from '@/core/constants/routes'
 import { LOGO_ALT } from '@/core/constants/branding'
 import { LegalCallout } from '@/features/legal/components/LegalCallout'
-import { LegalDocumentLayout } from '@/features/legal/components/LegalDocumentLayout'
-import { LegalPageHero, LegalRelatedLinks } from '@/features/legal/components/LegalPageHero'
-import { LegalSection } from '@/features/legal/components/LegalSection'
-import { LegalSummaryGrid } from '@/features/legal/components/LegalSummaryGrid'
+import { InfoPageShell } from '@/features/legal/components/InfoPageShell'
+import { InfoPageHero, InfoRelatedLinks } from '@/features/legal/components/InfoPageHero'
+import { InfoSection } from '@/features/legal/components/InfoSection'
+import { InfoSummaryGrid } from '@/features/legal/components/InfoSummaryGrid'
 import { cn } from '@/shared/utils/cn'
 
 const LAST_UPDATED = '2026-06-24'
@@ -112,18 +112,20 @@ function StepList({ steps }: { steps: { title: string; body: string }[] }) {
 
 export function AboutPage() {
   return (
-    <LegalDocumentLayout
+    <InfoPageShell
+      variant="about"
       hero={
-        <LegalPageHero
-          eyebrow="About"
+        <InfoPageHero
+          variant="about"
           title={`About ${LOGO_ALT}`}
           description="We built a virtual tipster league for sports fans who want the thrill of prediction and competition — without real-money risk."
           lastUpdated={LAST_UPDATED}
           readingMinutes={4}
         />
       }
-      summary={
-        <LegalSummaryGrid
+      intro={
+        <InfoSummaryGrid
+          variant="about"
           items={[
             {
               icon: LightBulbIcon,
@@ -153,8 +155,9 @@ export function AboutPage() {
         />
       }
       tocItems={[...TOC]}
-      relatedLinks={
-        <LegalRelatedLinks
+      footer={
+        <InfoRelatedLinks
+          variant="about"
           links={[
             {
               label: 'Arena Rules',
@@ -180,7 +183,7 @@ export function AboutPage() {
         We are not a licensed bookmaker and do not accept real-money bets.
       </LegalCallout>
 
-      <LegalSection id="story" index={1} title="Our story" icon={RocketLaunchIcon}>
+      <InfoSection variant="about" id="story" index={1} title="Our story" icon={RocketLaunchIcon}>
         <p>
           Sports prediction is one of the oldest fan debates — who wins, by how much, and why. {LOGO_ALT}{' '}
           turns that instinct into a structured competition: real fixtures and odds, virtual stakes, and
@@ -191,9 +194,9 @@ export function AboutPage() {
           for <strong className="text-text-primary">skill visibility</strong> — giving tipsters a fair stage
           to prove their edge season after season.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="mission" index={2} title="Our mission" icon={LightBulbIcon}>
+      <InfoSection variant="about" id="mission" index={2} title="Our mission" icon={LightBulbIcon}>
         <p>
           Our mission is to make competitive sports prediction accessible, transparent, and fun — without
           financial risk. Every player starts with the same virtual bankroll and the same published rules.
@@ -204,17 +207,17 @@ export function AboutPage() {
           <li>Foster community through forums, achievements, and shared analysis.</li>
           <li>Reward top performers with seasonal recognition and offline prizes — not cash payouts in-app.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="platform" index={3} title="The platform" icon={ChartBarIcon}>
+      <InfoSection variant="about" id="platform" index={3} title="The platform" icon={ChartBarIcon}>
         <p>
           {LOGO_ALT} brings together everything a tipster needs in one place. Here is what you will find
           inside the arena:
         </p>
         <PlatformFeatureGrid />
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="different" index={4} title="What sets us apart" icon={SparklesIcon}>
+      <InfoSection variant="about" id="different" index={4} title="What sets us apart" icon={SparklesIcon}>
         <div className="overflow-hidden rounded-xl border border-border-default/70">
           <table className="w-full text-left text-sm">
             <thead className="bg-bg-elevated/80 text-xs uppercase tracking-wider text-text-muted">
@@ -249,9 +252,9 @@ export function AboutPage() {
             </tbody>
           </table>
         </div>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="how-it-works" index={5} title="How it works" icon={TrophyIcon}>
+      <InfoSection variant="about" id="how-it-works" index={5} title="How it works" icon={TrophyIcon}>
         <p>New to the arena? Here is the path from signup to the leaderboard:</p>
         <StepList
           steps={[
@@ -277,9 +280,9 @@ export function AboutPage() {
             },
           ]}
         />
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="community" index={6} title="Community" icon={UserGroupIcon}>
+      <InfoSection variant="about" id="community" index={6} title="Community" icon={UserGroupIcon}>
         <p>
           Tipsters are not just bettors — they are analysts, fans, and competitors. The forum lets you publish
           picks and strategy with categories, tags, polls, and media. Top posts can earn view-milestone bonus
@@ -294,9 +297,9 @@ export function AboutPage() {
           We believe open competition makes everyone sharper. That is why rankings, rules, and stake limits
           are published — not hidden behind a paywall.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="values" index={7} title="Our values" icon={HeartIcon}>
+      <InfoSection variant="about" id="values" index={7} title="Our values" icon={HeartIcon}>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>
             <strong className="text-text-primary">Fairness</strong> — equal starting credits, fixed stakes,
@@ -315,9 +318,9 @@ export function AboutPage() {
             or manipulation in forum and profile spaces.
           </li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="start" index={8} title="Get started" icon={RocketLaunchIcon}>
+      <InfoSection variant="about" id="start" index={8} title="Get started" icon={RocketLaunchIcon}>
         <p>
           Ready to enter the arena? Head to the{' '}
           <Link to={ROUTES.HOME} className="text-accent-secondary hover:underline font-medium">
@@ -340,7 +343,7 @@ export function AboutPage() {
           </Link>
           .
         </p>
-      </LegalSection>
-    </LegalDocumentLayout>
+      </InfoSection>
+    </InfoPageShell>
   )
 }

@@ -20,10 +20,10 @@ import {
 import { ROUTES } from '@/core/constants/routes'
 import { FORUM_VIEW_REWARD, FORUM_VIEW_TARGET } from '@/features/forum/types/forum'
 import { LegalCallout } from '@/features/legal/components/LegalCallout'
-import { LegalDocumentLayout } from '@/features/legal/components/LegalDocumentLayout'
-import { LegalPageHero, LegalRelatedLinks } from '@/features/legal/components/LegalPageHero'
-import { LegalSection } from '@/features/legal/components/LegalSection'
-import { LegalSummaryGrid } from '@/features/legal/components/LegalSummaryGrid'
+import { InfoPageShell } from '@/features/legal/components/InfoPageShell'
+import { InfoPageHero, InfoRelatedLinks } from '@/features/legal/components/InfoPageHero'
+import { InfoSection } from '@/features/legal/components/InfoSection'
+import { InfoSummaryGrid } from '@/features/legal/components/InfoSummaryGrid'
 
 const LAST_UPDATED = '2026-06-24'
 
@@ -48,18 +48,20 @@ export function RulesPage() {
   const penalty100k = calculateCancellationPenalty(bettingRules.premiumStake)
 
   return (
-    <LegalDocumentLayout
+    <InfoPageShell
+      variant="rules"
       hero={
-        <LegalPageHero
-          eyebrow="Competition"
+        <InfoPageHero
+          variant="rules"
           title="Arena Rules"
           description="Official rules for virtual betting, rankings, and seasons — everything you need to compete fairly on Tipster Arena."
           lastUpdated={LAST_UPDATED}
           readingMinutes={5}
         />
       }
-      summary={
-        <LegalSummaryGrid
+      intro={
+        <InfoSummaryGrid
+          variant="rules"
           items={[
             {
               icon: CurrencyDollarIcon,
@@ -89,8 +91,9 @@ export function RulesPage() {
         />
       }
       tocItems={[...TOC]}
-      relatedLinks={
-        <LegalRelatedLinks
+      footer={
+        <InfoRelatedLinks
+          variant="rules"
           links={[
             {
               label: 'Terms of Service',
@@ -117,7 +120,7 @@ export function RulesPage() {
         by administrators when seasons end.
       </LegalCallout>
 
-      <LegalSection id="overview" index={1} title="Overview" icon={FlagIcon}>
+      <InfoSection variant="rules" id="overview" index={1} title="Overview" icon={FlagIcon}>
         <p>
           Arena Rules define how virtual betting, wallet transactions, rankings, and seasons work on Tipster
           Arena. All participants must follow these rules in addition to our{' '}
@@ -130,9 +133,9 @@ export function RulesPage() {
           The goal is a level playing field: fixed stakes, daily limits, transparent settlement, and public
           leaderboards so skill — not bankroll size — determines who rises.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="credits" index={2} title="Virtual credits" icon={BanknotesIcon}>
+      <InfoSection variant="rules" id="credits" index={2} title="Virtual credits" icon={BanknotesIcon}>
         <p>
           Credits are the in-app currency for placing bets and tracking performance. They cannot be bought,
           sold, withdrawn, or transferred between accounts.
@@ -165,9 +168,9 @@ export function RulesPage() {
             </tbody>
           </table>
         </div>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="betting" index={3} title="Placing bets" icon={TicketIcon}>
+      <InfoSection variant="rules" id="betting" index={3} title="Placing bets" icon={TicketIcon}>
         <p>Every bet must meet these requirements before it is accepted:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>
@@ -189,9 +192,9 @@ export function RulesPage() {
           Potential return is calculated from the displayed odds at placement. Once confirmed, the stake is
           deducted immediately from your balance.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="markets" index={4} title="Markets & odds" icon={ChartBarIcon}>
+      <InfoSection variant="rules" id="markets" index={4} title="Markets & odds" icon={ChartBarIcon}>
         <p>
           Tipster Cup fixtures offer standard markets such as match winner, handicap, and over/under where
           available. Odds are supplied by our sports data partner and may update until kickoff.
@@ -201,9 +204,9 @@ export function RulesPage() {
           <li>Markets may be removed or suspended without notice if data is unavailable.</li>
           <li>Live fixtures follow the same stake and daily-limit rules as pre-match bets.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="settlement" index={5} title="Settlement & results" icon={ClipboardDocumentCheckIcon}>
+      <InfoSection variant="rules" id="settlement" index={5} title="Settlement & results" icon={ClipboardDocumentCheckIcon}>
         <p>
           Bets settle automatically when official match results are confirmed. Your wallet and bet history
           update accordingly.
@@ -236,9 +239,9 @@ export function RulesPage() {
           Settlement may take a short time after the final whistle while results are verified. Active bets
           appear on your profile and in Active Bets until settled.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="cancellation" index={6} title="Bet cancellation" icon={XCircleIcon}>
+      <InfoSection variant="rules" id="cancellation" index={6} title="Bet cancellation" icon={XCircleIcon}>
         <p>
           You may cancel an <strong className="text-text-primary">active</strong> bet before the event starts,
           subject to a penalty on the stake:
@@ -271,9 +274,9 @@ export function RulesPage() {
           After kickoff, bets cannot be cancelled. The remaining stake (after penalty) is returned to your
           wallet.
         </p>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="leaderboard" index={7} title="Leaderboard & stats" icon={ChartBarIcon}>
+      <InfoSection variant="rules" id="leaderboard" index={7} title="Leaderboard & stats" icon={ChartBarIcon}>
         <p>
           The leaderboard ranks tipsters by season performance. Sort options include points, ROI, profit/loss,
           and win rate.
@@ -283,9 +286,9 @@ export function RulesPage() {
           <li>Stats update as bets settle — only settled results count toward rankings.</li>
           <li>Search and filter help you compare performance across the active season.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="seasons" index={8} title="Seasons & prizes" icon={CalendarDaysIcon}>
+      <InfoSection variant="rules" id="seasons" index={8} title="Seasons & prizes" icon={CalendarDaysIcon}>
         <p>
           Seasons run on a published schedule with defined start and end dates. One season is marked active
           at a time for primary rankings.
@@ -299,9 +302,9 @@ export function RulesPage() {
           Season dates and prize descriptions may change between seasons. Always check the current season
           page before competing.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="forum" index={9} title="Forum view rewards" icon={TrophyIcon}>
+      <InfoSection variant="rules" id="forum" index={9} title="Forum view rewards" icon={TrophyIcon}>
         <p>
           Published forum posts can earn bonus virtual credits through the view-milestone programme:
         </p>
@@ -310,9 +313,9 @@ export function RulesPage() {
           {fmt(FORUM_VIEW_TARGET)} cumulative views on your published posts. Milestones repeat. Self-views do
           not count. Bonus credits follow the same virtual-credit rules as welcome balance.
         </LegalCallout>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="fair-play" index={10} title="Fair play" icon={ScaleIcon}>
+      <InfoSection variant="rules" id="fair-play" index={10} title="Fair play" icon={ScaleIcon}>
         <p>The following are prohibited and may result in bet voiding, balance adjustment, or account suspension:</p>
         <ul className="list-disc pl-5 space-y-2 marker:text-accent-secondary">
           <li>Multiple accounts used to bypass daily limits or manipulate rankings.</li>
@@ -320,9 +323,9 @@ export function RulesPage() {
           <li>Collusion with other users to fix outcomes or share accounts.</li>
           <li>Harassment or spam in forum or profile content linked to competition manipulation.</li>
         </ul>
-      </LegalSection>
+      </InfoSection>
 
-      <LegalSection id="disputes" index={11} title="Disputes & rule changes" icon={ClipboardDocumentCheckIcon}>
+      <InfoSection variant="rules" id="disputes" index={11} title="Disputes & rule changes" icon={ClipboardDocumentCheckIcon}>
         <p>
           If you believe a bet was settled incorrectly, contact us through the{' '}
           <Link to={ROUTES.HELP} className="text-accent-secondary hover:underline font-medium">
@@ -334,7 +337,7 @@ export function RulesPage() {
           Arena Rules may be updated as features evolve. The last updated date at the top of this page reflects
           the current version. Continued participation after changes means you accept the updated rules.
         </p>
-      </LegalSection>
-    </LegalDocumentLayout>
+      </InfoSection>
+    </InfoPageShell>
   )
 }
