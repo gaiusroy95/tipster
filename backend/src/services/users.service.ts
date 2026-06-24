@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { AUTH_PROVIDER_EMAIL, INITIAL_BALANCE } from '../auth/auth.constants';
+import { leaderboardService } from './leaderboard.service';
 
 export const usersService = {
   findByEmail(email: string): Promise<User | null> {
@@ -51,6 +52,9 @@ export const usersService = {
         data: { userId: user.id },
       });
 
+      return user;
+    }).then(async (user) => {
+      await leaderboardService.enrollUserInActiveSeason(user.id);
       return user;
     });
   },

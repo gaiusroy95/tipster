@@ -1,6 +1,9 @@
 import type { UserProfileStats } from '@/mocks/data/types'
 
 export function rankTier(rank: number) {
+  if (rank <= 0) {
+    return { label: 'Newcomer', className: 'bg-bg-elevated text-text-muted border-border-default' }
+  }
   if (rank <= 10) {
     return { label: 'Champion', className: 'bg-accent-gold/20 text-accent-gold border-accent-gold/40' }
   }

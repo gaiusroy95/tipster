@@ -208,9 +208,9 @@
     background-color: var(--color-text-muted);
   }
 
-  /* Tipster Cup — fixed-height match list with internal scroll (Overtime-style) */
+  /* Tipster Cup — match list grows with content, scrolls when taller than viewport budget */
   .arena-match-list-scroll {
-    height: clamp(
+    max-height: clamp(
       14rem,
       calc(100dvh - var(--arena-matches-scroll-offset) - var(--layout-sticky-offset)),
       44rem
@@ -235,7 +235,7 @@
   @media (min-width: 1280px) {
     .arena-match-list-scroll {
       --arena-matches-scroll-offset: 30rem;
-      height: clamp(16rem, calc(100dvh - var(--arena-matches-scroll-offset)), 52rem);
+      max-height: clamp(16rem, calc(100dvh - var(--arena-matches-scroll-offset)), 52rem);
     }
   }
 

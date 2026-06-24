@@ -14,7 +14,6 @@ import { cn } from '@/shared/utils/cn'
 const VIEW_TITLES: Record<string, string> = {
   [FIXTURE_VIEWS.LIVE]: 'Live matches',
   [FIXTURE_VIEWS.UPCOMING]: 'Upcoming matches',
-  [FIXTURE_VIEWS.FINISHED]: 'Finished matches',
 }
 
 export function CupTabPanel() {

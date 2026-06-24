@@ -12,6 +12,7 @@ import { signToken } from '../middleware/auth.middleware';
 import { googleOAuthService, type GoogleProfile } from './google-oauth.service';
 import { oauthStateService, type OAuthMode } from './oauth-state.service';
 import { normalizeGooglePictureUrl } from '../lib/google-avatar';
+import { leaderboardService } from './leaderboard.service';
 
 function applyGoogleAvatar(
   updateData: { authProviders: string[]; avatarUrl?: string; emailVerifiedAt?: Date },
@@ -37,18 +38,9 @@ function sanitizeUsername(value: string): string {
 async function uniqueUsername(base: string): Promise<string> {
   const candidate = sanitizeUsername(base);
   const existing = await withDbRetry(() =>
-    prisma.user.findUnique({ where: { username: candidate } }),
+    prisma.user.findUnique({ where: { username: candidate }, select: { id: true } }),
   );
   if (!existing) return candidate;
-
-  for (let i = 0; i < 20; i++) {
-    const withSuffix = `${candidate}${Math.floor(Math.random() * 900 + 100)}`;
-    const clash = await withDbRetry(() =>
-      prisma.user.findUnique({ where: { username: withSuffix } }),
-    );
-    if (!clash) return withSuffix;
-  }
-
   return `${candidate}${Date.now().toString(36).slice(-4)}`;
 }
 
@@ -171,7 +163,26 @@ export const oauthService = {
 
     const profile = await resolveGoogleProfile(code, oauthState.redirectUri, state);
 
-    const result = await withDbRetry(async () => {
+    const result = await this.signInWithGoogleProfile(profile);
+
+    await oauthStateService.delete(state);
+    clearGoogleProfileCache(state);
+    return result;
+  },
+
+  async completeGoogleWithCredential(
+    credential: string,
+  ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
+    const profile = await googleOAuthService.verifyIdTokenCredential(credential);
+    return this.signInWithGoogleProfile(profile);
+  },
+
+  async signInWithGoogleProfile(
+    profile: GoogleProfile,
+  ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
+    const provider = AUTH_PROVIDER_GOOGLE as OAuthProvider;
+
+    return withDbRetry(async () => {
       const linkedAccount = await prisma.socialAccount.findUnique({
         where: {
           provider_providerAccountId: {
@@ -224,10 +235,6 @@ export const oauthService = {
         isNewUser: true,
       };
     });
-
-    await oauthStateService.delete(state);
-    clearGoogleProfileCache(state);
-    return result;
   },
 
   async linkAccount(
@@ -359,7 +366,7 @@ export const oauthService = {
   }): Promise<User> {
     const username = await uniqueUsername(profile.name);
 
-    return withDbRetry(() =>
+    const user = await withDbRetry(() =>
       prisma.$transaction(async (tx) => {
         const user = await tx.user.create({
           data: {
@@ -413,6 +420,10 @@ export const oauthService = {
         return user;
       }),
     );
+
+    await leaderboardService.enrollUserInActiveSeason(user.id);
+    const refreshed = await prisma.user.findUnique({ where: { id: user.id } });
+    return refreshed ?? user;
   },
 
   async linkSocialToUser(

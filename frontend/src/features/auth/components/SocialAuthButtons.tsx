@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { SOCIAL_PROVIDERS } from '@/core/constants/socialProviders'
 import { initiateSocialAuth } from '@/features/auth/lib/socialAuth'
+import { GoogleSignInButton } from '@/features/auth/components/GoogleSignInButton'
+import { env } from '@/core/config/env'
 import type { SocialAuthMode, SocialAuthProvider } from '@/features/auth/types/socialAuth'
 import { SocialProviderIcon } from '@/features/auth/components/SocialProviderIcon'
 import { ApiError } from '@/core/types/api'
@@ -27,6 +29,10 @@ export function SocialAuthButtons({ mode }: { mode: SocialAuthMode }) {
   return (
     <div className="space-y-3">
       {SOCIAL_PROVIDERS.map((provider) => {
+        if (provider.id === 'google' && env.googleClientId && env.googleUseGsi) {
+          return <GoogleSignInButton key={provider.id} mode={mode} />
+        }
+
         const isLoading = loadingProvider === provider.id
         const isDisabled = loadingProvider !== null
 

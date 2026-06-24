@@ -4,11 +4,10 @@ import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
 import { achievementService } from './achievement.service';
 
-const DISPLAY_TOTAL_PLAYERS = 3088;
-
 function buildOverallRankStats(
   currentRank: number,
   seasonPoints: number,
+  totalPlayersCount: number,
 ): {
   current: number;
   best: number;
@@ -21,7 +20,7 @@ function buildOverallRankStats(
   nextTierLabel: string;
   tierProgressPercent: number;
 } {
-  const totalPlayers = DISPLAY_TOTAL_PLAYERS;
+  const totalPlayers = Math.max(totalPlayersCount, 1);
   const percentile =
     currentRank > 0
       ? Math.round(((totalPlayers - currentRank) / totalPlayers) * 100)
@@ -168,6 +167,7 @@ export const profileService = {
 
     const achievements = await achievementService.getProfileAchievements(userId);
     const achievementProgress = await achievementService.getProgress(userId);
+    const totalPlayers = await leaderboardService.countActiveSeasonParticipants();
 
     return {
       userId,
@@ -176,7 +176,7 @@ export const profileService = {
       avatarUrl: user.avatarUrl ?? undefined,
       rank: currentRank,
       balance: user.balance,
-      overallRank: buildOverallRankStats(currentRank, seasonPoints),
+      overallRank: buildOverallRankStats(currentRank, seasonPoints, totalPlayers),
       seasonStats: {
         points: participant?.points ?? 0,
         roi: participant?.roi ?? 0,

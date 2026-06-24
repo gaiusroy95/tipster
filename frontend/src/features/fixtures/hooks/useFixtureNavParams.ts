@@ -19,8 +19,6 @@ export function fixtureViewToStatus(view: FixtureView): string {
   switch (view) {
     case FIXTURE_VIEWS.LIVE:
       return MATCH_STATUS.LIVE
-    case FIXTURE_VIEWS.FINISHED:
-      return MATCH_STATUS.FINISHED
     default:
       return MATCH_STATUS.SCHEDULED
   }

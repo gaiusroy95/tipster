@@ -22,8 +22,20 @@ import { seasonService } from '../services/season.service';
 import { notificationService } from '../services/notification.service';
 import { settingsService } from '../services/settings.service';
 import { achievementService } from '../services/achievement.service';
+import { newsService } from '../services/news.service';
 
 export const apiRouter = Router();
+
+apiRouter.get(
+  '/news',
+  asyncHandler(async (req, res) => {
+    const sport = typeof req.query.sport === 'string' ? req.query.sport : 'soccer';
+    const limit = Number(req.query.limit ?? 10);
+    const offset = Number(req.query.offset ?? 0);
+    const data = await newsService.getSportsNews({ sport, limit, offset });
+    res.json({ data });
+  }),
+);
 
 apiRouter.get(
   '/dashboard',

@@ -5,3 +5,7 @@ export const oauthExchangeSchema = z.object({
   state: z.string().min(1),
   redirectUri: z.string().url(),
 });
+
+export const googleCredentialSchema = z.object({
+  credential: z.string().min(1),
+});

@@ -133,6 +133,15 @@ export async function exchangeOAuthCodeOnce(
   return promise
 }
 
+export async function completeGoogleCredential(credential: string): Promise<SocialAuthResponse> {
+  const res = await apiClient.post<ApiResponse<SocialAuthResponse>>(
+    '/auth/oauth/google/credential',
+    { credential },
+    { timeout: 45000 },
+  )
+  return res.data.data
+}
+
 export async function completeOAuthFromCallback(
   code: string,
   state: string,

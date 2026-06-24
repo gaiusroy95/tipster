@@ -21,7 +21,6 @@ import { FixtureViewIcon } from '@/features/fixtures/components/FixtureViewIcon'
 const VIEW_ITEMS: { id: FixtureView; label: string }[] = [
   { id: FIXTURE_VIEWS.LIVE, label: 'Live' },
   { id: FIXTURE_VIEWS.UPCOMING, label: 'Upcoming' },
-  { id: FIXTURE_VIEWS.FINISHED, label: 'Finished' },
 ]
 
 function NavItem({

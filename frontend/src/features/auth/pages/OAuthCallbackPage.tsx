@@ -13,8 +13,6 @@ import {
 } from '@/features/auth/lib/socialAuth'
 import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
-import { apiClient, setAuthToken } from '@/core/api/client'
-import type { ApiResponse } from '@/core/types/api'
 
 /** One toast + navigation per OAuth callback URL (prevents Strict Mode / effect re-run spam). */
 const handledCallbackKeys = new Set<string>()
@@ -91,25 +89,19 @@ export function OAuthCallbackPage() {
         const result = await completeOAuthFromCallback(code, state)
         markHandled(callbackKey)
 
-        setAuthToken(result.token)
-        let user = result.user
-        try {
-          const meRes = await apiClient.get<ApiResponse<import('@/mocks/data/types').User>>('/auth/me')
-          user = meRes.data.data
-        } catch {
-          // OAuth response already includes user; /auth/me is optional refresh
-        }
-        setAuth(user, result.token)
-        if (import.meta.env.VITE_ENABLE_MSW === 'true') {
-          const { mockDb } = await import('@/mocks/data/seed')
-          mockDb.upsertRemoteUser(user)
-        }
-        queryClient.clear()
+        setAuth(result.user, result.token)
         clearOAuthSession()
+        navigate(ROUTES.HOME, { replace: true })
+
+        void queryClient.clear()
+        if (import.meta.env.VITE_ENABLE_MSW === 'true') {
+          void import('@/mocks/data/seed').then(({ mockDb }) => {
+            mockDb.upsertRemoteUser(result.user)
+          })
+        }
         if (result.isNewUser) {
           toast('Welcome! You received 1,000,000 virtual credits.', 'success')
         }
-        navigate(ROUTES.HOME, { replace: true })
       } catch (e) {
         markHandled(callbackKey)
         clearOAuthSession()

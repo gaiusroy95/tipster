@@ -3,6 +3,7 @@ import { createApp } from './app';
 import { connectPrisma, disconnectPrisma } from './lib/prisma';
 import { verifyOAuthSchema } from './lib/verify-schema';
 import { seasonService } from './services/season.service';
+import { leaderboardService } from './services/leaderboard.service';
 
 function logGoogleOAuthStatus(): void {
   const hasId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
@@ -21,6 +22,7 @@ async function bootstrap() {
   await connectPrisma();
   await verifyOAuthSchema();
   await seasonService.seedIfEmpty();
+  await leaderboardService.syncAllUsersToActiveSeason();
 
   const app = createApp();
   const port = Number(process.env.PORT ?? 3001);

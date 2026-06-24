@@ -1,7 +1,6 @@
 export const FIXTURE_VIEWS = {
   LIVE: 'live',
   UPCOMING: 'upcoming',
-  FINISHED: 'finished',
 } as const
 
 export type FixtureView = (typeof FIXTURE_VIEWS)[keyof typeof FIXTURE_VIEWS]
@@ -26,5 +25,5 @@ export const DEFAULT_SPORT_ID = 'soccer'
 export const DEFAULT_FIXTURE_VIEW: FixtureView = FIXTURE_VIEWS.UPCOMING
 
 export function isFixtureView(value: string | null): value is FixtureView {
-  return value === FIXTURE_VIEWS.LIVE || value === FIXTURE_VIEWS.UPCOMING || value === FIXTURE_VIEWS.FINISHED
+  return value === FIXTURE_VIEWS.LIVE || value === FIXTURE_VIEWS.UPCOMING
 }

@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|mockServiceWorker\\.js|favicon\\.svg|favicon\\.png).*)",
+      "source": "/((?!api/|sports/|assets/|mockServiceWorker\\.js|favicon\\.svg|favicon\\.png).*)",
       "destination": "/index.html"
     }
   ]

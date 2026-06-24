@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { asyncHandler } from '../middleware/error.middleware';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.middleware';
 import { validateBody } from '../middleware/validate.middleware';
-import { oauthExchangeSchema } from '../schemas/oauth.schemas';
+import { oauthExchangeSchema, googleCredentialSchema } from '../schemas/oauth.schemas';
 import { oauthService } from '../services/oauth.service';
 import { ApiException } from '../lib/api-exception';
 
@@ -39,6 +39,15 @@ oauthRouter.get(
 
     const url = await oauthService.getAuthorizationUrl(provider, mode, redirectUri, userId);
     res.json({ data: { url } });
+  }),
+);
+
+oauthRouter.post(
+  '/google/credential',
+  validateBody(googleCredentialSchema),
+  asyncHandler(async (req, res) => {
+    const result = await oauthService.completeGoogleWithCredential(req.body.credential);
+    res.json({ data: result });
   }),
 );
 

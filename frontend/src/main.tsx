@@ -5,6 +5,15 @@ import { useAuthStore } from '@/features/auth/stores/authStore'
 import { env } from '@/core/config/env'
 import '@/app/styles/index.css'
 
+/** Google OAuth redirect URIs must match exactly — normalize 127.0.0.1 to localhost. */
+function normalizeDevOrigin() {
+  if (typeof window === 'undefined') return
+  const { protocol, hostname, port, pathname, search, hash } = window.location
+  if (hostname !== '127.0.0.1') return
+  const portSuffix = port ? `:${port}` : ''
+  window.location.replace(`${protocol}//localhost${portSuffix}${pathname}${search}${hash}`)
+}
+
 /** Remove stale MSW service workers that cause passthrough / Failed to fetch errors. */
 async function unregisterStaleServiceWorkers() {
   if (!('serviceWorker' in navigator)) return
@@ -32,6 +41,7 @@ async function setupApiMocking() {
 }
 
 async function bootstrap() {
+  normalizeDevOrigin()
   await setupApiMocking()
   await useAuthStore.getState().initialize()
 

@@ -2,11 +2,10 @@ import { FIXTURE_VIEWS, type FixtureView } from '@/core/constants/sports'
 
 const SPORT_IMAGES_BASE = '/assets/sport-images'
 
-/** Live / Upcoming / Finished filter icons in public/assets/sport-images */
+/** Live / Upcoming filter icons in public/assets/sport-images */
 export const FIXTURE_VIEW_ICON_SRC: Record<FixtureView, string> = {
   [FIXTURE_VIEWS.LIVE]: `${SPORT_IMAGES_BASE}/live.png`,
   [FIXTURE_VIEWS.UPCOMING]: `${SPORT_IMAGES_BASE}/upcoming.png`,
-  [FIXTURE_VIEWS.FINISHED]: `${SPORT_IMAGES_BASE}/finish.png`,
 }
 
 export function getFixtureViewIconSrc(view: FixtureView): string {

@@ -8,7 +8,6 @@ import { cn } from '@/shared/utils/cn'
 const VIEW_LABELS: Record<string, string> = {
   live: 'Live',
   upcoming: 'Upcoming',
-  finished: 'Finished',
 }
 
 export function MobileSportsNavTrigger({ className }: { className?: string }) {
