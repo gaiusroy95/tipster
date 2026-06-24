@@ -6,7 +6,6 @@ import {
   TrophyIcon,
   WalletIcon,
   BellIcon,
-  ChartBarIcon,
   Bars3Icon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
@@ -34,16 +33,8 @@ const topNav = [
     to: ROUTES.HOME,
     label: 'Arena',
     icon: HomeIcon,
-    match: (pathname: string, search: string) =>
-      pathname === ROUTES.HOME && !search.includes('tab=cup'),
-  },
-  {
-    to: `${ROUTES.HOME}?tab=cup`,
-    label: 'Matches',
-    icon: ChartBarIcon,
-    match: (pathname: string, search: string) =>
-      pathname.startsWith('/fixtures') ||
-      (pathname === ROUTES.HOME && search.includes('tab=cup')),
+    match: (pathname: string) =>
+      pathname === ROUTES.HOME || pathname.startsWith('/fixtures'),
   },
   {
     to: ROUTES.LEADERBOARD,
@@ -99,7 +90,6 @@ export function MainLayout() {
   const [sportsNavOpen, setSportsNavOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const pathname = location.pathname
-  const search = location.search
 
   useEffect(() => {
     if (pathname === ROUTES.HOME) {
@@ -140,7 +130,7 @@ export function MainLayout() {
             >
               <div className="inline-flex items-center gap-0.5 rounded-xl border border-border-default/60 bg-bg-elevated/50 p-1">
                 {topNav.map((item) => {
-                  const active = item.match(pathname, search)
+                  const active = item.match(pathname)
                   return (
                     <Link
                       key={item.label}

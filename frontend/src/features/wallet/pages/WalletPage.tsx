@@ -1,10 +1,19 @@
 import { PageShell } from '@/shared/layouts/PageShell'
+import { PageHero } from '@/shared/components/PageHero'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { WalletBalanceHero } from '@/features/wallet/components/WalletBalanceHero'
 import { WalletRulesGrid } from '@/features/wallet/components/WalletRulesGrid'
 import { WalletTransactionList } from '@/features/wallet/components/WalletTransactionList'
 import { useWallet } from '@/features/wallet/hooks/useWallet'
+
+const walletHeader = (
+  <PageHero
+    variant="wallet"
+    title="Wallet"
+    description="Virtual credits and transaction history"
+  />
+)
 
 function WalletSkeleton() {
   return (
@@ -25,7 +34,7 @@ export function WalletPage() {
 
   if (isLoading) {
     return (
-      <PageShell title="Wallet" description="Virtual credits and transaction history">
+      <PageShell header={walletHeader}>
         <WalletSkeleton />
       </PageShell>
     )
@@ -33,14 +42,14 @@ export function WalletPage() {
 
   if (isError || !data) {
     return (
-      <PageShell title="Wallet">
+      <PageShell header={walletHeader}>
         <QueryErrorFallback onRetry={() => refetch()} />
       </PageShell>
     )
   }
 
   return (
-    <PageShell title="Wallet" description="Virtual credits and transaction history">
+    <PageShell header={walletHeader}>
       <div className="space-y-5">
         <WalletBalanceHero balance={data.balance} />
         <WalletRulesGrid />

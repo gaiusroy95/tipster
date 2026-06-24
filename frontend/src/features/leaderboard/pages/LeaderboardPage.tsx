@@ -1,12 +1,16 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageShell } from '@/shared/layouts/PageShell'
+import { PageHero } from '@/shared/components/PageHero'
 import { Input } from '@/shared/components/ui/Input'
 import { RankingRow } from '@/shared/components/BetCard'
 import { TopThreePodium } from '@/shared/components/TopThreePodium'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard'
+import { useActiveSeason } from '@/features/seasons/hooks/useSeasons'
 import { useDebounce } from '@/shared/hooks/useDebounce'
+import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 
 const sortOptions = [
@@ -21,18 +25,40 @@ export function LeaderboardPage() {
   const [sort, setSort] = useState('points')
   const debouncedSearch = useDebounce(search)
   const { data, isLoading, isError, refetch } = useLeaderboard(debouncedSearch, sort)
+  const activeSeason = useActiveSeason()
+
+  const header = (
+    <PageHero
+      variant="leaderboard"
+      title="Leaderboard"
+      description="Season rankings — compete for prizes"
+      extra={
+        activeSeason.data ? (
+          <Link
+            to={ROUTES.SEASONS}
+            className="rounded-xl border border-accent-gold/25 bg-accent-gold/5 px-4 py-3 text-left transition-colors hover:border-accent-gold/40 hover:bg-accent-gold/10 min-w-[140px]"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider text-accent-gold">Active season</p>
+            <p className="mt-0.5 font-display text-sm font-bold text-text-primary leading-tight">
+              {activeSeason.data.name}
+            </p>
+          </Link>
+        ) : undefined
+      }
+    />
+  )
 
   if (isError) {
     return (
-      <PageShell title="Leaderboard">
+      <PageShell header={header}>
         <QueryErrorFallback onRetry={() => refetch()} />
       </PageShell>
     )
   }
 
   return (
-    <PageShell title="Leaderboard" description="Season rankings — compete for prizes">
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+    <PageShell header={header}>
+      <div className="flex flex-col sm:flex-row gap-4">
         <Input
           placeholder="Search players..."
           value={search}
@@ -49,7 +75,7 @@ export function LeaderboardPage() {
                 'px-3 py-2 rounded-lg text-sm font-medium min-h-[44px] border transition-colors',
                 sort === opt.id
                   ? 'bg-accent-primary/15 border-accent-primary text-accent-primary'
-                  : 'border-border-default bg-bg-surface text-text-muted',
+                  : 'border-border-default bg-bg-surface text-text-muted hover:text-text-primary hover:border-border-strong',
               )}
             >
               {opt.label}
