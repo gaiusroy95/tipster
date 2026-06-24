@@ -39,29 +39,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function AboutPage() {
-  return (
-    <ContentPage
-      title="About Us"
-      description="Tipster Arena is built for sports fans who want competitive prediction skill without real-money risk."
-    >
-      <Section title="Our mission">
-        <p>
-          We combine fixture markets, leaderboards, achievements, and seasonal rewards into
-          one arena where tipsters prove their edge using virtual credits only.
-        </p>
-      </Section>
-      <Section title="What makes us different">
-        <p>
-          Unlike traditional betting sites, Tipster Arena is a skill competition. There are
-          no deposits, no withdrawals, and no real-money wagers — only virtual stakes and
-          seasonal prizes.
-        </p>
-      </Section>
-    </ContentPage>
-  )
-}
-
 export function HelpPage() {
   return (
     <ContentPage
