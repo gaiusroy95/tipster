@@ -153,18 +153,46 @@ export function AchievementsGrid({
   emptyMessage = 'Place bets and complete profile goals to unlock achievements.',
   layout = 'default',
   showEarnedAt = false,
+  maxVisible,
 }: {
   achievements: AchievementProgress[]
   emptyMessage?: string
   /** `compact` — single column for narrow profile panels; `default` — responsive 2-col grid */
   layout?: 'default' | 'compact'
   showEarnedAt?: boolean
+  /** When set, list scrolls after this many items (compact layout). */
+  maxVisible?: number
 }) {
   if (achievements.length === 0) {
     return <p className="text-sm text-text-muted py-8 text-center">{emptyMessage}</p>
   }
 
   const earnedCount = achievements.filter((a) => a.earned).length
+  const scrollable =
+    maxVisible != null && achievements.length > maxVisible && layout === 'compact'
+  const scrollMaxHeight =
+    maxVisible != null
+      ? `calc(${maxVisible} * 6.125rem + ${Math.max(0, maxVisible - 1)} * 0.75rem)`
+      : undefined
+
+  const grid = (
+    <div
+      className={cn(
+        'grid min-w-0 gap-3 [&>*]:min-w-0',
+        layout === 'compact' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2',
+      )}
+    >
+      {achievements.map((a) => (
+        <AchievementCard
+          key={a.id}
+          achievement={a}
+          earnedAt={
+            showEarnedAt && a.earnedAt ? formatDateTime(a.earnedAt) : undefined
+          }
+        />
+      ))}
+    </div>
+  )
 
   return (
     <div className="min-w-0">
@@ -172,6 +200,7 @@ export function AchievementsGrid({
         achievements.length > 0 && (
           <p className="text-xs text-text-muted mb-3">
             {achievements.length} milestone{achievements.length !== 1 ? 's' : ''} earned
+            {scrollable ? ` · scroll for more` : ''}
           </p>
         )
       ) : (
@@ -179,22 +208,17 @@ export function AchievementsGrid({
           {earnedCount} of {achievements.length} unlocked
         </p>
       )}
-      <div
-        className={cn(
-          'grid min-w-0 gap-3 [&>*]:min-w-0',
-          layout === 'compact' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2',
-        )}
-      >
-        {achievements.map((a) => (
-          <AchievementCard
-            key={a.id}
-            achievement={a}
-            earnedAt={
-              showEarnedAt && a.earnedAt ? formatDateTime(a.earnedAt) : undefined
-            }
-          />
-        ))}
-      </div>
+      {scrollable ? (
+        <div
+          className="overflow-y-auto overscroll-y-contain scrollbar-panel -mx-1 px-1 pr-0.5"
+          style={{ maxHeight: scrollMaxHeight }}
+          aria-label="Achievements list"
+        >
+          {grid}
+        </div>
+      ) : (
+        grid
+      )}
     </div>
   )
 }

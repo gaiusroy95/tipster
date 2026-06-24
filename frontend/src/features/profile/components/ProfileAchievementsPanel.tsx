@@ -53,6 +53,7 @@ export function ProfileAchievementsPanel({ profile }: { profile: UserProfileStat
           achievements={achievements}
           layout="compact"
           showEarnedAt
+          maxVisible={5}
         />
       )}
     </ProfilePanelCard>
