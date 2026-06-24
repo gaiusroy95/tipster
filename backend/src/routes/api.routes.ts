@@ -125,6 +125,14 @@ apiRouter.get(
 );
 
 apiRouter.get(
+  '/seasons/active',
+  asyncHandler(async (_req, res) => {
+    const data = await seasonService.getActiveSeasonDto();
+    res.json({ data });
+  }),
+);
+
+apiRouter.get(
   '/seasons/:seasonId',
   asyncHandler(async (req, res) => {
     const data = await seasonService.getSeasonById(String(req.params.seasonId));

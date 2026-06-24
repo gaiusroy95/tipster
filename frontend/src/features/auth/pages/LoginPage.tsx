@@ -69,10 +69,6 @@ export function LoginPage() {
               error={errors.email?.message}
               {...emailField}
               name="ta-signin-email"
-              onFocus={(e) => {
-                emailField.onFocus(e)
-                e.currentTarget.readOnly = false
-              }}
             />
             <FieldError message={errors.email?.message} />
           </div>
@@ -86,10 +82,6 @@ export function LoginPage() {
               error={errors.password?.message}
               {...passwordField}
               name="ta-signin-password"
-              onFocus={(e) => {
-                passwordField.onFocus(e)
-                e.currentTarget.readOnly = false
-              }}
             />
             <FieldError message={errors.password?.message} />
           </div>

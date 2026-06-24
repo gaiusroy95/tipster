@@ -13,5 +13,6 @@ export function useLeaderboard(search?: string, sort?: string) {
       })
       return res.data.data
     },
+    staleTime: 2 * 60_000,
   })
 }

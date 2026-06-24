@@ -1,10 +1,9 @@
-import { useSeasons } from '@/features/seasons/hooks/useSeasons'
+import { useActiveSeason } from '@/features/seasons/hooks/useSeasons'
 import { ActiveSeasonHero } from '@/features/arena/components/ActiveSeasonHero'
 import { SportsNewsSection } from '@/features/news/components/SportsNewsSection'
 
 export function ArenaMasthead() {
-  const seasons = useSeasons()
-  const activeSeason = seasons.data?.find((s) => s.isActive)
+  const activeSeason = useActiveSeason()
 
   return (
     <section
@@ -13,8 +12,8 @@ export function ArenaMasthead() {
     >
       <ActiveSeasonHero
         variant="embedded"
-        season={activeSeason}
-        isLoading={seasons.isLoading}
+        season={activeSeason.data ?? undefined}
+        isLoading={activeSeason.isPending && !activeSeason.data}
       />
 
       <div className="border-t border-border-default">

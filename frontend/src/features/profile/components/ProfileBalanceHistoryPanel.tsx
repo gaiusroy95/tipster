@@ -1,14 +1,20 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { LockClosedIcon } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
 import { ProfilePanelCard } from '@/features/profile/components/ProfilePanelCard'
-import { PerformanceChart } from '@/shared/components/charts/PerformanceCharts'
 import { Button } from '@/shared/components/ui/Button'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
 import type { UserProfileStats } from '@/mocks/data/types'
 import { hasBettingInsights } from '@/features/profile/lib/profileUtils'
+
+const PerformanceChart = lazy(() =>
+  import('@/shared/components/charts/PerformanceCharts').then((m) => ({
+    default: m.PerformanceChart,
+  })),
+)
 
 type RangeKey = '7d' | '1m' | 'all'
 
@@ -108,7 +114,9 @@ export function ProfileBalanceHistoryPanel({
         )}
       </div>
       <div className="min-h-[200px] -mx-1">
-        <PerformanceChart data={filteredHistory} />
+        <Suspense fallback={<Skeleton className="h-[200px] w-full rounded-lg" />}>
+          <PerformanceChart data={filteredHistory} />
+        </Suspense>
       </div>
       {isOwnProfile && (
         <Link to={ROUTES.WALLET} className="block">

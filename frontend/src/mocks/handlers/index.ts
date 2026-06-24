@@ -516,6 +516,11 @@ export const handlers = [
 
   http.get(p('/seasons'), () => json(mockDb.seasons)),
 
+  http.get(p('/seasons/active'), () => {
+    const active = mockDb.seasons.find((s) => s.isActive)
+    return json(active ?? null)
+  }),
+
   http.get(p('/seasons/:seasonId'), ({ params }) => {
     const season = mockDb.seasons.find((s) => s.id === params.seasonId)
     if (!season) return error('NOT_FOUND', 'Season not found', 404)

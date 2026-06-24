@@ -79,6 +79,12 @@ export const seasonService = {
     });
   },
 
+  async getActiveSeasonDto() {
+    const season = await this.getActiveSeason();
+    if (!season) return null;
+    return toSeasonDto(season, season.prizes);
+  },
+
   async listSeasons() {
     const seasons = await prisma.season.findMany({
       include: { prizes: true },

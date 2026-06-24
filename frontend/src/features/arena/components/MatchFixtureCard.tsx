@@ -22,6 +22,12 @@ interface MatchFixtureCardProps {
   featured?: boolean
 }
 
+function winnerDisplayLabel(label: string, match: MatchWithTeams): string {
+  if (label === match.homeTeam.name) return match.homeTeam.shortName
+  if (label === match.awayTeam.name) return match.awayTeam.shortName
+  return label
+}
+
 export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardProps) {
   const addSelection = useBetSlipStore((s) => s.addSelection)
   const selections = useBetSlipStore((s) => s.selections)
@@ -60,11 +66,12 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   const hasOddsColumns = winner || hcp || ou
 
   const winnerColumn = winner ? (
-    <BettingMarketColumn title="Winner" className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Winner" className="min-w-[96px] sm:min-w-[104px]">
       {winner.selections.map((sel) => (
         <BettingOddsButton
           key={sel.id}
-          label={sel.label}
+          label={winnerDisplayLabel(sel.label, match)}
+          labelTitle={sel.label}
           value={sel.value}
           marketType={MARKET_TYPES.WINNER}
           selected={isSelected(sel.id)}
@@ -77,7 +84,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   ) : null
 
   const handicapColumn = hcp ? (
-    <BettingMarketColumn title="Handicap" showInfo className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Handicap" showInfo className="min-w-[96px] sm:min-w-[104px]">
       {hcp.selections.slice(0, 2).map((sel) => (
         <BettingOddsButton
           key={sel.id}
@@ -94,7 +101,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
   ) : null
 
   const totalColumn = ou ? (
-    <BettingMarketColumn title="Total" className="min-w-[100px] sm:min-w-[110px]">
+    <BettingMarketColumn title="Total" className="min-w-[96px] sm:min-w-[104px]">
       {ou.selections.slice(0, 2).map((sel) => (
         <BettingOddsButton
           key={sel.id}
@@ -179,7 +186,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
             </div>
 
             {/* lg+: full row */}
-            <div className="hidden lg:flex flex-1 items-stretch gap-2 p-4 lg:py-3 min-h-[148px]">
+            <div className="hidden lg:flex min-w-0 flex-1 items-stretch gap-2 p-4 lg:py-3 min-h-[148px]">
               {winnerColumn}
               {handicapColumn}
               {totalColumn}

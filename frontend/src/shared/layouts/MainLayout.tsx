@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   HomeIcon,
   TrophyIcon,
@@ -24,6 +25,8 @@ import { MobileBottomNav, MobileMoreMenu } from '@/shared/layouts/MobileNav'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { SiteFooter } from '@/shared/components/SiteFooter'
+import { prefetchActiveSeason } from '@/features/seasons/hooks/useSeasons'
+import { prefetchSportsNews } from '@/features/news/hooks/useSportsNews'
 
 const topNav = [
   {
@@ -83,12 +86,20 @@ function HeaderIconLink({
 
 export function MainLayout() {
   const location = useLocation()
+  const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const [moreOpen, setMoreOpen] = useState(false)
   const [sportsNavOpen, setSportsNavOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const pathname = location.pathname
   const search = location.search
+
+  useEffect(() => {
+    if (pathname === ROUTES.HOME) {
+      prefetchActiveSeason(queryClient)
+      prefetchSportsNews(queryClient, { sport: 'soccer', limit: 10 })
+    }
+  }, [pathname, queryClient])
 
   return (
     <EditProfileDrawerProvider>

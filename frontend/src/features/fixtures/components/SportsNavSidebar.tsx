@@ -3,10 +3,8 @@ import type { ReactNode } from 'react'
 import { useLeagues } from '@/features/fixtures/hooks/useFixtures'
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard'
 import {
-  fixtureViewToStatus,
   useFixtureNavParams,
 } from '@/features/fixtures/hooks/useFixtureNavParams'
-import { useFixtures } from '@/features/fixtures/hooks/useFixtures'
 import { ROUTES } from '@/core/constants/routes'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
@@ -59,9 +57,6 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const leagues = useLeagues(sportId)
   const leaderboard = useLeaderboard(undefined, 'points')
 
-  const status = fixtureViewToStatus(view)
-  const fixtures = useFixtures({ sportId, status, leagueId })
-
   const handleView = (id: FixtureView) => {
     setView(id)
     onNavigate?.()
@@ -99,7 +94,6 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
           </p>
           {SPORT_CATEGORIES.map((sport) => {
             const active = sportId === sport.id
-            const count = active ? (fixtures.data?.length ?? 0) : undefined
 
             return (
               <NavItem
@@ -109,9 +103,6 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <SportCategoryIcon sportId={sport.id} className="h-4 w-4 shrink-0 opacity-80" />
                 <span className="flex-1 truncate">{sport.name}</span>
-                {active && count !== undefined && (
-                  <span className="text-xs font-mono text-text-muted">{count}</span>
-                )}
               </NavItem>
             )
           })}

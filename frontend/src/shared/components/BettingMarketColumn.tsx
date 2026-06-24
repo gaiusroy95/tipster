@@ -19,7 +19,7 @@ export function BettingMarketColumn({
   const rowCount = childCount >= 3 ? 3 : 2
 
   return (
-    <div className={cn('flex flex-col flex-1 min-w-[88px] self-stretch', className)}>
+    <div className={cn('flex min-w-0 flex-1 flex-col self-stretch', className)}>
       <div className="mb-1.5 flex shrink-0 items-center gap-1 px-0.5">
         <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{title}</span>
         {showInfo && <InformationCircleIcon className="h-3.5 w-3.5 text-text-muted/70" aria-hidden="true" />}

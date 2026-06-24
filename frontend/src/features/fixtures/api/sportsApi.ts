@@ -11,6 +11,9 @@ import {
   pickPrimaryMarket,
 } from '@/features/fixtures/lib/mapOvertimeToFixtures'
 import { sportIdMatchesCategory } from '@/features/fixtures/lib/mapOvertimeSport'
+import {
+  filterMatchesWithDisplayableOdds,
+} from '@/features/fixtures/lib/matchOdds'
 import type {
   OvertimeLeagueGroup,
   OvertimeLiveMarketsResponse,
@@ -132,8 +135,10 @@ export async function fetchFixturesFromApi(filters?: {
     const matches = liveMarkets.map((live) =>
       mapOvertimeMarketToMatch(live, [], typeById, sportsCatalog, live, status),
     )
-    return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    return filterMatchesWithDisplayableOdds(
+      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      ),
     )
   }
 
@@ -171,13 +176,17 @@ export async function fetchFixturesFromApi(filters?: {
   }
 
   if (status === MATCH_STATUS.FINISHED) {
-    return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-      (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+    return filterMatchesWithDisplayableOdds(
+      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+        (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+      ),
     )
   }
 
-  return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-    (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+  return filterMatchesWithDisplayableOdds(
+    filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    ),
   )
 }
 

@@ -15,7 +15,6 @@ import { EmptyState } from '@/shared/components/EmptyState'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { Skeleton, SkeletonCard } from '@/shared/components/ui/Skeleton'
 import { seasonPath } from '@/core/constants/routes'
-import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard'
 import { useSeasons } from '@/features/seasons/hooks/useSeasons'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { formatDateTime } from '@/shared/utils/formatDate'
@@ -25,14 +24,21 @@ export function PublicProfilePage() {
   const authUser = useAuthStore((s) => s.user)
   const tab = useProfileTab()
   const profile = usePlayerProfile(userId ?? '')
-  const activeBets = usePlayerBets(userId ?? '', 'active')
-  const allBets = usePlayerBets(userId ?? '')
-  const historyBets = usePlayerBets(userId ?? '', 'won')
-  const lostBets = usePlayerBets(userId ?? '', 'lost')
-  const seasons = useSeasons()
-  const leaderboard = useLeaderboard()
   const isOwnProfile = authUser?.id === userId
-  const dashboard = useDashboard(isOwnProfile)
+  const profileReady = !!profile.data
+
+  const activeBets = usePlayerBets(userId ?? '', 'active', { enabled: profileReady })
+  const historyBets = usePlayerBets(userId ?? '', 'won', {
+    enabled: profileReady && tab === 'history',
+  })
+  const lostBets = usePlayerBets(userId ?? '', 'lost', {
+    enabled: profileReady && tab === 'history',
+  })
+  const allBets = usePlayerBets(userId ?? '', undefined, {
+    enabled: profileReady && tab === 'history',
+  })
+  const seasons = useSeasons({ enabled: tab === 'season' })
+  const dashboard = useDashboard(isOwnProfile && tab === 'overview')
   const { open: openEditProfile } = useEditProfileDrawer()
 
   const openBetsTotal = useMemo(
@@ -48,7 +54,7 @@ export function PublicProfilePage() {
     )
   }, [historyBets.data, lostBets.data])
 
-  if (profile.isLoading) {
+  if (profile.isPending && !profile.data) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-48 w-full rounded-xl" />
@@ -67,7 +73,7 @@ export function PublicProfilePage() {
   }
 
   const p = profile.data
-  const totalPlayers = leaderboard.data?.length ?? 3088
+  const totalPlayers = p.overallRank?.totalPlayers ?? 3088
 
   return (
     <div className="space-y-4 sm:space-y-5 min-w-0">

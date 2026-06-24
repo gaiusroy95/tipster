@@ -29,14 +29,16 @@ const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswo
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
 const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })))
 const RegisterPendingPage = lazy(() => import('@/features/auth/pages/RegisterPendingPage').then((m) => ({ default: m.RegisterPendingPage })))
-const DashboardPage = lazy(() => import('@/features/arena/pages/TipsterHubPage').then((m) => ({ default: m.TipsterHubPage })))
+import { TipsterHubPage } from '@/features/arena/pages/TipsterHubPage'
 const WalletPage = lazy(() => import('@/features/wallet/pages/WalletPage').then((m) => ({ default: m.WalletPage })))
 const MatchDetailPage = lazy(() => import('@/features/fixtures/pages/MatchDetailPage').then((m) => ({ default: m.MatchDetailPage })))
 const BetSlipPage = lazy(() => import('@/features/betting/pages/BetSlipPage').then((m) => ({ default: m.BetSlipPage })))
 const ActiveBetsPage = lazy(() => import('@/features/bets/pages/ActiveBetsPage').then((m) => ({ default: m.ActiveBetsPage })))
 const BetHistoryPage = lazy(() => import('@/features/bets/pages/BetHistoryPage').then((m) => ({ default: m.BetHistoryPage })))
 const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })))
-const PublicProfilePage = lazy(() => import('@/features/profile/pages/PublicProfilePage').then((m) => ({ default: m.PublicProfilePage })))
+const PublicProfilePage = lazy(() =>
+  import('@/features/profile/pages/PublicProfilePage').then((m) => ({ default: m.PublicProfilePage })),
+)
 const SeasonsPage = lazy(() => import('@/features/seasons/pages/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
 const SeasonDetailPage = lazy(() => import('@/features/seasons/pages/SeasonDetailPage').then((m) => ({ default: m.SeasonDetailPage })))
 const NotificationsPage = lazy(() => import('@/features/notifications/pages/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
@@ -78,7 +80,7 @@ export const router = createBrowserRouter([
       </ErrorBoundary>
     ),
     children: [
-      { path: ROUTES.HOME, element: withSuspense(DashboardPage) },
+      { path: ROUTES.HOME, element: <TipsterHubPage /> },
       { path: ROUTES.FIXTURES, element: <Navigate to={`${ROUTES.HOME}?tab=cup`} replace /> },
       { path: ROUTES.MATCH, element: withSuspense(MatchDetailPage) },
       { path: ROUTES.LEADERBOARD, element: withSuspense(LeaderboardPage) },

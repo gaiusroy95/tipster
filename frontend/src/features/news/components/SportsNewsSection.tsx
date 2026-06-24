@@ -21,7 +21,7 @@ export function SportsNewsSection({ variant = 'default' }: SportsNewsSectionProp
     surface: embedded ? 'surface' as const : 'primary' as const,
   }
 
-  if (news.isLoading) {
+  if (news.isPending && !news.data) {
     return (
       <section
         className={embedded ? 'px-4 py-4 sm:px-6' : 'mb-6'}

@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
@@ -15,6 +17,7 @@ import { ProfileRewardsWidget } from '@/features/profile/components/ProfileRewar
 import { ProfileSocialStatsGrid } from '@/features/profile/components/ProfileSocialStats'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
+import { prefetchPlayerProfile } from '@/features/profile/hooks/useProfile'
 import { rankTier } from '@/features/profile/lib/profileUtils'
 import { CollapsibleSection } from '@/shared/components/CollapsibleSection'
 import { formatCredits } from '@/shared/utils/formatCredits'
@@ -22,8 +25,19 @@ import { cn } from '@/shared/utils/cn'
 
 export function ProfileSidebarPanel() {
   const user = useAuthStore((s) => s.user)
+  const queryClient = useQueryClient()
   const dashboard = useDashboard()
   const activeBets = useBets('active')
+
+  useEffect(() => {
+    if (user?.id) {
+      prefetchPlayerProfile(queryClient, user.id)
+    }
+  }, [queryClient, user?.id])
+
+  const prefetchProfile = () => {
+    if (user?.id) prefetchPlayerProfile(queryClient, user.id)
+  }
 
   if (!user) {
     return (
@@ -92,6 +106,8 @@ export function ProfileSidebarPanel() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted">My profile</h2>
             <Link
               to={playerPath(user.id)}
+              onMouseEnter={prefetchProfile}
+              onFocus={prefetchProfile}
               className="text-xs font-semibold text-accent-secondary hover:underline"
             >
               View profile

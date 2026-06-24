@@ -29,6 +29,7 @@ export const queryKeys = {
   },
   seasons: {
     all: () => ['seasons'] as const,
+    active: () => ['seasons', 'active'] as const,
     detail: (id: string) => ['seasons', id] as const,
   },
   notifications: {

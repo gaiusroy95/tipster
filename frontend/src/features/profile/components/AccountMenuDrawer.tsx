@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   BellIcon,
   ClipboardDocumentListIcon,
@@ -13,6 +15,7 @@ import { ROUTES, playerPath } from '@/core/constants/routes'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
 import { useEditProfileDrawer } from '@/features/profile/context/EditProfileDrawerContext'
+import { prefetchPlayerProfile } from '@/features/profile/hooks/useProfile'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { RightSideDrawer } from '@/shared/components/ui/RightSideDrawer'
 import { Button } from '@/shared/components/ui/Button'
@@ -74,6 +77,13 @@ export function AccountMenuDrawer({ open, onClose }: AccountMenuDrawerProps) {
   const logout = useAuthStore((s) => s.logout)
   const setPanelOpen = useBetSlipStore((s) => s.setPanelOpen)
   const { open: openEditProfile } = useEditProfileDrawer()
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (open && user?.id) {
+      prefetchPlayerProfile(queryClient, user.id)
+    }
+  }, [open, queryClient, user?.id])
 
   if (!user) {
     return (

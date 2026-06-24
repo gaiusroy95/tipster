@@ -12,5 +12,6 @@ export function useDashboard(enabled = true) {
       return res.data.data
     },
     enabled,
+    staleTime: 60_000,
   })
 }
