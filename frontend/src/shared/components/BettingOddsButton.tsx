@@ -38,8 +38,9 @@ export function BettingOddsButton({
         type="button"
         onClick={onClick}
         disabled={isDisabled}
+        title={labelTitle ?? label}
         className={cn(
-          'flex flex-col items-center justify-center rounded-lg border px-3 py-2 min-h-[52px] min-w-[72px] transition-colors',
+          'flex w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2 min-h-[44px] transition-colors',
           selected
             ? 'border-cyan-400/60 bg-cyan-500/10 text-text-primary'
             : 'border-border-default bg-betting-btn hover:border-cyan-400/35 hover:bg-betting-btn-hover',
@@ -47,8 +48,8 @@ export function BettingOddsButton({
           className,
         )}
       >
-        <span className="text-xs text-text-muted truncate max-w-full">{label}</span>
-        <span className="font-mono font-semibold text-sm mt-0.5 text-cyan-400">{displayOdds}</span>
+        <span className="max-w-full truncate text-[11px] text-text-muted">{label}</span>
+        <span className="font-mono text-sm font-semibold text-cyan-400">{displayOdds}</span>
       </button>
     )
   }
@@ -60,7 +61,7 @@ export function BettingOddsButton({
       disabled={isDisabled}
       title={labelTitle ?? label}
       className={cn(
-        'flex h-full min-h-[40px] min-w-0 w-full items-center justify-between gap-2 overflow-hidden rounded-md border px-3 py-2 transition-colors',
+        'flex h-full min-h-[40px] min-w-0 w-full flex-col items-center justify-center gap-0.5 overflow-hidden rounded-md border px-2 py-1.5 transition-colors',
         selected
           ? 'border-cyan-400/60 bg-cyan-500/10'
           : 'border-betting-btn-border bg-betting-btn hover:border-cyan-400/35 hover:bg-betting-btn-hover',
@@ -68,10 +69,10 @@ export function BettingOddsButton({
         className,
       )}
     >
-      <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-text-primary">
+      <span className="max-w-full truncate text-center text-[11px] font-medium text-text-muted">
         {label}
       </span>
-      <span className="shrink-0 pl-1 font-mono text-sm font-semibold text-cyan-400">{displayOdds}</span>
+      <span className="shrink-0 font-mono text-sm font-semibold text-cyan-400">{displayOdds}</span>
     </button>
   )
 }

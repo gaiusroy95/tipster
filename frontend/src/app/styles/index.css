@@ -197,6 +197,15 @@
     display: none;
   }
 
+  /* Sports category slider — arrows replace scrollbar */
+  .sports-category-scroll:hover {
+    scrollbar-width: none;
+  }
+
+  .sports-category-scroll:hover::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Vertical panels (drawers, sidebars) — subtle thumb on dark surfaces */
   .scrollbar-panel {
     scrollbar-width: thin;

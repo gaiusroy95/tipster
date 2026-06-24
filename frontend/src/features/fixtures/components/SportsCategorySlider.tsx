@@ -63,7 +63,7 @@ export function SportsCategorySlider({ className }: { className?: string }) {
 
       <div
         ref={scrollRef}
-        className="horizontal-scroll-strip flex min-w-0 flex-1 gap-2 scroll-snap-x py-0.5"
+        className="sports-category-scroll horizontal-scroll-strip flex min-w-0 flex-1 gap-2 scroll-snap-x py-0.5"
         role="tablist"
         aria-label="Sport categories"
       >

@@ -23,12 +23,14 @@ export function formatSelectionLabel(
   label: string,
   handicap?: number,
   line?: number,
+  options?: { short?: boolean },
 ): string {
   if (marketType === MARKET_TYPES.HANDICAP && handicap !== undefined) {
     return formatHandicap(handicap)
   }
   if (marketType === MARKET_TYPES.OVER_UNDER && line !== undefined) {
     const isOver = label.toLowerCase().includes('over')
+    if (options?.short) return `${isOver ? 'O' : 'U'} ${line}`
     return `${isOver ? 'Over' : 'Under'} ${line}`
   }
   return label
