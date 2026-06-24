@@ -4,7 +4,7 @@ import { SiteFooter } from '@/shared/components/SiteFooter'
 import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
 
-const NO_HEADER_PATHS = [ROUTES.TERMS, ROUTES.PRIVACY] as const
+const NO_HEADER_PATHS = [ROUTES.TERMS, ROUTES.PRIVACY, ROUTES.RULES] as const
 
 export function MinimalLayout() {
   const { pathname } = useLocation()

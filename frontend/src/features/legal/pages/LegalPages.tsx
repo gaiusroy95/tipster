@@ -39,34 +39,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function RulesPage() {
-  return (
-    <ContentPage
-      title="Arena Rules"
-      description="Official competition rules for virtual betting on Tipster Arena."
-    >
-      <Section title="Virtual credits">
-        <p>
-          New accounts receive 1,000,000 virtual credits. Credits have no cash value and
-          cannot be withdrawn or transferred.
-        </p>
-      </Section>
-      <Section title="Betting limits">
-        <p>
-          Each bet must be exactly 25,000 or 100,000 credits. You may place up to three bets
-          per calendar day. Cancelling an active bet incurs a 10% penalty on the stake.
-        </p>
-      </Section>
-      <Section title="Seasons & prizes">
-        <p>
-          Seasons run on a fixed schedule. Rankings determine eligibility for offline physical
-          prizes awarded by administrators — not through the platform wallet.
-        </p>
-      </Section>
-    </ContentPage>
-  )
-}
-
 export function AboutPage() {
   return (
     <ContentPage
