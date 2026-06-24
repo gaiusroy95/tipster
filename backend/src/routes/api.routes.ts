@@ -9,6 +9,8 @@ import { validateBody } from '../middleware/validate.middleware';
 import { ApiException } from '../lib/api-exception';
 import { toUserDto } from '../auth/user.mapper';
 import {
+  changeEmailSchema,
+  changePasswordSchema,
   placeBetSchema,
   updateProfileSchema,
   updateSettingsSchema,
@@ -21,6 +23,7 @@ import { profileService } from '../services/profile.service';
 import { seasonService } from '../services/season.service';
 import { notificationService } from '../services/notification.service';
 import { settingsService } from '../services/settings.service';
+import { twoFactorService } from '../services/two-factor.service';
 import { achievementService } from '../services/achievement.service';
 import { newsService } from '../services/news.service';
 
@@ -202,17 +205,41 @@ apiRouter.patch(
   }),
 );
 
+apiRouter.post(
+  '/profile/change-password',
+  requireAuth,
+  validateBody(changePasswordSchema),
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const data = await profileService.changePassword(user.id, req.body);
+    res.json({ data });
+  }),
+);
+
+apiRouter.post(
+  '/profile/change-email',
+  requireAuth,
+  validateBody(changeEmailSchema),
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const updated = await profileService.changeEmail(user.id, req.body);
+    res.json({ data: toUserDto(updated) });
+  }),
+);
+
 apiRouter.get(
   '/settings',
   requireAuth,
   asyncHandler(async (req, res) => {
     const user = (req as AuthenticatedRequest).user;
     const settings = await settingsService.getOrCreate(user.id);
+    const twoFactor = await twoFactorService.getStatus(user.id);
     res.json({
       data: {
         emailNotifications: settings.emailNotifications,
         pushNotifications: settings.pushNotifications,
         showProfilePublic: settings.showProfilePublic,
+        ...twoFactor,
       },
     });
   }),

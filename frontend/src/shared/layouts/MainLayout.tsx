@@ -8,6 +8,7 @@ import {
   BellIcon,
   ChartBarIcon,
   Bars3Icon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
 import { ROUTES } from '@/core/constants/routes'
 import { cn } from '@/shared/utils/cn'
@@ -50,6 +51,12 @@ const topNav = [
     icon: TrophyIcon,
     match: (pathname: string) =>
       pathname.startsWith('/leaderboard') || pathname.startsWith('/players'),
+  },
+  {
+    to: ROUTES.FORUM,
+    label: 'Forum',
+    icon: ChatBubbleLeftRightIcon,
+    match: (pathname: string) => pathname.startsWith('/forum'),
   },
   {
     to: ROUTES.WALLET,

@@ -3,6 +3,7 @@ import { asyncHandler } from '../middleware/error.middleware';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.middleware';
 import { validateBody, validateQuery } from '../middleware/validate.middleware';
 import { getClientIp } from '../lib/client-ip';
+import { getCountryFromRequest } from '../lib/country-from-ip';
 import {
   checkEmailSchema,
   checkUsernameSchema,
@@ -42,7 +43,11 @@ authRouter.post(
   '/register',
   validateBody(registerSchema),
   asyncHandler(async (req, res) => {
-    const result = await authService.register(req.body, getClientIp(req));
+    const result = await authService.register(
+      req.body,
+      getClientIp(req),
+      getCountryFromRequest(req),
+    );
     res.status(201).json({ data: result });
   }),
 );

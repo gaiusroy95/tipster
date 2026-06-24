@@ -5,6 +5,8 @@ import { validateBody } from '../middleware/validate.middleware';
 import { oauthExchangeSchema, googleCredentialSchema } from '../schemas/oauth.schemas';
 import { oauthService } from '../services/oauth.service';
 import { ApiException } from '../lib/api-exception';
+import { getClientIp } from '../lib/client-ip';
+import { getCountryFromRequest } from '../lib/country-from-ip';
 
 export const oauthRouter = Router();
 
@@ -46,7 +48,13 @@ oauthRouter.post(
   '/google/credential',
   validateBody(googleCredentialSchema),
   asyncHandler(async (req, res) => {
-    const result = await oauthService.completeGoogleWithCredential(req.body.credential);
+    const clientIp = getClientIp(req);
+    const signupCountry = getCountryFromRequest(req);
+    const result = await oauthService.completeGoogleWithCredential(
+      req.body.credential,
+      clientIp,
+      signupCountry,
+    );
     res.json({ data: result });
   }),
 );
@@ -59,6 +67,8 @@ oauthRouter.post(
       req.body.code,
       req.body.state,
       req.body.redirectUri,
+      getClientIp(req),
+      getCountryFromRequest(req),
     );
     res.json({ data: result });
   }),
@@ -94,6 +104,8 @@ oauthRouter.post(
       req.body.code,
       req.body.state,
       req.body.redirectUri,
+      getClientIp(req),
+      getCountryFromRequest(req),
     );
     res.json({ data: result });
   }),

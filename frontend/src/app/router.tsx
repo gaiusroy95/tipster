@@ -49,6 +49,8 @@ const PrivacyPage = lazy(() => import('@/features/legal/pages/LegalPages').then(
 const RulesPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.RulesPage })))
 const AboutPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.AboutPage })))
 const HelpPage = lazy(() => import('@/features/legal/pages/LegalPages').then((m) => ({ default: m.HelpPage })))
+const ForumPage = lazy(() => import('@/features/forum/pages/ForumPage').then((m) => ({ default: m.ForumPage })))
+const ForumPostPage = lazy(() => import('@/features/forum/pages/ForumPostPage').then((m) => ({ default: m.ForumPostPage })))
 const NotFoundPage = lazy(() => import('@/shared/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
 export const router = createBrowserRouter([
@@ -84,6 +86,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.FIXTURES, element: <Navigate to={`${ROUTES.HOME}?tab=cup`} replace /> },
       { path: ROUTES.MATCH, element: withSuspense(MatchDetailPage) },
       { path: ROUTES.LEADERBOARD, element: withSuspense(LeaderboardPage) },
+      { path: ROUTES.FORUM, element: withSuspense(ForumPage) },
+      { path: ROUTES.FORUM_POST, element: withSuspense(ForumPostPage) },
       { path: ROUTES.PLAYER, element: withSuspense(PublicProfilePage) },
       { path: ROUTES.SEASONS, element: withSuspense(SeasonsPage) },
       { path: ROUTES.SEASON, element: withSuspense(SeasonDetailPage) },

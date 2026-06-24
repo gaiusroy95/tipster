@@ -1,0 +1,2 @@
+export const FORUM_VIEW_MILESTONE = 1000;
+export const FORUM_VIEW_REWARD_AMOUNT = 2000;

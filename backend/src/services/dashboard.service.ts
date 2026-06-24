@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { toWalletTransactionDto } from '../mappers/wallet.mapper';
 import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
+import { forumService } from './forum.service';
 
 export const dashboardService = {
   async getDashboard(userId: string) {
@@ -41,6 +42,8 @@ export const dashboardService = {
       form = participant?.form.slice(0, 5) ?? [];
     }
 
+    const forumStats = await forumService.getUserForumStats(userId);
+
     return {
       balance: user.balance,
       rank: user.rank,
@@ -48,6 +51,7 @@ export const dashboardService = {
       todayProfitLoss,
       recentActivity: recentTransactions.map(toWalletTransactionDto),
       form,
+      ...forumStats,
     };
   },
 };

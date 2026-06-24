@@ -345,6 +345,9 @@ const settings: Record<string, UserSettings> = {
     emailNotifications: true,
     pushNotifications: false,
     showProfilePublic: true,
+    twoFactorEnabled: false,
+    twoFactorMethod: null,
+    phoneNumberMasked: null,
   },
 }
 
@@ -429,6 +432,9 @@ export const mockDb = {
       emailNotifications: true,
       pushNotifications: false,
       showProfilePublic: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: null,
+      phoneNumberMasked: null,
     }
 
     return user

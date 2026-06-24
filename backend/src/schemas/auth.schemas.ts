@@ -22,6 +22,7 @@ export const registerSchema = z.object({
 export const loginSchema = z.object({
   email: emailField,
   password: loginPasswordField,
+  trustToken: z.string().optional(),
 });
 
 export const forgotPasswordSchema = z.object({

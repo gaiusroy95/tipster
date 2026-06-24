@@ -74,14 +74,13 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
             <div
               key={provider.id}
               className={cn(
-                'rounded-xl border px-4 py-3.5 space-y-3',
+                'flex flex-col gap-3 rounded-xl border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4',
                 linked
                   ? 'border-accent-secondary/25 bg-accent-secondary/5'
                   : 'border-border-default/70 bg-bg-elevated/40',
-                'sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-4',
               )}
             >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
                 <div
                   className={cn(
                     'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm',
@@ -92,7 +91,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                 >
                   <SocialProviderIcon provider={provider.id} className="h-6 w-6" />
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 overflow-hidden">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-text-primary">{provider.name}</p>
                     {linked ? (
@@ -101,7 +100,10 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                       <Badge variant="muted" className="text-[10px] px-2 py-0">Not linked</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-text-muted mt-0.5 break-all sm:break-words leading-relaxed">
+                  <p
+                    className="mt-0.5 truncate text-sm text-text-muted"
+                    title={linked ? statusLabel : undefined}
+                  >
                     {statusLabel}
                   </p>
                 </div>

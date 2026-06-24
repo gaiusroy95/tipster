@@ -37,6 +37,7 @@ export const usersService = {
     passwordHash: string;
     emailVerifiedAt?: Date | null;
     registrationIp?: string | null;
+    country?: string | null;
   }): Promise<User> {
     const username = normalizeUsername(data.username);
 
@@ -50,6 +51,7 @@ export const usersService = {
           emailVerifiedAt: data.emailVerifiedAt ?? null,
           registrationIp: data.registrationIp ?? null,
           verifiedIp: null,
+          country: data.country ?? null,
           balance: INITIAL_BALANCE,
           rank: 0,
           authProviders: [AUTH_PROVIDER_EMAIL],

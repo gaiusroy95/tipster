@@ -6,7 +6,8 @@ import { Input } from '@/shared/components/ui/Input'
 import { PasswordInput } from '@/shared/components/ui/PasswordInput'
 import { Label, FieldError } from '@/shared/components/ui/Label'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
-import { PROFILE_COUNTRIES } from '@/features/profile/constants/countries'
+import { PROFILE_COUNTRIES, countryName } from '@/features/profile/constants/countries'
+import { countryFlagEmoji } from '@/features/profile/lib/countryFlag'
 import { useEditProfileDrawer } from '@/features/profile/context/EditProfileDrawerContext'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import {
@@ -18,9 +19,17 @@ import { useToast } from '@/shared/components/ui/Toast'
 import { ApiError } from '@/core/types/api'
 import { cn } from '@/shared/utils/cn'
 import type { SignatureMode } from '@/mocks/data/types'
+import {
+  PASSWORD_MIN_LENGTH,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from '@/features/auth/schemas/authSchemas'
 
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024
 const SIGNATURE_POST_MIN = 30
+const USERNAME_PATTERN = /^[a-z0-9_]+$/
+const PASSWORD_LETTER = /[A-Za-z]/
+const PASSWORD_DIGIT = /\d/
 
 interface FormState {
   username: string
@@ -38,7 +47,7 @@ function buildFormState(user: NonNullable<ReturnType<typeof useAuthStore.getStat
   return {
     username: user.username,
     email: user.email,
-    country: user.country ?? 'MY',
+    country: user.country ?? '',
     signatureMode: user.signatureMode ?? 'text',
     signature: user.signature ?? '',
     signatureLink: user.signatureLink ?? '',
@@ -61,6 +70,7 @@ export function EditProfileDrawer() {
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>()
   const [avatarRemoved, setAvatarRemoved] = useState(false)
   const [emailPanelOpen, setEmailPanelOpen] = useState(false)
+  const [countryPanelOpen, setCountryPanelOpen] = useState(false)
   const [newEmail, setNewEmail] = useState('')
   const [emailPassword, setEmailPassword] = useState('')
   const [errors, setErrors] = useState<Partial<Record<keyof FormState | 'newEmail' | 'emailPassword', string>>>({})
@@ -75,6 +85,7 @@ export function EditProfileDrawer() {
     setAvatarPreview(user.avatarUrl)
     setAvatarRemoved(false)
     setEmailPanelOpen(false)
+    setCountryPanelOpen(false)
     setNewEmail('')
     setEmailPassword('')
     setErrors({})
@@ -122,9 +133,23 @@ export function EditProfileDrawer() {
   const validate = (): boolean => {
     const next: typeof errors = {}
     if (!form.username.trim()) next.username = 'Username is required'
+    else {
+      const username = form.username.trim().toLowerCase()
+      if (username.length < USERNAME_MIN_LENGTH) {
+        next.username = `Username must be at least ${USERNAME_MIN_LENGTH} characters`
+      } else if (username.length > USERNAME_MAX_LENGTH) {
+        next.username = `Username must be at most ${USERNAME_MAX_LENGTH} characters`
+      } else if (!USERNAME_PATTERN.test(username)) {
+        next.username = 'Username can only contain lowercase letters, numbers, and underscores'
+      }
+    }
     if (form.newPassword || form.verifyPassword || form.currentPassword) {
       if (!form.currentPassword) next.currentPassword = 'Enter your current password'
-      if (form.newPassword.length < 6) next.newPassword = 'At least 6 characters'
+      if (form.newPassword.length < PASSWORD_MIN_LENGTH) {
+        next.newPassword = `At least ${PASSWORD_MIN_LENGTH} characters`
+      } else if (!PASSWORD_LETTER.test(form.newPassword) || !PASSWORD_DIGIT.test(form.newPassword)) {
+        next.newPassword = 'Include at least one letter and one number'
+      }
       if (form.newPassword !== form.verifyPassword) next.verifyPassword = 'Passwords do not match'
     }
     if (emailPanelOpen) {
@@ -153,9 +178,10 @@ export function EditProfileDrawer() {
       }
 
       const avatarChanged = avatarRemoved || (avatarPreview !== user.avatarUrl)
+      const countryChanged = form.country !== (user.country ?? '')
       await updateProfile.mutateAsync({
-        username: form.username.trim(),
-        country: form.country,
+        username: form.username.trim().toLowerCase(),
+        ...(countryChanged ? { country: form.country || undefined } : {}),
         signatureMode: form.signatureMode,
         ...(canUseSignature
           ? { signature: form.signature.trim(), signatureLink: form.signatureLink.trim() }
@@ -317,24 +343,60 @@ export function EditProfileDrawer() {
           </div>
 
           <div>
-            <Label htmlFor="edit-country">Country</Label>
-            <div className="relative">
-              <select
-                id="edit-country"
-                value={form.country}
-                onChange={(e) => setField('country', e.target.value)}
-                className="h-11 w-full appearance-none rounded-lg border border-border-default bg-bg-elevated px-4 pr-10 text-base text-text-primary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30"
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <Label htmlFor="edit-country" className="mb-0">
+                Country
+              </Label>
+              <button
+                type="button"
+                onClick={() => setCountryPanelOpen((v) => !v)}
+                className="text-xs font-semibold text-accent-secondary hover:underline shrink-0"
               >
-                {PROFILE_COUNTRIES.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
-                ▾
-              </span>
+                {countryPanelOpen ? 'Cancel' : 'Change country'}
+              </button>
             </div>
+
+            {countryPanelOpen ? (
+              <div className="relative">
+                <select
+                  id="edit-country"
+                  value={form.country}
+                  onChange={(e) => setField('country', e.target.value)}
+                  className="h-11 w-full appearance-none rounded-lg border border-border-default bg-bg-elevated px-4 pr-10 text-base text-text-primary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/30"
+                >
+                  {!form.country && (
+                    <option value="" disabled>
+                      Select a country
+                    </option>
+                  )}
+                  {countrySelectOptions(form.country).map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
+                  ▾
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2.5 rounded-lg border border-border-default bg-bg-elevated/60 px-4 py-3 min-h-[44px]">
+                {countryFlagEmoji(form.country) && (
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    {countryFlagEmoji(form.country)}
+                  </span>
+                )}
+                <span className="text-base text-text-primary">
+                  {form.country ? countryName(form.country) : 'Not set'}
+                </span>
+              </div>
+            )}
+
+            <p className="text-xs text-text-muted mt-2 leading-relaxed">
+              {form.country
+                ? 'Set automatically from your location when you signed up. You can change it anytime.'
+                : 'Your country was not detected at signup. Use Change country to set it.'}
+            </p>
           </div>
         </FieldGroup>
 
@@ -426,7 +488,7 @@ export function EditProfileDrawer() {
               id="edit-new-password"
               value={form.newPassword}
               onChange={(e) => setField('newPassword', e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters with a letter and number"
               autoComplete="new-password"
             />
             <FieldError message={errors.newPassword} />
@@ -457,4 +519,10 @@ function FieldGroup({ title, children }: { title: string; children: ReactNode })
       <div className="space-y-4">{children}</div>
     </section>
   )
+}
+
+function countrySelectOptions(currentCode: string) {
+  const known = PROFILE_COUNTRIES.some((c) => c.code === currentCode)
+  if (!currentCode || known) return PROFILE_COUNTRIES
+  return [{ code: currentCode, name: countryName(currentCode) }, ...PROFILE_COUNTRIES]
 }

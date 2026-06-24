@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/shared/components/ui/Button'
 import { Label, FieldError } from '@/shared/components/ui/Label'
 import { Modal } from '@/shared/components/ui/Modal'
@@ -37,6 +37,7 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   const balance = useAuthStore((s) => s.user?.balance ?? 0)
   const placeBet = usePlaceBet()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { data: dailyLimit } = useDailyBetLimit()
   const { toast } = useToast()
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -74,6 +75,7 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
     setConfirmOpen(false)
     setPanelOpen(false)
     toast('Bet placed successfully!', 'success')
+    navigate(ROUTES.BETS_ACTIVE)
   }
 
   const handlePlaceBet = async () => {

@@ -39,6 +39,17 @@ export const queryKeys = {
   settings: {
     all: () => ['settings'] as const,
   },
+  forum: {
+    all: () => ['forum'] as const,
+    categories: () => ['forum', 'categories'] as const,
+    tags: () => ['forum', 'tags'] as const,
+    list: (limit?: number, offset?: number, category?: string, tag?: string) =>
+      ['forum', 'list', limit, offset, category, tag] as const,
+    detail: (slug: string) => ['forum', 'detail', slug] as const,
+    comments: (postId: string) => ['forum', 'comments', postId] as const,
+    drafts: () => ['forum', 'drafts'] as const,
+    scheduled: () => ['forum', 'scheduled'] as const,
+  },
   achievements: {
     all: () => ['achievements'] as const,
   },

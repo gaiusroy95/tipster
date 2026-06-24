@@ -2,6 +2,7 @@ import type { User } from '@prisma/client';
 import { prisma, withDbRetry } from '../lib/prisma';
 import { ApiException } from '../lib/api-exception';
 import {
+  AUTH_PROVIDER_FACEBOOK,
   AUTH_PROVIDER_GOOGLE,
   INITIAL_BALANCE,
   type OAuthProvider,
@@ -9,19 +10,31 @@ import {
 } from '../auth/auth.constants';
 import { toUserDto, type UserDto } from '../auth/user.mapper';
 import { signToken } from '../middleware/auth.middleware';
-import { googleOAuthService, type GoogleProfile } from './google-oauth.service';
+import { googleOAuthService } from './google-oauth.service';
+import { facebookOAuthService } from './facebook-oauth.service';
+import type { SocialOAuthProfile } from './social-oauth.types';
 import { oauthStateService, type OAuthMode } from './oauth-state.service';
 import { normalizeGooglePictureUrl } from '../lib/google-avatar';
 import { leaderboardService } from './leaderboard.service';
 
-function applyGoogleAvatar(
+function applySocialAvatarIfEmpty(
   updateData: { authProviders: string[]; avatarUrl?: string; emailVerifiedAt?: Date },
   provider: string,
-  picture?: string,
+  picture: string | undefined,
+  currentAvatarUrl: string | null | undefined,
 ): void {
-  if (provider === AUTH_PROVIDER_GOOGLE && picture) {
+  if (!picture || currentAvatarUrl?.trim()) return;
+  if (provider === AUTH_PROVIDER_GOOGLE) {
     updateData.avatarUrl = normalizeGooglePictureUrl(picture) ?? picture;
+    return;
   }
+  if (provider === AUTH_PROVIDER_FACEBOOK) {
+    updateData.avatarUrl = picture;
+  }
+}
+
+function isSocialEmailVerified(provider: string): boolean {
+  return provider === AUTH_PROVIDER_GOOGLE || provider === AUTH_PROVIDER_FACEBOOK;
 }
 
 const ALL_SOCIAL_PROVIDERS = ['google', 'facebook', 'apple'] as const;
@@ -62,35 +75,44 @@ function normalizeRedirectUri(uri: string): string {
   }
 }
 
-const googleProfileByState = new Map<string, { profile: GoogleProfile; expiresAt: number }>();
+const profileByState = new Map<string, { profile: SocialOAuthProfile; expiresAt: number }>();
 
-function cacheGoogleProfile(state: string, profile: GoogleProfile): void {
-  googleProfileByState.set(state, {
+function cacheOAuthProfile(state: string, profile: SocialOAuthProfile): void {
+  profileByState.set(state, {
     profile,
     expiresAt: Date.now() + 10 * 60 * 1000,
   });
 }
 
-function getCachedGoogleProfile(state: string): GoogleProfile | null {
-  const cached = googleProfileByState.get(state);
+function getCachedOAuthProfile(state: string): SocialOAuthProfile | null {
+  const cached = profileByState.get(state);
   if (!cached) return null;
   if (cached.expiresAt < Date.now()) {
-    googleProfileByState.delete(state);
+    profileByState.delete(state);
     return null;
   }
   return cached.profile;
 }
 
-function clearGoogleProfileCache(state: string): void {
-  googleProfileByState.delete(state);
+function clearOAuthProfileCache(state: string): void {
+  profileByState.delete(state);
 }
 
-async function resolveGoogleProfile(code: string, redirectUri: string, state: string) {
-  const cached = getCachedGoogleProfile(state);
+async function resolveOAuthProfile(
+  provider: OAuthProvider,
+  code: string,
+  redirectUri: string,
+  state: string,
+): Promise<SocialOAuthProfile> {
+  const cached = getCachedOAuthProfile(state);
   if (cached) return cached;
 
-  const profile = await googleOAuthService.exchangeCode(code, redirectUri);
-  cacheGoogleProfile(state, profile);
+  const profile =
+    provider === 'google'
+      ? await googleOAuthService.exchangeCode(code, redirectUri)
+      : await facebookOAuthService.exchangeCode(code, redirectUri);
+
+  cacheOAuthProfile(state, profile);
   return profile;
 }
 
@@ -115,6 +137,9 @@ export const oauthService = {
     if (provider === 'google') {
       return googleOAuthService.buildAuthorizationUrl(state, normalizedRedirectUri);
     }
+    if (provider === 'facebook') {
+      return facebookOAuthService.buildAuthorizationUrl(state, normalizedRedirectUri);
+    }
     throw new ApiException('INVALID_PROVIDER', 'Unsupported social provider', 400);
   },
 
@@ -123,12 +148,21 @@ export const oauthService = {
     code: string,
     state: string,
     redirectUri: string,
+    clientIp: string,
+    signupCountry: string | null,
   ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
     const oauthState = await oauthStateService.validate(state);
     if (!oauthState) {
       throw new ApiException('INVALID_OAUTH', 'OAuth state expired or invalid', 400);
     }
-    return this.completeOAuth(oauthState.provider, code, state, redirectUri);
+    return this.completeOAuth(
+      oauthState.provider,
+      code,
+      state,
+      redirectUri,
+      clientIp,
+      signupCountry,
+    );
   },
 
   async linkAccountFromState(
@@ -149,6 +183,8 @@ export const oauthService = {
     code: string,
     state: string,
     redirectUri: string,
+    clientIp: string,
+    signupCountry: string | null,
   ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
     const oauthState = await oauthStateService.validate(state);
     if (!oauthState || oauthState.provider !== provider) {
@@ -161,27 +197,30 @@ export const oauthService = {
       throw new ApiException('INVALID_OAUTH', 'redirectUri mismatch', 400);
     }
 
-    const profile = await resolveGoogleProfile(code, oauthState.redirectUri, state);
+    const profile = await resolveOAuthProfile(provider, code, oauthState.redirectUri, state);
 
-    const result = await this.signInWithGoogleProfile(profile);
+    const result = await this.signInWithSocialProfile(provider, profile, clientIp, signupCountry);
 
     await oauthStateService.delete(state);
-    clearGoogleProfileCache(state);
+    clearOAuthProfileCache(state);
     return result;
   },
 
   async completeGoogleWithCredential(
     credential: string,
+    clientIp: string,
+    signupCountry: string | null,
   ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
     const profile = await googleOAuthService.verifyIdTokenCredential(credential);
-    return this.signInWithGoogleProfile(profile);
+    return this.signInWithSocialProfile(AUTH_PROVIDER_GOOGLE, profile, clientIp, signupCountry);
   },
 
-  async signInWithGoogleProfile(
-    profile: GoogleProfile,
+  async signInWithSocialProfile(
+    provider: OAuthProvider,
+    profile: SocialOAuthProfile,
+    clientIp: string,
+    signupCountry: string | null,
   ): Promise<{ user: UserDto; token: string; isNewUser: boolean }> {
-    const provider = AUTH_PROVIDER_GOOGLE as OAuthProvider;
-
     return withDbRetry(async () => {
       const linkedAccount = await prisma.socialAccount.findUnique({
         where: {
@@ -223,12 +262,17 @@ export const oauthService = {
         };
       }
 
-      const user = await this.createGoogleUser({
-        sub: profile.sub,
-        email: profile.email,
-        name: profile.name,
-        picture: profile.picture,
-      });
+      const user = await this.createSocialUser(
+        provider,
+        {
+          sub: profile.sub,
+          email: profile.email,
+          name: profile.name,
+          picture: profile.picture,
+        },
+        clientIp,
+        signupCountry,
+      );
       return {
         user: toUserDto(user),
         token: signToken(user.id),
@@ -252,7 +296,7 @@ export const oauthService = {
       throw new ApiException('INVALID_OAUTH', 'redirectUri mismatch', 400);
     }
 
-    const profile = await resolveGoogleProfile(code, oauthState.redirectUri, state);
+    const profile = await resolveOAuthProfile(provider, code, oauthState.redirectUri, state);
 
     const result = await withDbRetry(async () => {
       const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -295,7 +339,7 @@ export const oauthService = {
     });
 
     await oauthStateService.delete(state);
-    clearGoogleProfileCache(state);
+    clearOAuthProfileCache(state);
     return result;
   },
 
@@ -358,13 +402,22 @@ export const oauthService = {
     };
   },
 
-  async createGoogleUser(profile: {
-    sub: string;
-    email: string;
-    name: string;
-    picture?: string;
-  }): Promise<User> {
+  async createSocialUser(
+    provider: OAuthProvider,
+    profile: {
+      sub: string;
+      email: string;
+      name: string;
+      picture?: string;
+    },
+    clientIp: string,
+    signupCountry: string | null,
+  ): Promise<User> {
     const username = await uniqueUsername(profile.name);
+    const avatarUrl =
+      provider === AUTH_PROVIDER_GOOGLE
+        ? normalizeGooglePictureUrl(profile.picture) ?? null
+        : profile.picture ?? null;
 
     const user = await withDbRetry(() =>
       prisma.$transaction(async (tx) => {
@@ -373,20 +426,22 @@ export const oauthService = {
             email: profile.email,
             username,
             displayName: profile.name,
-            avatarUrl: normalizeGooglePictureUrl(profile.picture) ?? null,
+            avatarUrl,
             passwordHash: null,
             emailVerifiedAt: new Date(),
+            registrationIp: clientIp,
+            country: signupCountry,
             balance: INITIAL_BALANCE,
             rank: 0,
-            authProviders: [AUTH_PROVIDER_GOOGLE],
-            primaryAuthProvider: AUTH_PROVIDER_GOOGLE,
+            authProviders: [provider],
+            primaryAuthProvider: provider,
           },
         });
 
         await tx.socialAccount.create({
           data: {
             userId: user.id,
-            provider: AUTH_PROVIDER_GOOGLE,
+            provider,
             providerAccountId: profile.sub,
             email: profile.email,
           },
@@ -445,8 +500,8 @@ export const oauthService = {
       } = {
         authProviders: mergeAuthProviders(user.authProviders, provider),
       };
-      applyGoogleAvatar(updateData, provider, picture);
-      if (!user.emailVerifiedAt && provider === AUTH_PROVIDER_GOOGLE) {
+      applySocialAvatarIfEmpty(updateData, provider, picture, user.avatarUrl);
+      if (!user.emailVerifiedAt && isSocialEmailVerified(provider)) {
         updateData.emailVerifiedAt = new Date();
       }
       return prisma.user.update({
@@ -467,8 +522,8 @@ export const oauthService = {
     const updateData: { authProviders: string[]; avatarUrl?: string; emailVerifiedAt?: Date } = {
       authProviders: mergeAuthProviders(user.authProviders, provider),
     };
-    applyGoogleAvatar(updateData, provider, picture);
-    if (!user.emailVerifiedAt && provider === AUTH_PROVIDER_GOOGLE) {
+    applySocialAvatarIfEmpty(updateData, provider, picture, user.avatarUrl);
+    if (!user.emailVerifiedAt && isSocialEmailVerified(provider)) {
       updateData.emailVerifiedAt = new Date();
     }
 
@@ -482,13 +537,12 @@ export const oauthService = {
     user: User,
     provider: string,
     email: string,
-    picture?: string,
+    _picture?: string,
   ): Promise<User> {
-    const updateData: { authProviders: string[]; avatarUrl?: string; emailVerifiedAt?: Date } = {
+    const updateData: { authProviders: string[]; emailVerifiedAt?: Date } = {
       authProviders: mergeAuthProviders(user.authProviders, provider),
     };
-    applyGoogleAvatar(updateData, provider, picture);
-    if (!user.emailVerifiedAt && provider === AUTH_PROVIDER_GOOGLE) {
+    if (!user.emailVerifiedAt && isSocialEmailVerified(provider)) {
       updateData.emailVerifiedAt = new Date();
     }
 

@@ -25,6 +25,7 @@ import {
 import { getFallbackSportsNewsFeed } from '@/features/news/api/fallbackNews'
 import type { SportsNewsSport } from '@/features/news/types/news'
 import { getUserAchievementProgress, syncUserAchievements } from '@/mocks/data/achievementService'
+import { getMockForumStats, mockForum } from '@/mocks/data/mockForum'
 
 const tokens: Record<string, string> = {}
 
@@ -91,6 +92,56 @@ function findUserBySocialEmail(email: string) {
   return mockDb.demoUsers.find((u) => u.email === email)
 }
 
+function completeMockOAuthSignIn(provider: SocialAuthProvider) {
+  const profile = resolveMockProfile(provider)
+  let user = findUserBySocialEmail(profile.email)
+  let isNewUser = false
+
+  if (!user) {
+    user = createSocialUser(provider, profile, mockDb)
+    isNewUser = true
+    syncUserAchievements(mockDb, user.id)
+  } else {
+    user.authProviders = mergeAuthProviders(user.authProviders, provider)
+    const links = mockDb.getSocialLinks(user.id)
+    if (!links.some((l) => l.provider === provider)) {
+      mockDb.setSocialLinks(user.id, [
+        ...links,
+        { provider, email: profile.email, linkedAt: new Date().toISOString() },
+      ])
+    }
+  }
+
+  return { user, token: issueToken(user.id), isNewUser }
+}
+
+function completeMockOAuthLink(
+  userId: string,
+  provider: SocialAuthProvider,
+): { user: User } | ReturnType<typeof error> {
+  const user = mockDb.getUser(userId)
+  if (!user) return error('NOT_FOUND', 'User not found', 404)
+
+  const profile = resolveMockProfile(provider)
+  const existingLinks = mockDb.getSocialLinks(userId)
+  if (existingLinks.some((l) => l.provider === provider)) {
+    return error('ALREADY_LINKED', 'This provider is already connected', 409)
+  }
+
+  const emailOwner = findUserBySocialEmail(profile.email)
+  if (emailOwner && emailOwner.id !== userId) {
+    return error('EMAIL_IN_USE', 'This social account is linked to another user', 409)
+  }
+
+  user.authProviders = mergeAuthProviders(user.authProviders, provider)
+  mockDb.setSocialLinks(userId, [
+    ...existingLinks,
+    { provider, email: profile.email, linkedAt: new Date().toISOString() },
+  ])
+  syncUserAchievements(mockDb, userId)
+  return { user }
+}
+
 export const handlers = [
   http.get(p('/auth/oauth/:provider/url'), ({ params, request }) => {
     const provider = params.provider as string
@@ -119,6 +170,42 @@ export const handlers = [
     return json({ url: callbackUrl })
   }),
 
+  http.post(p('/auth/oauth/complete'), async ({ request }) => {
+    const body = (await request.json()) as { code?: string; state?: string }
+    if (!body.code?.startsWith('mock-') || !body.state) {
+      return error('INVALID_OAUTH', 'Invalid OAuth code or state', 400)
+    }
+
+    const oauthState = consumeOAuthState(body.state)
+    if (!oauthState) {
+      return error('INVALID_OAUTH', 'OAuth state expired or invalid', 400)
+    }
+    if (oauthState.mode === 'link') {
+      return error('INVALID_OAUTH', 'Use link endpoint for account linking', 400)
+    }
+
+    return json(completeMockOAuthSignIn(oauthState.provider))
+  }),
+
+  http.post(p('/auth/oauth/complete/link'), async ({ request }) => {
+    const userId = getUserId(request)
+    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+
+    const body = (await request.json()) as { code?: string; state?: string }
+    if (!body.code?.startsWith('mock-') || !body.state) {
+      return error('INVALID_OAUTH', 'Invalid OAuth code or state', 400)
+    }
+
+    const oauthState = consumeOAuthState(body.state)
+    if (!oauthState || oauthState.mode !== 'link' || oauthState.userId !== userId) {
+      return error('INVALID_OAUTH', 'OAuth state expired or invalid', 400)
+    }
+
+    const result = completeMockOAuthLink(userId, oauthState.provider)
+    if (!('user' in result)) return result
+    return json(result)
+  }),
+
   http.post(p('/auth/oauth/:provider'), async ({ params, request }) => {
     const provider = params.provider as string
     if (!isSocialProvider(provider)) {
@@ -138,27 +225,7 @@ export const handlers = [
       return error('INVALID_OAUTH', 'Use link endpoint for account linking', 400)
     }
 
-    const profile = resolveMockProfile(provider)
-    let user = findUserBySocialEmail(profile.email)
-    let isNewUser = false
-
-    if (!user) {
-      user = createSocialUser(provider, profile, mockDb)
-      isNewUser = true
-      syncUserAchievements(mockDb, user.id)
-    } else {
-      user.authProviders = mergeAuthProviders(user.authProviders, provider)
-      const links = mockDb.getSocialLinks(user.id)
-      if (!links.some((l) => l.provider === provider)) {
-        mockDb.setSocialLinks(user.id, [
-          ...links,
-          { provider, email: profile.email, linkedAt: new Date().toISOString() },
-        ])
-      }
-    }
-
-    const token = issueToken(user.id)
-    return json({ user, token, isNewUser })
+    return json(completeMockOAuthSignIn(provider))
   }),
 
   http.post(p('/auth/oauth/:provider/link'), async ({ params, request }) => {
@@ -180,29 +247,9 @@ export const handlers = [
       return error('INVALID_OAUTH', 'OAuth state expired or invalid', 400)
     }
 
-    const user = mockDb.getUser(userId)
-    if (!user) return error('NOT_FOUND', 'User not found', 404)
-
-    const profile = resolveMockProfile(provider)
-    const existingLinks = mockDb.getSocialLinks(userId)
-    if (existingLinks.some((l) => l.provider === provider)) {
-      return error('ALREADY_LINKED', 'This provider is already connected', 409)
-    }
-
-    const emailOwner = findUserBySocialEmail(profile.email)
-    if (emailOwner && emailOwner.id !== userId) {
-      return error('EMAIL_IN_USE', 'This social account is linked to another user', 409)
-    }
-
-    user.authProviders = mergeAuthProviders(user.authProviders, provider)
-    mockDb.setSocialLinks(userId, [
-      ...existingLinks,
-      { provider, email: profile.email, linkedAt: new Date().toISOString() },
-    ])
-
-    syncUserAchievements(mockDb, userId)
-
-    return json({ user })
+    const result = completeMockOAuthLink(userId, provider)
+    if (!('user' in result)) return result
+    return json(result)
   }),
 
   http.delete(p('/auth/oauth/:provider/unlink'), ({ params, request }) => {
@@ -287,7 +334,113 @@ export const handlers = [
       todayProfitLoss: 0,
       recentActivity: mockDb.getTransactions().filter((t) => t.userId === userId).slice(0, 5),
       form: entry?.form ?? [],
+      ...getMockForumStats(userId),
     })
+  }),
+
+  http.get(p('/forum/categories'), () => json(mockForum.categories())),
+
+  http.get(p('/forum/tags'), () => json(mockForum.tags())),
+
+  http.get(p('/forum/posts/me/drafts'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    return json(mockForum.myDrafts(user.id))
+  }),
+
+  http.get(p('/forum/posts/me/scheduled'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    return json(mockForum.myScheduled(user.id))
+  }),
+
+  http.get(p('/forum/posts'), ({ request }) => {
+    const url = new URL(request.url)
+    const limit = Number(url.searchParams.get('limit') ?? 20)
+    const offset = Number(url.searchParams.get('offset') ?? 0)
+    const category = url.searchParams.get('category') ?? undefined
+    const tag = url.searchParams.get('tag') ?? undefined
+    return json(mockForum.list(limit, offset, category, tag))
+  }),
+
+  http.get(p('/forum/posts/:slug'), ({ params }) => {
+    const post = mockForum.getBySlug(String(params.slug))
+    if (!post) return error('NOT_FOUND', 'Post not found', 404)
+    return json(post)
+  }),
+
+  http.post(p('/forum/posts'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as import('@/features/forum/types/forum').CreateForumPostPayload
+    if (!body.title?.trim() || !body.body?.trim()) {
+      return error('INVALID_REQUEST', 'Title and body are required', 400)
+    }
+    const post = mockForum.create(user, {
+      ...body,
+      title: body.title.trim(),
+      body: body.body.trim(),
+    })
+    return json(post, 201)
+  }),
+
+  http.patch(p('/forum/posts/:id'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as Partial<import('@/features/forum/types/forum').CreateForumPostPayload>
+    const post = mockForum.update(user, String(params.id), body)
+    if (!post) return error('NOT_FOUND', 'Post not found', 404)
+    return json(post)
+  }),
+
+  http.delete(p('/forum/posts/:id'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const ok = mockForum.delete(user, String(params.id))
+    if (!ok) return error('NOT_FOUND', 'Post not found', 404)
+    return json({ message: 'Post deleted' })
+  }),
+
+  http.post(p('/forum/posts/:id/publish'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const post = mockForum.publish(user, String(params.id))
+    if (!post) return error('NOT_FOUND', 'Post not found', 404)
+    return json(post)
+  }),
+
+  http.post(p('/forum/posts/:id/view'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    const viewerKey = user?.id ?? `ip-${request.headers.get('x-forwarded-for') ?? 'anon'}`
+    const result = mockForum.recordView(String(params.id), viewerKey, user, mockDb)
+    if (!result) return error('NOT_FOUND', 'Post not found', 404)
+    return json(result)
+  }),
+
+  http.get(p('/forum/posts/:id/comments'), ({ params }) => {
+    const post = mockForum.getById(String(params.id))
+    if (!post) return error('NOT_FOUND', 'Post not found', 404)
+    return json(mockForum.getComments(String(params.id)))
+  }),
+
+  http.post(p('/forum/posts/:id/comments'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as { body?: string; parentId?: string }
+    if (!body.body?.trim()) return error('INVALID_REQUEST', 'Comment body is required', 400)
+    const comment = mockForum.createComment(user, String(params.id), body.body.trim(), body.parentId)
+    if (!comment) return error('NOT_FOUND', 'Post not found', 404)
+    return json(comment, 201)
+  }),
+
+  http.post(p('/forum/posts/:id/poll/vote'), async ({ params, request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as { optionId?: string }
+    if (!body.optionId) return error('INVALID_REQUEST', 'optionId is required', 400)
+    const post = mockForum.votePoll(user, String(params.id), body.optionId)
+    if (!post) return error('NOT_FOUND', 'Post or poll not found', 404)
+    return json(post)
   }),
 
   http.get(p('/wallet'), async ({ request }) => {
@@ -619,7 +772,14 @@ export const handlers = [
   http.get(p('/settings'), ({ request }) => {
     const userId = getUserId(request)
     if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
-    return json(mockDb.settings[userId] ?? { emailNotifications: true, pushNotifications: false, showProfilePublic: true })
+    return json(mockDb.settings[userId] ?? {
+      emailNotifications: true,
+      pushNotifications: false,
+      showProfilePublic: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: null,
+      phoneNumberMasked: null,
+    })
   }),
 
   http.patch(p('/settings'), async ({ request }) => {

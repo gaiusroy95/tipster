@@ -8,6 +8,7 @@ import { toUserDto, type UserDto } from '../auth/user.mapper';
 import { signToken } from '../middleware/auth.middleware';
 import { mailService } from './mail.service';
 import { usersService } from './users.service';
+import { getCountryFromIp } from '../lib/country-from-ip';
 import type { z } from 'zod';
 import type {
   forgotPasswordSchema,
@@ -47,6 +48,7 @@ export const authService = {
   async register(
     dto: RegisterInput,
     clientIp: string,
+    country: string | null = getCountryFromIp(clientIp),
   ): Promise<{
     message: string;
     email: string;
@@ -80,6 +82,7 @@ export const authService = {
         passwordHash,
         emailVerifiedAt: null,
         registrationIp: clientIp,
+        country,
       }),
     );
 
@@ -195,7 +198,18 @@ export const authService = {
     return response;
   },
 
-  async login(dto: LoginInput, clientIp: string): Promise<{ user: UserDto; token: string }> {
+  async login(
+    dto: LoginInput,
+    clientIp: string,
+  ): Promise<
+    | { user: UserDto; token: string }
+    | {
+        requiresTwoFactor: true;
+        twoFactorSession: string;
+        method: 'authenticator' | 'phone';
+        phoneNumberMasked: string | null;
+      }
+  > {
     return withDbRetry(async () => {
       const user = await usersService.findByEmail(dto.email);
       if (!user) {
@@ -232,6 +246,18 @@ export const authService = {
           'Please verify your email before signing in. Check your inbox for the verification link.',
           403,
         );
+      }
+
+      const { twoFactorService } = await import('./two-factor.service');
+      const twoFactor = await twoFactorService.loginRequiresTwoFactor(user.id, dto.trustToken);
+      if (twoFactor.required) {
+        const challenge = await twoFactorService.beginLoginChallenge(user.id);
+        return {
+          requiresTwoFactor: true,
+          twoFactorSession: challenge.twoFactorSession,
+          method: challenge.method,
+          phoneNumberMasked: challenge.phoneNumberMasked,
+        };
       }
 
       return {

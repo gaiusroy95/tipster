@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -12,6 +12,10 @@ import { loginSchema } from '@/features/auth/schemas/authSchemas'
 import { syncAutofillToForm } from '@/features/auth/lib/syncAutofillToForm'
 import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
+import {
+  isTwoFactorChallenge,
+  useVerifyTwoFactorLogin,
+} from '@/features/settings/hooks/useTwoFactor'
 
 import { SocialAuthButtons } from '@/features/auth/components/SocialAuthButtons'
 import { AuthDivider } from '@/features/auth/components/AuthDivider'
@@ -25,7 +29,16 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const login = useLogin()
+  const verifyTwoFactor = useVerifyTwoFactorLogin()
   const { toast } = useToast()
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState<{
+    session: string
+    method: 'authenticator' | 'phone'
+    phoneNumberMasked: string | null
+    email: string
+  } | null>(null)
+  const [twoFactorCode, setTwoFactorCode] = useState('')
+  const [trustDevice, setTrustDevice] = useState(true)
   const {
     register,
     handleSubmit,
@@ -36,11 +49,25 @@ export function LoginPage() {
     defaultValues: { email: '', password: '' },
   })
 
+  const completeLogin = () => {
+    const redirect = params.get('redirect') ?? ROUTES.HOME
+    navigate(redirect)
+  }
+
   const submitLogin = handleSubmit(async (data) => {
     try {
-      await login.mutateAsync(data)
-      const redirect = params.get('redirect') ?? ROUTES.HOME
-      navigate(redirect)
+      const result = await login.mutateAsync(data)
+      if (isTwoFactorChallenge(result)) {
+        setTwoFactorChallenge({
+          session: result.twoFactorSession,
+          method: result.method,
+          phoneNumberMasked: result.phoneNumberMasked,
+          email: data.email,
+        })
+        setTwoFactorCode('')
+        return
+      }
+      completeLogin()
     } catch (e) {
       if (
         e instanceof ApiError &&
@@ -61,6 +88,23 @@ export function LoginPage() {
     }
   })
 
+  const submitTwoFactor = async () => {
+    if (!twoFactorChallenge || twoFactorCode.length < 6) return
+    try {
+      await verifyTwoFactor.mutateAsync({
+        session: twoFactorChallenge.session,
+        code: twoFactorCode,
+        trustDevice,
+        email: twoFactorChallenge.email,
+      })
+      setTwoFactorChallenge(null)
+      completeLogin()
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Invalid verification code'
+      toast(msg, 'error')
+    }
+  }
+
   const onFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     syncAutofillToForm(event.currentTarget, [
@@ -68,6 +112,65 @@ export function LoginPage() {
       { id: 'login-password', name: 'password' },
     ], setValue)
     void submitLogin()
+  }
+
+  const backToCredentials = () => {
+    setTwoFactorChallenge(null)
+    setTwoFactorCode('')
+  }
+
+  if (twoFactorChallenge) {
+    const isPhone = twoFactorChallenge.method === 'phone'
+    return (
+      <AuthCard>
+        <AuthCardHeader
+          title="Verify it's you"
+          subtitle={
+            isPhone
+              ? `Enter the code sent to ${twoFactorChallenge.phoneNumberMasked ?? 'your phone'}`
+              : 'Enter the code from your authenticator app'
+          }
+        />
+        <CardContent className="px-6 pb-6 space-y-4">
+          <div>
+            <Label htmlFor="twofa-code">Verification code</Label>
+            <Input
+              id="twofa-code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="000000"
+              value={twoFactorCode}
+              onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              autoFocus
+            />
+            {isPhone && import.meta.env.DEV && (
+              <p className="text-xs text-text-muted mt-1">Dev: check server console for SMS code</p>
+            )}
+          </div>
+          <label className="flex items-center gap-2 text-sm text-text-muted cursor-pointer">
+            <input
+              type="checkbox"
+              checked={trustDevice}
+              onChange={(e) => setTrustDevice(e.target.checked)}
+              className="rounded border-border-default"
+            />
+            Trust this device for 30 days
+          </label>
+          <Button
+            type="button"
+            className="w-full"
+            isLoading={verifyTwoFactor.isPending}
+            disabled={twoFactorCode.length < 6}
+            onClick={() => void submitTwoFactor()}
+          >
+            Verify & sign in
+          </Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={backToCredentials}>
+            Back to sign in
+          </Button>
+        </CardContent>
+      </AuthCard>
+    )
   }
 
   return (

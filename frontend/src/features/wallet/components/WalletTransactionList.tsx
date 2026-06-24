@@ -49,6 +49,11 @@ const txVisuals: Record<WalletTransaction['type'], TxVisual> = {
     label: 'Penalty',
     wrap: 'bg-accent-loss/12 text-accent-loss border-accent-loss/25',
   },
+  forum_bonus: {
+    icon: SparklesIcon,
+    label: 'Forum bonus',
+    wrap: 'bg-accent-gold/15 text-accent-gold border-accent-gold/25',
+  },
 }
 
 function isRecent(date: string) {

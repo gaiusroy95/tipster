@@ -29,28 +29,69 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  settings                UserSettings?
-  passwordResetTokens     PasswordResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
-  walletTransactions      WalletTransaction[]
-  socialAccounts          SocialAccount[]
-  bets                    Bet[]
-  seasonParticipants      SeasonParticipant[]
-  notifications           Notification[]
-  achievements            UserAchievement[]
-  dailyBetUsage           DailyBetUsage[]
+  settings                  UserSettings?
+  passwordResetTokens       PasswordResetToken[]
+  emailVerificationTokens   EmailVerificationToken[]
+  walletTransactions        WalletTransaction[]
+  socialAccounts            SocialAccount[]
+  bets                      Bet[]
+  seasonParticipants        SeasonParticipant[]
+  notifications             Notification[]
+  achievements              UserAchievement[]
+  dailyBetUsage             DailyBetUsage[]
+  twoFactorTrustedDevices   TwoFactorTrustedDevice[]
+  twoFactorPhoneCodes       TwoFactorPhoneCode[]
+  forumPosts                ForumPost[]
+  forumPostViews            ForumPostView[]
+  forumViewRewards          ForumViewReward[]
+  forumComments             ForumComment[]
+  forumPollVotes            ForumPollVote[]
 
   @@index([email])
   @@index([username])
 }
 
 model UserSettings {
-  userId             String  @id
-  emailNotifications Boolean @default(true)
-  pushNotifications  Boolean @default(false)
-  showProfilePublic  Boolean @default(true)
+  userId                 String    @id
+  emailNotifications     Boolean   @default(true)
+  pushNotifications      Boolean   @default(false)
+  showProfilePublic      Boolean   @default(true)
+  twoFactorEnabled       Boolean   @default(false)
+  twoFactorMethod        String?
+  twoFactorSecret        String?
+  twoFactorPendingSecret String?
+  phoneNumber            String?
+  phoneVerifiedAt        DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TwoFactorTrustedDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  lastIp    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model TwoFactorPhoneCode {
+  id          String    @id @default(cuid())
+  userId      String
+  phoneNumber String
+  codeHash    String
+  purpose     String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, expiresAt])
 }
 
 model SocialAccount {
@@ -120,6 +161,148 @@ model WalletTransaction {
 
   @@index([userId, createdAt])
   @@index([betId])
+}
+
+model ForumPost {
+  id            String    @id @default(cuid())
+  authorId      String
+  title         String
+  body          String
+  slug          String    @unique
+  status        String    @default("published")
+  scheduledAt   DateTime?
+  coverImageUrl String?
+  categoryId    String?
+  tags          String[]  @default([])
+  viewCount     Int       @default(0)
+  commentCount  Int       @default(0)
+  publishedAt   DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  author      User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  category    ForumCategory?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  views       ForumPostView[]
+  comments    ForumComment[]
+  attachments ForumAttachment[]
+  poll        ForumPoll?
+
+  @@index([authorId, publishedAt])
+  @@index([authorId, status])
+  @@index([publishedAt])
+  @@index([status, scheduledAt])
+  @@index([categoryId])
+}
+
+model ForumCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  posts ForumPost[]
+}
+
+model ForumComment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  parentId  String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post    ForumPost     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  ForumComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies ForumComment[] @relation("CommentReplies")
+
+  @@index([postId, createdAt])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model ForumAttachment {
+  id        String @id @default(cuid())
+  postId    String
+  type      String
+  url       String
+  title     String?
+  sortOrder Int    @default(0)
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model ForumPoll {
+  id       String    @id @default(cuid())
+  postId   String    @unique
+  question String
+  endsAt   DateTime?
+  createdAt DateTime @default(now())
+
+  post    ForumPost         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  options ForumPollOption[]
+  votes   ForumPollVote[]
+}
+
+model ForumPollOption {
+  id        String @id @default(cuid())
+  pollId    String
+  label     String
+  voteCount Int    @default(0)
+  sortOrder Int    @default(0)
+
+  poll  ForumPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes ForumPollVote[]
+
+  @@index([pollId])
+}
+
+model ForumPollVote {
+  id        String   @id @default(cuid())
+  pollId    String
+  optionId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  poll   ForumPoll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option ForumPollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([optionId])
+}
+
+model ForumPostView {
+  id        String   @id @default(cuid())
+  postId    String
+  viewerKey String
+  userId    String?
+  createdAt DateTime @default(now())
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([postId, viewerKey])
+  @@index([postId])
+  @@index([userId])
+}
+
+model ForumViewReward {
+  id         String   @id @default(cuid())
+  userId     String
+  milestone  Int
+  amount     Int
+  paidAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, milestone])
+  @@index([userId])
 }
 
 model Bet {

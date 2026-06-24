@@ -88,7 +88,7 @@ export interface Bet {
 export interface WalletTransaction {
   id: string
   userId: string
-  type: 'initial' | 'bet_placed' | 'bet_won' | 'bet_lost' | 'bet_cancelled' | 'penalty'
+  type: 'initial' | 'bet_placed' | 'bet_won' | 'bet_lost' | 'bet_cancelled' | 'penalty' | 'forum_bonus'
   amount: number
   balanceAfter: number
   description: string
@@ -187,6 +187,9 @@ export interface UserSettings {
   emailNotifications: boolean
   pushNotifications: boolean
   showProfilePublic: boolean
+  twoFactorEnabled: boolean
+  twoFactorMethod: 'authenticator' | 'phone' | null
+  phoneNumberMasked: string | null
 }
 
 export interface DashboardData {
@@ -196,4 +199,9 @@ export interface DashboardData {
   todayProfitLoss: number
   recentActivity: WalletTransaction[]
   form: ('W' | 'L' | 'D')[]
+  forumViewsTotal: number
+  forumViewsProgress: number
+  forumViewsTarget: number
+  forumViewsRemaining: number
+  forumBonusEarned: number
 }

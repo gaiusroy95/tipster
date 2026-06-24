@@ -13,10 +13,10 @@ import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
 import type { DashboardData, UserProfileStats } from '@/mocks/data/types'
 
+import { FORUM_VIEW_REWARD, FORUM_VIEW_TARGET } from '@/features/forum/types/forum'
+
 const STREAK_BONUS_TARGET = 5
 const STREAK_DISPLAY_SLOTS = 8
-const FORUM_VIEW_TARGET = 1000
-const FORUM_VIEW_REWARD = 2000
 const REWARD_MISSION_ICON_CLASS = 'h-10 w-10 shrink-0'
 
 interface ProfileRewardsWidgetProps { 
@@ -35,14 +35,16 @@ export function ProfileRewardsWidget({
   const { currentWin } = computeStreaks(profile.form)
   const dailyRank = dashboard?.rank ?? profile.rank
   const todayPl = dashboard?.todayProfitLoss ?? 0
-  const forumViews = 0
-  const forumProgress = Math.min(100, (forumViews / FORUM_VIEW_TARGET) * 100)
+  const forumViews = dashboard?.forumViewsProgress ?? 0
+  const forumViewsTarget = dashboard?.forumViewsTarget ?? FORUM_VIEW_TARGET
+  const forumBonusEarned = dashboard?.forumBonusEarned ?? 0
+  const forumProgress = Math.min(100, (forumViews / forumViewsTarget) * 100)
+  const forumViewsRemaining = dashboard?.forumViewsRemaining ?? forumViewsTarget
   const isRanked = dailyRank <= 500
   const winsToBonus =
     currentWin % STREAK_BONUS_TARGET === 0 && currentWin > 0
       ? STREAK_BONUS_TARGET
       : STREAK_BONUS_TARGET - (currentWin % STREAK_BONUS_TARGET)
-  const forumViewsRemaining = Math.max(0, FORUM_VIEW_TARGET - forumViews)
 
   const rankingCard = (
     <RewardMissionCard
@@ -63,10 +65,10 @@ export function ProfileRewardsWidget({
   const forumCard = (
     <RewardMissionCard
       title="Forum views"
-      action={{ label: 'Post now', to: ROUTES.TERMS }}
+      action={{ label: 'Post now', to: ROUTES.FORUM }}
       footer={
         forumViewsRemaining > 0
-          ? `You have earned ${formatCredits(0)} so far. ${forumViewsRemaining.toLocaleString()} more views to earn ${formatCredits(FORUM_VIEW_REWARD)}.`
+          ? `You have earned ${formatCredits(forumBonusEarned)} so far. ${forumViewsRemaining.toLocaleString()} more views to earn ${formatCredits(FORUM_VIEW_REWARD)}.`
           : `View target reached — ${formatCredits(FORUM_VIEW_REWARD)} bonus credited.`
       }
       compact={variant === 'compact'}
@@ -75,7 +77,7 @@ export function ProfileRewardsWidget({
         <ProfileBalanceIcon src={PROFILE_ICON_EYE} className={REWARD_MISSION_ICON_CLASS} alt="" />
         <p className="font-semibold text-base tabular-nums">
           {forumViews.toLocaleString()}
-          <span className="text-text-muted font-normal"> / {FORUM_VIEW_TARGET.toLocaleString()} views</span>
+          <span className="text-text-muted font-normal"> / {forumViewsTarget.toLocaleString()} views</span>
         </p>
       </div>
       <div className="mt-3 h-1.5 rounded-full bg-bg-primary/80 overflow-hidden">

@@ -4,6 +4,11 @@ import type { ApiResponse } from '@/core/types/api'
 import type { User } from '@/mocks/data/types'
 import { queryKeys } from '@/core/constants/queryKeys'
 import { useAuthStore } from '@/features/auth/stores/authStore'
+import { getTwoFactorTrustToken } from '@/features/auth/lib/twoFactorTrust'
+import {
+  isTwoFactorChallenge,
+  type LoginResponse,
+} from '@/features/settings/hooks/useTwoFactor'
 
 interface AuthResponse {
   user: User
@@ -21,12 +26,18 @@ export function useLogin() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: { email: string; password: string }) => {
-      const res = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data)
+      const trustToken = getTwoFactorTrustToken(data.email)
+      const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', {
+        ...data,
+        trustToken,
+      })
       return res.data.data
     },
-    onSuccess: ({ user, token }) => {
-      setAuth(user, token)
-      queryClient.clear()
+    onSuccess: (result) => {
+      if (!isTwoFactorChallenge(result)) {
+        setAuth(result.user, result.token)
+        queryClient.clear()
+      }
     },
   })
 }

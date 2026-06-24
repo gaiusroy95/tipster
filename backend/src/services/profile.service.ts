@@ -1,8 +1,12 @@
+import * as bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma';
 import { ApiException } from '../lib/api-exception';
 import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
 import { achievementService } from './achievement.service';
+import { usersService } from './users.service';
+
+const BCRYPT_ROUNDS = 12;
 
 function buildOverallRankStats(
   currentRank: number,
@@ -104,6 +108,77 @@ export const profileService = {
     await achievementService.syncUserAchievements(userId);
 
     return updated;
+  },
+
+  async changePassword(
+    userId: string,
+    body: { currentPassword: string; newPassword: string },
+  ) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    if (!user.passwordHash) {
+      throw new ApiException(
+        'NO_PASSWORD',
+        'Set a password first or sign in with your linked provider',
+        400,
+      );
+    }
+
+    const valid = await bcrypt.compare(body.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new ApiException('INVALID_PASSWORD', 'Current password is incorrect', 401);
+    }
+
+    if (body.currentPassword === body.newPassword) {
+      throw new ApiException(
+        'VALIDATION',
+        'New password must differ from current password',
+        400,
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(body.newPassword, BCRYPT_ROUNDS);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+
+    return { message: 'Password updated successfully' };
+  },
+
+  async changeEmail(
+    userId: string,
+    body: { email: string; password: string },
+  ) {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
+
+    if (!user.passwordHash) {
+      throw new ApiException(
+        'NO_PASSWORD',
+        'Set a password first or sign in with your linked provider',
+        400,
+      );
+    }
+
+    const valid = await bcrypt.compare(body.password, user.passwordHash);
+    if (!valid) {
+      throw new ApiException('INVALID_PASSWORD', 'Password is incorrect', 401);
+    }
+
+    const email = body.email.toLowerCase();
+    if (email === user.email) {
+      return user;
+    }
+
+    const existing = await usersService.findByEmail(email);
+    if (existing && existing.id !== userId) {
+      throw new ApiException('EMAIL_EXISTS', 'Email is already in use', 409);
+    }
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: { email },
+    });
   },
 
   async getProfileStats(userId: string) {

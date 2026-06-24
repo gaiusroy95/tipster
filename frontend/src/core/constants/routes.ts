@@ -25,6 +25,8 @@ export const ROUTES = {
   RULES: '/rules',
   ABOUT: '/about',
   HELP: '/help',
+  FORUM: '/forum',
+  FORUM_POST: '/forum/:slug',
 } as const;
 
 export function matchPath(matchId: string) {
@@ -37,6 +39,10 @@ export function playerPath(userId: string) {
 
 export function seasonPath(seasonId: string) {
   return `/seasons/${seasonId}`
+}
+
+export function forumPostPath(slug: string) {
+  return `/forum/${slug}`
 }
 
 export function loginPath(redirect?: string) {
