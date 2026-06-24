@@ -39,34 +39,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function PrivacyPage() {
-  return (
-    <ContentPage
-      title="Privacy Policy"
-      description="How Tipster Arena handles your account data in this virtual competition platform."
-    >
-      <Section title="What we collect">
-        <p>
-          We store account details you provide at registration (email, display name, username)
-          and activity related to virtual bets, rankings, and profile settings.
-        </p>
-      </Section>
-      <Section title="How we use data">
-        <p>
-          Data powers leaderboard standings, season statistics, notifications, and account
-          management. We do not sell personal information.
-        </p>
-      </Section>
-      <Section title="Your choices">
-        <p>
-          You can update profile and notification preferences in Settings. Contact support
-          through the Help Center for account-related requests.
-        </p>
-      </Section>
-    </ContentPage>
-  )
-}
-
 export function RulesPage() {
   return (
     <ContentPage
