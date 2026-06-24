@@ -282,8 +282,8 @@ function resolveMatchStatus(
 
 function liveMinute(live?: OvertimeLiveMarket): number | undefined {
   if (!live) return undefined
-  const clock = live.gameClock
-  if (!clock) return undefined
+  const clock = Number(live.gameClock)
+  if (!Number.isFinite(clock)) return undefined
   return clock > 120 ? Math.floor(clock / 60) : clock
 }
 

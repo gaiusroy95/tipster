@@ -27,6 +27,8 @@ const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage').then((m) 
 const RegisterPage = lazy(() => import('@/features/auth/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
 const ForgotPasswordPage = lazy(() => import('@/features/auth/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage })))
+const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })))
+const RegisterPendingPage = lazy(() => import('@/features/auth/pages/RegisterPendingPage').then((m) => ({ default: m.RegisterPendingPage })))
 const DashboardPage = lazy(() => import('@/features/arena/pages/TipsterHubPage').then((m) => ({ default: m.TipsterHubPage })))
 const WalletPage = lazy(() => import('@/features/wallet/pages/WalletPage').then((m) => ({ default: m.WalletPage })))
 const MatchDetailPage = lazy(() => import('@/features/fixtures/pages/MatchDetailPage').then((m) => ({ default: m.MatchDetailPage })))
@@ -52,6 +54,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: ROUTES.OAUTH_CALLBACK, element: withSuspense(OAuthCallbackPage) },
+      { path: ROUTES.VERIFY_EMAIL, element: withSuspense(VerifyEmailPage) },
     ],
   },
   {
@@ -63,6 +66,7 @@ export const router = createBrowserRouter([
     children: [
       { path: ROUTES.LOGIN, element: withSuspense(LoginPage) },
       { path: ROUTES.REGISTER, element: withSuspense(RegisterPage) },
+      { path: ROUTES.REGISTER_PENDING, element: withSuspense(RegisterPendingPage) },
       { path: ROUTES.FORGOT_PASSWORD, element: withSuspense(ForgotPasswordPage) },
       { path: ROUTES.RESET_PASSWORD, element: withSuspense(ResetPasswordPage) },
     ],

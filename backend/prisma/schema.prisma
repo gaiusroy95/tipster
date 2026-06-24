@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  username            String    @unique
+  displayName         String
+  avatarUrl           String?
+  passwordHash        String?
+  balance             Int       @default(1000000)
+  rank                Int       @default(0)
+  authProviders       String[]  @default(["email"])
+  primaryAuthProvider String    @default("email")
+  emailVerifiedAt     DateTime?
+  country             String?
+  signature           String?
+  signatureLink       String?
+  signatureMode       String?
+  postCount           Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  settings                UserSettings?
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  walletTransactions      WalletTransaction[]
+  socialAccounts          SocialAccount[]
+  bets                    Bet[]
+  seasonParticipants      SeasonParticipant[]
+  notifications           Notification[]
+  achievements            UserAchievement[]
+  dailyBetUsage           DailyBetUsage[]
+
+  @@index([email])
+  @@index([username])
+}
+
+model UserSettings {
+  userId             String  @id
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(false)
+  showProfilePublic  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SocialAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  email             String
+  linkedAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model OAuthState {
+  state       String   @id
+  provider    String
+  mode        String
+  redirectUri String
+  userId      String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model WalletTransaction {
+  id           String   @id @default(cuid())
+  userId       String
+  betId        String?
+  type         String
+  amount       Int
+  balanceAfter Int
+  description  String
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bet  Bet? @relation(fields: [betId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([betId])
+}
+
+model Bet {
+  id               String    @id @default(cuid())
+  userId           String
+  matchId          String
+  marketType       String
+  selectionId      String
+  selectionLabel   String
+  odds             Float
+  stake            Int
+  potentialReturn  Int
+  betSize          String
+  status           String    @default("active")
+  profitLoss       Int?
+  placedAt         DateTime  @default(now())
+  settledAt        DateTime?
+  homeTeamName     String
+  awayTeamName     String
+  leagueName       String?
+  matchStartTime   DateTime?
+  sportId          String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletTransactions WalletTransaction[]
+
+  @@index([userId, placedAt])
+  @@index([userId, status])
+  @@index([matchId])
+  @@index([status, matchId])
+}
+
+model DailyBetUsage {
+  userId String
+  date   String
+  count  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, date])
+}
+
+model Season {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("upcoming")
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prizes       PrizeTier[]
+  participants SeasonParticipant[]
+
+  @@index([isActive])
+  @@index([status])
+}
+
+model PrizeTier {
+  id          String  @id @default(cuid())
+  seasonId    String
+  rankFrom    Int
+  rankTo      Int
+  name        String
+  description String
+  imageUrl    String?
+
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@index([seasonId])
+}
+
+model SeasonParticipant {
+  id         String   @id @default(cuid())
+  userId     String
+  seasonId   String
+  points     Int      @default(0)
+  roi        Float    @default(0)
+  profitLoss Int      @default(0)
+  winRate    Float    @default(0)
+  totalBets  Int      @default(0)
+  wins       Int      @default(0)
+  losses     Int      @default(0)
+  voids      Int      @default(0)
+  rank       Int      @default(0)
+  form       String[] @default([])
+  updatedAt  DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, seasonId])
+  @@index([seasonId, points])
+  @@index([seasonId, rank])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@index([userId])
+}

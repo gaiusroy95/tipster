@@ -390,6 +390,50 @@ export const mockDb = {
     return demoUsers.find((u) => u.email === email)
   },
 
+  upsertRemoteUser(user: User) {
+    const existing = this.getUser(user.id)
+    if (existing) {
+      existing.email = user.email
+      existing.displayName = user.displayName
+      existing.username = user.username
+      existing.balance = user.balance
+      existing.rank = user.rank
+      existing.avatarUrl = user.avatarUrl
+      existing.authProviders = user.authProviders
+      existing.primaryAuthProvider = user.primaryAuthProvider
+      existing.createdAt = user.createdAt
+      return existing
+    }
+
+    demoUsers.push({
+      ...user,
+      authProviders: user.authProviders ?? ['google'],
+      primaryAuthProvider: user.primaryAuthProvider ?? 'google',
+    })
+
+    leaderboard.push({
+      userId: user.id,
+      displayName: user.displayName,
+      username: user.username,
+      rank: user.rank,
+      points: 0,
+      roi: 0,
+      profitLoss: 0,
+      winRate: 0,
+      totalBets: 0,
+      form: [],
+    })
+
+    userRankMeta[user.id] = { bestRank: user.rank, rankChange: 0 }
+    settings[user.id] = {
+      emailNotifications: true,
+      pushNotifications: false,
+      showProfilePublic: true,
+    }
+
+    return user
+  },
+
   getTeam(id: string) {
     return teams.find((t) => t.id === id)
   },

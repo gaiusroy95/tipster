@@ -1,13 +1,13 @@
 import axios from 'axios';
-import { X_API_KEY } from 'src/constants/config';
+import { X_API_KEY } from '../constants/config';
 import {
   LiveMarkets,
   Market,
   MarketData,
   MarketType,
   Sport,
-} from 'src/types/overtime';
-import { sleep } from 'src/utils/overtime.util';
+} from '../types/overtime';
+import { sleep } from '../utils/overtime.util';
 
 const V2_API_URL = 'https://api.overtime.io/overtime-v2';
 

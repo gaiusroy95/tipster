@@ -1,5 +1,3 @@
-import * as dotenv from 'dotenv';
-
-dotenv.config();
+import '../load-env';
 
 export const X_API_KEY = process.env.X_API_KEY ?? '';

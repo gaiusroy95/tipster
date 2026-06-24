@@ -1,79 +1,126 @@
-import { useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent } from '@/shared/components/ui/Card'
 import { ROUTES } from '@/core/constants/routes'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import {
-  useCompleteSocialAuth,
-  useLinkSocialAccount,
-} from '@/features/auth/hooks/useSocialAuth'
-import { ALL_SOCIAL_PROVIDERS } from '@/core/constants/socialProviders'
-import type { SocialAuthProvider } from '@/features/auth/types/socialAuth'
+  clearOAuthSession,
+  completeOAuthFromCallback,
+  getOAuthCallbackParams,
+  linkOAuthFromCallback,
+  readOAuthSession,
+} from '@/features/auth/lib/socialAuth'
 import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
+import { apiClient, setAuthToken } from '@/core/api/client'
+import type { ApiResponse } from '@/core/types/api'
 
-function parseProvider(value: string | null): SocialAuthProvider | null {
-  if (!value || !ALL_SOCIAL_PROVIDERS.includes(value as SocialAuthProvider)) return null
-  return value as SocialAuthProvider
+/** One toast + navigation per OAuth callback URL (prevents Strict Mode / effect re-run spam). */
+const handledCallbackKeys = new Set<string>()
+
+function showErrorOnce(key: string, toast: (msg: string, type: 'error') => void, message: string) {
+  if (handledCallbackKeys.has(key)) return
+  handledCallbackKeys.add(key)
+  toast(message, 'error')
+}
+
+function markHandled(key: string) {
+  handledCallbackKeys.add(key)
 }
 
 export function OAuthCallbackPage() {
   const navigate = useNavigate()
-  const [params] = useSearchParams()
   const { toast } = useToast()
+  const queryClient = useQueryClient()
   const token = useAuthStore((s) => s.token)
-  const completeAuth = useCompleteSocialAuth()
-  const linkAccount = useLinkSocialAccount()
-  const handledRef = useRef(false)
+  const setAuth = useAuthStore((s) => s.setAuth)
 
   useEffect(() => {
-    if (handledRef.current) return
+    const callbackKey = window.location.search || window.location.pathname
+    if (handledCallbackKeys.has(callbackKey)) return
 
-    const oauthError = params.get('error')
-    const provider = parseProvider(params.get('provider'))
-    const code = params.get('code')
-    const state = params.get('state')
+    const { code, state, error: oauthError } = getOAuthCallbackParams()
+    const { mode: oauthMode } = readOAuthSession()
 
     if (oauthError) {
-      handledRef.current = true
+      markHandled(callbackKey)
+      clearOAuthSession()
       toast('Social sign-in was cancelled or failed', 'error')
       navigate(token ? ROUTES.SETTINGS : ROUTES.LOGIN, { replace: true })
       return
     }
 
-    if (!provider || !code || !state) {
-      handledRef.current = true
-      toast('Invalid social sign-in response', 'error')
-      navigate(token ? ROUTES.SETTINGS : ROUTES.LOGIN, { replace: true })
+    if (!code || !state) {
+      if (!window.location.search.includes('code=')) {
+        markHandled(callbackKey)
+        clearOAuthSession()
+        showErrorOnce(callbackKey, toast, 'Invalid social sign-in response')
+        navigate(token ? ROUTES.SETTINGS : ROUTES.LOGIN, { replace: true })
+      }
       return
     }
 
-    handledRef.current = true
-    const payload = { provider, code, state }
+    const shouldLink = oauthMode === 'link' && token
+
+    if (oauthMode === 'link' && !token) {
+      markHandled(callbackKey)
+      clearOAuthSession()
+      toast('Sign in first to connect a social account', 'error')
+      navigate(ROUTES.LOGIN, { replace: true })
+      return
+    }
+
+    const runKey = `oauth-run-${state}`
+
+    if (handledCallbackKeys.has(runKey)) return
+    handledCallbackKeys.add(runKey)
 
     const run = async () => {
       try {
-        if (token) {
-          await linkAccount.mutateAsync(payload)
+        if (shouldLink) {
+          const { user } = await linkOAuthFromCallback(code, state)
+          markHandled(callbackKey)
+          useAuthStore.getState().setUser(user)
+          clearOAuthSession()
           toast('Social account connected', 'success')
           navigate(ROUTES.SETTINGS, { replace: true })
           return
         }
 
-        const result = await completeAuth.mutateAsync(payload)
+        const result = await completeOAuthFromCallback(code, state)
+        markHandled(callbackKey)
+
+        setAuthToken(result.token)
+        let user = result.user
+        try {
+          const meRes = await apiClient.get<ApiResponse<import('@/mocks/data/types').User>>('/auth/me')
+          user = meRes.data.data
+        } catch {
+          // OAuth response already includes user; /auth/me is optional refresh
+        }
+        setAuth(user, result.token)
+        if (import.meta.env.VITE_ENABLE_MSW === 'true') {
+          const { mockDb } = await import('@/mocks/data/seed')
+          mockDb.upsertRemoteUser(user)
+        }
+        queryClient.clear()
+        clearOAuthSession()
         if (result.isNewUser) {
           toast('Welcome! You received 1,000,000 virtual credits.', 'success')
         }
         navigate(ROUTES.HOME, { replace: true })
       } catch (e) {
+        markHandled(callbackKey)
+        clearOAuthSession()
         const msg = e instanceof ApiError ? e.message : 'Social sign-in failed'
         toast(msg, 'error')
-        navigate(token ? ROUTES.SETTINGS : ROUTES.LOGIN, { replace: true })
+        navigate(shouldLink ? ROUTES.SETTINGS : ROUTES.LOGIN, { replace: true })
       }
     }
 
     run()
-  }, [completeAuth, linkAccount, navigate, params, toast, token])
+  }, [navigate, queryClient, setAuth, toast, token])
 
   return (
     <Card>

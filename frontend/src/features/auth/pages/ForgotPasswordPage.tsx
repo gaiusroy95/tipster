@@ -18,6 +18,7 @@ export function ForgotPasswordPage() {
   const { toast } = useToast()
   const { register, handleSubmit, formState: { errors } } = useForm<ForgotForm>({
     resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
   })
 
   const onSubmit = handleSubmit(async (data) => {
@@ -29,10 +30,16 @@ export function ForgotPasswordPage() {
     <AuthCard>
       <AuthCardHeader title="Forgot password" subtitle="We'll send you a reset link" />
       <CardContent className="px-6 pb-6">
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" autoComplete="off">
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" {...register('email')} />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="off"
+              placeholder="you@example.com"
+              {...register('email')}
+            />
             <FieldError message={errors.email?.message} />
           </div>
           <Button type="submit" className="w-full" isLoading={forgot.isPending}>Send reset link</Button>

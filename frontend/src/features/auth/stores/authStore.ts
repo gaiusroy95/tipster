@@ -26,6 +26,7 @@ export const useAuthStore = create<AuthState>()(
 
       setAuth: (user, token) => {
         setAuthToken(token)
+        sessionStorage.setItem(TOKEN_KEY, token)
         set({ user, token })
       },
 
@@ -33,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         setAuthToken(null)
+        sessionStorage.removeItem(TOKEN_KEY)
         set({ user: null, token: null })
       },
 

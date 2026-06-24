@@ -2,6 +2,8 @@ export const ROUTES = {
   HOME: '/',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  REGISTER_PENDING: '/auth/register/pending',
+  VERIFY_EMAIL: '/auth/verify-email',
   OAUTH_CALLBACK: '/auth/callback',
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/auth/reset-password',

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/core/api/client'
+import { apiClient, setAuthToken } from '@/core/api/client'
 import type { ApiResponse } from '@/core/types/api'
 import { queryKeys } from '@/core/constants/queryKeys'
 import { useAuthStore } from '@/features/auth/stores/authStore'
@@ -8,7 +8,10 @@ import type {
   SocialAuthProvider,
   SocialAuthResponse,
 } from '@/features/auth/types/socialAuth'
-import { getOAuthRedirectUri } from '@/features/auth/lib/socialAuth'
+import {
+  completeOAuthFromCallback,
+  linkOAuthFromCallback,
+} from '@/features/auth/lib/socialAuth'
 
 interface OAuthExchangePayload {
   provider: SocialAuthProvider
@@ -16,13 +19,9 @@ interface OAuthExchangePayload {
   state: string
 }
 
-function exchangeOAuthCode(payload: OAuthExchangePayload) {
-  const { provider, code, state } = payload
-  return apiClient.post<ApiResponse<SocialAuthResponse>>(`/auth/oauth/${provider}`, {
-    code,
-    state,
-    redirectUri: getOAuthRedirectUri(),
-  })
+function exchangeOAuthCode(payload: OAuthExchangePayload): Promise<SocialAuthResponse> {
+  const { state } = payload
+  return completeOAuthFromCallback(payload.code, state)
 }
 
 export function useCompleteSocialAuth() {
@@ -30,12 +29,25 @@ export function useCompleteSocialAuth() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: OAuthExchangePayload) => {
-      const res = await exchangeOAuthCode(payload)
-      return res.data.data
-    },
+    mutationFn: (payload: OAuthExchangePayload) => exchangeOAuthCode(payload),
     onSuccess: ({ user, token }) => {
-      setAuth(user, token)
+      setAuthToken(token)
+      apiClient
+        .get<ApiResponse<import('@/mocks/data/types').User>>('/auth/me')
+        .then((meRes) => {
+          setAuth(meRes.data.data, token)
+          if (import.meta.env.VITE_ENABLE_MSW === 'true') {
+            import('@/mocks/data/seed').then(({ mockDb }) =>
+              mockDb.upsertRemoteUser(meRes.data.data),
+            )
+          }
+        })
+        .catch(() => {
+          setAuth(user, token)
+          if (import.meta.env.VITE_ENABLE_MSW === 'true') {
+            import('@/mocks/data/seed').then(({ mockDb }) => mockDb.upsertRemoteUser(user))
+          }
+        })
       queryClient.clear()
     },
   })
@@ -57,12 +69,9 @@ export function useLinkSocialAccount() {
 
   return useMutation({
     mutationFn: async (payload: OAuthExchangePayload) => {
-      const { provider, code, state } = payload
-      const res = await apiClient.post<ApiResponse<{ user: import('@/mocks/data/types').User }>>(
-        `/auth/oauth/${provider}/link`,
-        { code, state, redirectUri: getOAuthRedirectUri() },
-      )
-      return res.data.data
+      const { code, state } = payload
+      const res = await linkOAuthFromCallback(code, state)
+      return res
     },
     onSuccess: ({ user }) => {
       setUser(user)

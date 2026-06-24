@@ -32,6 +32,8 @@
   --layout-bottom-nav: 4rem;
   --layout-sticky-offset: calc(var(--layout-bottom-nav) + env(safe-area-inset-bottom, 0px));
   --layout-toast-offset: calc(var(--layout-sticky-offset) + 0.5rem);
+  --layout-header-height: 3.75rem;
+  --arena-matches-scroll-offset: 22rem;
 }
 
 @layer base {
@@ -204,6 +206,37 @@
 
   .scrollbar-panel::-webkit-scrollbar-thumb:hover {
     background-color: var(--color-text-muted);
+  }
+
+  /* Tipster Cup — fixed-height match list with internal scroll (Overtime-style) */
+  .arena-match-list-scroll {
+    height: clamp(
+      14rem,
+      calc(100dvh - var(--arena-matches-scroll-offset) - var(--layout-sticky-offset)),
+      44rem
+    );
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (min-width: 640px) {
+    .arena-match-list-scroll {
+      --arena-matches-scroll-offset: 26rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .arena-match-list-scroll {
+      --arena-matches-scroll-offset: 28rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .arena-match-list-scroll {
+      --arena-matches-scroll-offset: 30rem;
+      height: clamp(16rem, calc(100dvh - var(--arena-matches-scroll-offset)), 52rem);
+    }
   }
 
   @media (min-width: 640px) {

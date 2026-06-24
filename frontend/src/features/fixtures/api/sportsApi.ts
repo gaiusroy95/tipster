@@ -67,6 +67,16 @@ async function fetchOpenMarkets() {
 async function fetchResolvedMarkets() {
   try {
     const { data } = await sportsClient.get<OvertimeMarketsResponse | unknown[]>(
+      `/sports/networks/${NETWORK_ID}/finished-markets`,
+    )
+    const markets = extractMarketsArray(data)
+    if (markets.length > 0) return markets
+  } catch {
+    // Fall back to direct resolved query when finished-markets is unavailable.
+  }
+
+  try {
+    const { data } = await sportsClient.get<OvertimeMarketsResponse | unknown[]>(
       `/sports/networks/${NETWORK_ID}/markets`,
       {
         params: {
@@ -122,7 +132,9 @@ export async function fetchFixturesFromApi(filters?: {
     const matches = liveMarkets.map((live) =>
       mapOvertimeMarketToMatch(live, [], typeById, sportsCatalog, live, status),
     )
-    return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId)
+    return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    )
   }
 
   const rawMarkets =
@@ -149,12 +161,18 @@ export async function fetchFixturesFromApi(filters?: {
     }
 
     if (status === MATCH_STATUS.FINISHED) {
-      if (!primary.isResolved && primary.statusCode !== 'resolved') continue
+      if (primary.statusCode === 'open' && !primary.isResolved) continue
     }
 
     const related = gameMarkets.filter((m) => m !== primary)
     matches.push(
       mapOvertimeMarketToMatch(primary, related, typeById, sportsCatalog, undefined, status),
+    )
+  }
+
+  if (status === MATCH_STATUS.FINISHED) {
+    return filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+      (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
     )
   }
 

@@ -10,6 +10,12 @@ interface AuthResponse {
   token: string
 }
 
+interface RegisterResponse {
+  message: string
+  email: string
+  devVerificationUrl?: string
+}
+
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()
@@ -26,16 +32,43 @@ export function useLogin() {
 }
 
 export function useRegister() {
+  return useMutation({
+    mutationFn: async (data: { email: string; password: string; displayName: string; username: string }) => {
+      const res = await apiClient.post<ApiResponse<RegisterResponse>>('/auth/register', data)
+      return res.data.data
+    },
+  })
+}
+
+export function useVerifyEmail() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (data: { email: string; password: string; displayName: string; username: string }) => {
-      const res = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', data)
+    mutationFn: async (data: { token: string }) => {
+      const res = await apiClient.post<ApiResponse<AuthResponse & { message: string }>>(
+        '/auth/verify-email',
+        data,
+      )
       return res.data.data
     },
     onSuccess: ({ user, token }) => {
       setAuth(user, token)
+      if (import.meta.env.VITE_ENABLE_MSW === 'true') {
+        import('@/mocks/data/seed').then(({ mockDb }) => mockDb.upsertRemoteUser(user))
+      }
       queryClient.clear()
+    },
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: async (data: { email: string }) => {
+      const res = await apiClient.post<ApiResponse<{ message: string; devVerificationUrl?: string }>>(
+        '/auth/resend-verification',
+        data,
+      )
+      return res.data.data
     },
   })
 }

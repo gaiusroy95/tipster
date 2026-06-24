@@ -1,0 +1,95 @@
+import type { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
+import { ApiException } from '../lib/api-exception';
+import { isPrismaConnectionError } from '../lib/prisma';
+
+export function errorMiddleware(
+  err: unknown,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+): void {
+  if (err instanceof ApiException) {
+    res.status(err.status).json({
+      code: err.code,
+      message: err.message,
+      ...(err.details ? { details: err.details } : {}),
+    });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    const details: Record<string, string[]> = {};
+    for (const issue of err.issues) {
+      const key = issue.path.join('.') || 'body';
+      if (!details[key]) details[key] = [];
+      details[key].push(issue.message);
+    }
+    res.status(400).json({
+      code: 'VALIDATION_ERROR',
+      message: 'Validation failed',
+      details,
+    });
+    return;
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2021') {
+      const table = (err.meta as { table?: string } | undefined)?.table ?? '';
+      const message =
+        table.includes('OAuthState')
+          ? 'Database schema is outdated (OAuthState). Run npm run prisma:deploy in the backend folder, then restart.'
+          : 'Database schema is outdated. Run npm run prisma:deploy in the backend folder, then restart the server.';
+      res.status(503).json({
+        code: 'DATABASE_SCHEMA_OUTDATED',
+        message,
+      });
+      return;
+    }
+
+    if (err.code === 'P2022') {
+      const column = (err.meta as { column?: string } | undefined)?.column ?? '';
+      const message = column.includes('avatarUrl')
+        ? 'Database schema is outdated (User.avatarUrl). Run npm run prisma:deploy in the backend folder, then restart.'
+        : 'Database schema is outdated. Run npm run prisma:deploy in the backend folder, then restart the server.';
+      res.status(503).json({
+        code: 'DATABASE_UNAVAILABLE',
+        message,
+      });
+      return;
+    }
+
+    if (err.code === 'P1001') {
+      res.status(503).json({
+        code: 'DATABASE_UNAVAILABLE',
+        message:
+          'Database is temporarily unavailable. Wait a few seconds and try Google sign-in again.',
+      });
+      return;
+    }
+  }
+
+  if (isPrismaConnectionError(err)) {
+    res.status(503).json({
+      code: 'DATABASE_UNAVAILABLE',
+      message:
+        'Database is temporarily unavailable. Wait a few seconds and try Google sign-in again.',
+    });
+    return;
+  }
+
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    code: 'INTERNAL_ERROR',
+    message: 'An unexpected error occurred',
+  });
+}
+
+export function asyncHandler(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void>,
+) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}

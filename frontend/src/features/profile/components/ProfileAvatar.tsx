@@ -1,4 +1,11 @@
+import { useEffect, useState } from 'react'
 import { cn } from '@/shared/utils/cn'
+
+function normalizeGoogleAvatarUrl(url: string): string {
+  if (!url.includes('googleusercontent.com')) return url
+  const base = url.replace(/=s\d+(-c)?$/, '')
+  return `${base}=s256-c`
+}
 
 export function ProfileAvatar({
   name,
@@ -9,6 +16,12 @@ export function ProfileAvatar({
   avatarUrl?: string
   className?: string
 }) {
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatarUrl])
+
   const initials = name
     .split(/\s+/)
     .map((w) => w[0])
@@ -16,12 +29,16 @@ export function ProfileAvatar({
     .slice(0, 2)
     .toUpperCase()
 
-  if (avatarUrl) {
+  const src = avatarUrl ? normalizeGoogleAvatarUrl(avatarUrl) : undefined
+
+  if (src && !imageFailed) {
     return (
       <img
-        src={avatarUrl}
+        src={src}
         alt=""
+        referrerPolicy="no-referrer"
         className={cn('rounded-full object-cover shrink-0 ring-2 ring-border-default', className)}
+        onError={() => setImageFailed(true)}
       />
     )
   }

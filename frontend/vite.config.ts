@@ -31,7 +31,8 @@ async function attachMockApi(server: ViteDevServer) {
 
   server.middlewares.use((req, res, next) => {
     const pathname = (req.url ?? '').split('?')[0]
-    if (!pathname.startsWith('/api')) {
+    // MSW only for news; all other /api routes go to the Express backend
+    if (!pathname.startsWith('/api/news')) {
       next()
       return
     }
@@ -77,6 +78,19 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:3000',
+          changeOrigin: true,
+          bypass(req) {
+            const pathname = (req.url ?? '').split('?')[0]
+            if (pathname.startsWith('/api/news')) {
+              return req.url
+            }
+            return undefined
+          },
+        },
+      },
       watch: {
         // Windows locks temp exports (e.g. ChatGPT Image*.png) and crashes the dev server.
         ignored: [

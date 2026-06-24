@@ -4,6 +4,7 @@ import { mockApiPath as p, mockApiBase } from '@/mocks/config'
 import { bettingRules, getBetSize } from '@/core/config/bettingRules'
 import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import type { Bet, User } from '@/mocks/data/types'
+import { fetchRealAuthUser, getUserIdFromRequest } from '@/mocks/lib/realAuthBridge'
 import {
   ALL_SOCIAL_PROVIDERS,
 } from '@/core/constants/socialProviders'
@@ -50,6 +51,24 @@ function getUserId(request: Request): string | null {
     }
   }
 
+  const jwtUserId = getUserIdFromRequest(request)
+  if (jwtUserId) return jwtUserId
+
+  return null
+}
+
+async function resolveAuthenticatedUser(request: Request): Promise<User | null> {
+  const userId = getUserId(request)
+  if (!userId) return null
+
+  const local = mockDb.getUser(userId)
+  if (local) return local
+
+  const remote = await fetchRealAuthUser(request)
+  if (remote?.id === userId) {
+    return mockDb.upsertRemoteUser(remote)
+  }
+
   return null
 }
 
@@ -73,64 +92,6 @@ function findUserBySocialEmail(email: string) {
 }
 
 export const handlers = [
-  http.post(p('/auth/register'), async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string; displayName: string; username: string }
-    if (mockDb.getUserByEmail(body.email)) {
-      return error('EMAIL_EXISTS', 'Email already registered', 409)
-    }
-    const id = `user-${Date.now()}`
-    const user: User = {
-      id,
-      email: body.email,
-      displayName: body.displayName,
-      username: body.username,
-      balance: bettingRules.initialBalance,
-      rank: mockDb.leaderboard.length + 1,
-      createdAt: new Date().toISOString(),
-      authProviders: ['email'],
-      primaryAuthProvider: 'email',
-    }
-    mockDb.demoUsers.push(user)
-    const tx = mockDb.getTransactions()
-    tx.unshift({
-      id: `tx-${Date.now()}`,
-      userId: id,
-      type: 'initial',
-      amount: bettingRules.initialBalance,
-      balanceAfter: bettingRules.initialBalance,
-      description: 'Welcome bonus — initial virtual credits',
-      createdAt: new Date().toISOString(),
-    })
-    mockDb.setTransactions(tx)
-    syncUserAchievements(mockDb, id)
-    const token = `token-${id}`
-    tokens[token] = id
-    return json({ user, token })
-  }),
-
-  http.post(p('/auth/login'), async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string }
-    const user = mockDb.getUserByEmail(body.email)
-    if (!user || body.password.length < 6) {
-      return error('INVALID_CREDENTIALS', 'Invalid email or password', 401)
-    }
-    const token = `token-${user.id}`
-    tokens[token] = user.id
-    return json({ user, token })
-  }),
-
-  http.post(p('/auth/forgot-password'), async () => json({ message: 'Reset link sent if email exists' })),
-
-  http.post(p('/auth/reset-password'), async () => json({ message: 'Password reset successful' })),
-
-  http.get(p('/auth/me'), ({ request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
-    const user = mockDb.getUser(userId)
-    if (!user) return error('NOT_FOUND', 'User not found', 404)
-    return json(user)
-  }),
-
   http.get(p('/auth/oauth/:provider/url'), ({ params, request }) => {
     const provider = params.provider as string
     if (!isSocialProvider(provider)) {
@@ -313,26 +274,26 @@ export const handlers = [
     }
   }),
 
-  http.get(p('/dashboard'), ({ request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
-    const user = mockDb.getUser(userId)!
+  http.get(p('/dashboard'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const userId = user.id
     const activeBets = mockDb.getBets().filter((b) => b.userId === userId && b.status === 'active')
     const entry = mockDb.leaderboard.find((e) => e.userId === userId)
     return json({
       balance: user.balance,
       rank: user.rank,
       activeBetsCount: activeBets.length,
-      todayProfitLoss: 120,
+      todayProfitLoss: 0,
       recentActivity: mockDb.getTransactions().filter((t) => t.userId === userId).slice(0, 5),
       form: entry?.form ?? [],
     })
   }),
 
-  http.get(p('/wallet'), ({ request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
-    const user = mockDb.getUser(userId)!
+  http.get(p('/wallet'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const userId = user.id
     return json({
       balance: user.balance,
       transactions: mockDb.getTransactions().filter((t) => t.userId === userId),
@@ -391,15 +352,15 @@ export const handlers = [
   }),
 
   http.post(p('/bets'), async ({ request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const userId = user.id
     const body = (await request.json()) as {
       matchId: string
       marketType: string
       selectionId: string
       stake: number
     }
-    const user = mockDb.getUser(userId)!
     const match = mockDb.getMatch(body.matchId)
     if (!match) return error('NOT_FOUND', 'Match not found', 404)
     if (match.status === 'finished') return error('MATCH_FINISHED', 'Cannot bet on finished match', 400)
@@ -468,15 +429,15 @@ export const handlers = [
   }),
 
   http.post(p('/bets/:betId/cancel'), async ({ params, request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const userId = user.id
     const bet = mockDb.getBets().find((b) => b.id === params.betId && b.userId === userId)
     if (!bet) return error('NOT_FOUND', 'Bet not found', 404)
     if (bet.status !== 'active') return error('BET_NOT_ACTIVE', 'Only active bets can be cancelled', 400)
 
     const penalty = calculateCancellationPenalty(bet.stake)
     const refund = bet.stake - penalty
-    const user = mockDb.getUser(userId)!
     user.balance += refund
 
     bet.status = 'cancelled'
@@ -532,8 +493,15 @@ export const handlers = [
     return json(entries)
   }),
 
-  http.get(p('/players/:userId'), ({ params }) => {
-    const stats = mockDb.getProfileStats(params.userId as string)
+  http.get(p('/players/:userId'), async ({ params, request }) => {
+    const userId = params.userId as string
+    let stats = mockDb.getProfileStats(userId)
+    if (!stats) {
+      const user = await resolveAuthenticatedUser(request)
+      if (user?.id === userId) {
+        stats = mockDb.getProfileStats(userId)
+      }
+    }
     if (!stats) return error('NOT_FOUND', 'Player not found', 404)
     return json(stats)
   }),
@@ -571,8 +539,9 @@ export const handlers = [
   }),
 
   http.patch(p('/profile'), async ({ request }) => {
-    const userId = getUserId(request)
-    if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const userId = user.id
     const body = (await request.json()) as {
       displayName?: string
       username?: string
@@ -582,7 +551,6 @@ export const handlers = [
       signatureLink?: string
       signatureMode?: 'text' | 'banner'
     }
-    const user = mockDb.getUser(userId)!
     if (body.displayName !== undefined) user.displayName = body.displayName
     if (body.username !== undefined) user.username = body.username
     if (body.avatarUrl !== undefined) {
