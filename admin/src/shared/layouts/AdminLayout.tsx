@@ -72,9 +72,7 @@ function SidebarBrand() {
         aria-hidden="true"
       />
       <div className="relative flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-default/70 bg-bg-elevated/80 shadow-[0_0_24px_rgba(99,102,241,0.12)]">
-          <AppLogo size="sm" variant="mark" className="h-7 w-auto max-w-none" />
-        </div>
+        <AppLogo size="sm" variant="mark" className="h-9 w-auto max-w-none shrink-0" />
         <div className="min-w-0">
           <p className="truncate text-sm font-display font-bold tracking-tight">Admin Panel</p>
           <p className="text-[10px] uppercase tracking-[0.16em] text-text-muted">{ADMIN_TAGLINE}</p>
