@@ -5,6 +5,7 @@ import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { useFixtures, useLeagues } from '@/features/fixtures/hooks/useFixtures'
+import { LeagueLogo } from '@/shared/components/LeagueLogo'
 import { cn } from '@/shared/utils/cn'
 
 export function FixturesPage() {
@@ -30,7 +31,7 @@ export function FixturesPage() {
             type="button"
             onClick={() => setLeagueId(undefined)}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] border transition-colors',
+              'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] border transition-colors',
               !leagueId
                 ? 'bg-accent-primary/15 border-accent-primary text-accent-primary'
                 : 'border-border-default bg-bg-surface text-text-muted hover:text-text-primary',
@@ -44,12 +45,13 @@ export function FixturesPage() {
               type="button"
               onClick={() => setLeagueId(league.id)}
               className={cn(
-                'px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] border transition-colors',
+                'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium min-h-[44px] border transition-colors',
                 leagueId === league.id
                   ? 'bg-accent-primary/15 border-accent-primary text-accent-primary'
                   : 'border-border-default bg-bg-surface text-text-muted hover:text-text-primary',
               )}
             >
+              <LeagueLogo name={league.name} country={league.country} logoUrl={league.logoUrl} size="xs" />
               {league.name}
             </button>
           ))}

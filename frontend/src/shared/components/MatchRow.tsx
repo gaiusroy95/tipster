@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { LiveBadge } from '@/shared/components/LiveBadge'
+import { LeagueLogo } from '@/shared/components/LeagueLogo'
 import { formatMatchDate, formatMatchTime } from '@/shared/utils/formatDate'
 import { matchPath } from '@/core/constants/routes'
 import type { MatchWithTeams } from '@/features/fixtures/hooks/useFixtures'
@@ -17,7 +18,14 @@ export function MatchRow({ match }: { match: MatchWithTeams }) {
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-text-muted">{match.league.name}</span>
+          <LeagueLogo
+            name={match.league.name}
+            country={match.league.country}
+            logoUrl={match.league.logoUrl}
+            size="xs"
+            className="h-5 w-5 rounded-md"
+          />
+          <span className="text-xs text-text-muted truncate">{match.league.name}</span>
           <LiveBadge status={match.status} minute={match.minute} />
         </div>
         <div className="flex items-center justify-between gap-4">

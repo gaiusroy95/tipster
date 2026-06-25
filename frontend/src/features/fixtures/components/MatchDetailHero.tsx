@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon, CalendarDaysIcon, MapPinIcon } from '@heroicons/react/24/outline'
+import { ArrowLeftIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { LiveBadge } from '@/shared/components/LiveBadge'
+import { LeagueLogo } from '@/shared/components/LeagueLogo'
 import { ROUTES } from '@/core/constants/routes'
 import { formatMatchDate, formatMatchTime } from '@/shared/utils/formatDate'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
@@ -55,7 +56,13 @@ export function MatchDetailHero({ match }: MatchDetailHeroProps) {
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
             <span className="inline-flex items-center gap-1.5">
-              <MapPinIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <LeagueLogo
+                name={match.league.name}
+                country={match.league.country}
+                logoUrl={match.league.logoUrl}
+                size="xs"
+                className="h-5 w-5 rounded-md"
+              />
               <span className="truncate">{match.league.name}</span>
             </span>
             <span className="hidden text-border-strong sm:inline" aria-hidden="true">·</span>

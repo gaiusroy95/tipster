@@ -17,6 +17,7 @@ import {
 import { cn } from '@/shared/utils/cn'
 import { SportCategoryIcon } from '@/features/fixtures/components/SportCategoryIcon'
 import { FixtureViewIcon } from '@/features/fixtures/components/FixtureViewIcon'
+import { LeagueLogo } from '@/shared/components/LeagueLogo'
 
 const VIEW_ITEMS: { id: FixtureView; label: string }[] = [
   { id: FIXTURE_VIEWS.LIVE, label: 'Live' },
@@ -121,6 +122,7 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
                 active={leagueId === league.id}
                 onClick={() => handleLeague(league.id)}
               >
+                <LeagueLogo name={league.name} country={league.country} logoUrl={league.logoUrl} size="xs" />
                 <span className="flex-1 truncate text-sm">{league.name}</span>
                 <span className="text-xs text-text-muted truncate max-w-[72px]">{league.country}</span>
               </NavItem>

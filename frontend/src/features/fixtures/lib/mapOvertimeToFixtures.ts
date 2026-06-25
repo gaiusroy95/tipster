@@ -1,6 +1,7 @@
 import { MARKET_TYPES, MATCH_STATUS, type MarketType, type MatchStatus } from '@/core/constants/markets'
 import type { League, MarketOdds, Match, OddsSelection, Team } from '@/mocks/data/types'
 import { mapOvertimeCategoryToSportId } from '@/features/fixtures/lib/mapOvertimeSport'
+import { getLeagueLogoSrc } from '@/core/constants/leagueLogos'
 import type {
   OvertimeChildMarket,
   OvertimeLiveMarket,
@@ -312,6 +313,12 @@ export function mapOvertimeMarketToMatch(
       'League',
     country: '',
     sportId,
+    logoUrl: getLeagueLogoSrc(
+      primary.leagueName ||
+        primary.tournamentName ||
+        sportsBySubLeague[primary.subLeagueId]?.label ||
+        'League',
+    ),
   }
 
   const homeTeam: Team = {
@@ -379,6 +386,7 @@ export function mapLeaguesResponse(
         name: item.name,
         country: category,
         sportId: mappedSportId,
+        logoUrl: getLeagueLogoSrc(item.name),
       })
     }
   }

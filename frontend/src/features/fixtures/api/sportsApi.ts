@@ -13,6 +13,7 @@ import {
   pickPrimaryMarket,
 } from '@/features/fixtures/lib/mapOvertimeToFixtures'
 import { sportIdMatchesCategory } from '@/features/fixtures/lib/mapOvertimeSport'
+import { getLeagueLogoSrc } from '@/core/constants/leagueLogos'
 import {
   filterMatchesWithDisplayableOdds,
 } from '@/features/fixtures/lib/matchOdds'
@@ -56,7 +57,12 @@ function applyCuratedLeagueFilter(leagues: League[], curated: CuratedLeagueRow[]
     .filter((league) => byOvertimeId.has(league.id))
     .map((league) => {
       const row = byOvertimeId.get(league.id)!
-      return { ...league, name: row.name, country: row.country }
+      return {
+        ...league,
+        name: row.name,
+        country: row.country,
+        logoUrl: getLeagueLogoSrc(row.name),
+      }
     })
     .sort((a, b) => {
       const sortA = byOvertimeId.get(a.id)?.sortOrder ?? 999

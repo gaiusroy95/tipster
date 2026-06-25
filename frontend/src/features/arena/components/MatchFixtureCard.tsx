@@ -5,6 +5,7 @@ import {
   FireIcon,
 } from '@heroicons/react/24/outline'
 import { LiveBadge } from '@/shared/components/LiveBadge'
+import { LeagueLogo } from '@/shared/components/LeagueLogo'
 import { BettingOddsButton } from '@/shared/components/BettingOddsButton'
 import { BettingMarketColumn } from '@/shared/components/BettingMarketColumn'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
@@ -246,7 +247,16 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
             <span className="mb-2 hidden xl:block h-[22px]" aria-hidden="true" />
           )}
           <div className="mb-3 space-y-1 text-xs font-medium text-text-muted leading-snug">
-            <p className="line-clamp-2">{match.league.name}</p>
+            <p className="flex items-center gap-1.5 line-clamp-2">
+              <LeagueLogo
+                name={match.league.name}
+                country={match.league.country}
+                logoUrl={match.league.logoUrl}
+                size="xs"
+                className="h-5 w-5 rounded-md shrink-0"
+              />
+              <span className="min-w-0">{match.league.name}</span>
+            </p>
             <p className="text-text-primary font-semibold">
               {formatMatchDate(match.startTime)} · {formatMatchTime(match.startTime)}
             </p>

@@ -1,22 +1,26 @@
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminClient } from '@/core/api/client'
 import { queryKeys } from '@/core/constants/queryKeys'
 import type { ApiResponse } from '@/core/types/api'
-import { Button } from '@/shared/components/ui/Button'
-import { Card, Skeleton } from '@/shared/components/ui/Card'
-
-interface CuratedLeague {
-  id: string
-  overtimeLeagueId: number
-  name: string
-  country: string
-  sportId: string
-  isEnabled: boolean
-  sortOrder: number
-}
+import { LeagueCatalogPanel } from '@/features/leagues/components/LeagueCatalogPanel'
+import { LeaguesPageHeader } from '@/features/leagues/components/LeaguesPageHeader'
+import {
+  filterLeagues,
+  sortLeagues,
+  summarizeLeagues,
+  type CuratedLeague,
+  type LeagueFilter,
+  type LeagueSort,
+} from '@/features/leagues/lib/leagueUtils'
+import { Skeleton } from '@/shared/components/ui/Card'
 
 export function LeaguesPage() {
   const queryClient = useQueryClient()
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<LeagueFilter>('all')
+  const [sort, setSort] = useState<LeagueSort>('order')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.leagues(),
@@ -28,6 +32,14 @@ export function LeaguesPage() {
     },
   })
 
+  const leagues = data ?? []
+  const summary = summarizeLeagues(leagues)
+
+  const visibleLeagues = useMemo(() => {
+    const filtered = filterLeagues(leagues, filter, search)
+    return sortLeagues(filtered, sort)
+  }, [leagues, filter, search, sort])
+
   const syncMutation = useMutation({
     mutationFn: async () => {
       await adminClient.post('/leagues/sync')
@@ -37,66 +49,41 @@ export function LeaguesPage() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isEnabled }: { id: string; isEnabled: boolean }) => {
+      setTogglingId(id)
       await adminClient.patch(`/leagues/${id}`, { isEnabled })
     },
+    onSettled: () => setTogglingId(null),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.leagues() }),
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Curated leagues</h1>
-          <p className="text-sm text-text-muted">Soccer leagues shown in the main app sidebar.</p>
-        </div>
-        <Button onClick={() => syncMutation.mutate()} isLoading={syncMutation.isPending}>
-          Sync from Overtime
-        </Button>
-      </div>
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      {isLoading && !data ? (
+        <Skeleton className="h-48 rounded-3xl" />
+      ) : (
+        <LeaguesPageHeader
+          total={summary.total}
+          enabled={summary.enabled}
+          disabled={summary.disabled}
+          onSync={() => syncMutation.mutate()}
+          isSyncing={syncMutation.isPending}
+        />
+      )}
 
-      <Card className="p-0 overflow-auto">
-        {isLoading ? (
-          <Skeleton className="h-48 m-4" />
-        ) : !data?.length ? (
-          <p className="p-4 text-sm text-text-muted">
-            No curated leagues yet. Run sync to import from Overtime API.
-          </p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-text-muted border-b border-border-default">
-              <tr>
-                <th className="p-3">Order</th>
-                <th className="p-3">League</th>
-                <th className="p-3">Overtime ID</th>
-                <th className="p-3">Enabled</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((league) => (
-                <tr key={league.id} className="border-b border-border-default/50">
-                  <td className="p-3 tabular-nums">{league.sortOrder}</td>
-                  <td className="p-3">
-                    <p className="font-medium">{league.name}</p>
-                    <p className="text-xs text-text-muted">{league.country}</p>
-                  </td>
-                  <td className="p-3 tabular-nums">{league.overtimeLeagueId}</td>
-                  <td className="p-3">
-                    <Button
-                      variant={league.isEnabled ? 'primary' : 'secondary'}
-                      className="text-xs px-2 py-1"
-                      onClick={() =>
-                        toggleMutation.mutate({ id: league.id, isEnabled: !league.isEnabled })
-                      }
-                    >
-                      {league.isEnabled ? 'Enabled' : 'Disabled'}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+      <LeagueCatalogPanel
+        leagues={visibleLeagues}
+        matchCount={visibleLeagues.length}
+        totalCount={summary.total}
+        isLoading={isLoading}
+        search={search}
+        onSearchChange={setSearch}
+        filter={filter}
+        onFilterChange={setFilter}
+        sort={sort}
+        onSortChange={setSort}
+        togglingId={togglingId}
+        onToggle={(league, isEnabled) => toggleMutation.mutate({ id: league.id, isEnabled })}
+      />
     </div>
   )
 }
