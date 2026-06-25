@@ -75,9 +75,9 @@ export function DashboardHero({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row lg:flex-col lg:items-end">
+        <div className="flex w-full flex-col gap-3 lg:w-auto lg:items-end">
           {stats.activeSeason && progress !== null ? (
-            <div className="w-full rounded-2xl border border-border-default/70 bg-bg-primary/50 p-4 backdrop-blur-sm sm:min-w-[260px] lg:w-[280px]">
+            <div className="w-full rounded-2xl border border-border-default/70 bg-bg-primary/50 p-4 backdrop-blur-sm lg:w-[280px]">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-muted">
@@ -121,10 +121,21 @@ export function DashboardHero({
                   {remaining} day{remaining === 1 ? '' : 's'} remaining
                 </p>
               ) : null}
+
+              <Link
+                to="/audit"
+                className="mt-4 flex w-full items-center justify-between rounded-xl border border-border-default/70 bg-bg-elevated/40 px-3 py-2.5 text-sm font-medium text-text-primary transition-colors hover:border-accent-secondary/30 hover:bg-accent-secondary/10 lg:hidden"
+              >
+                View audit log
+                <ArrowRightIcon className="h-4 w-4 text-text-muted" aria-hidden="true" />
+              </Link>
             </div>
           ) : null}
 
-          <Link to="/audit" className="w-full sm:w-auto lg:w-[280px]">
+          <Link
+            to="/audit"
+            className={cn('w-full lg:w-[280px]', stats.activeSeason && progress !== null && 'hidden lg:block')}
+          >
             <Button variant="secondary" className="w-full group">
               View audit log
               <ArrowRightIcon
