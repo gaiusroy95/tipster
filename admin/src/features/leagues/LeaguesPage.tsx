@@ -17,6 +17,7 @@ import {
   type LeagueSportFilter,
 } from '@/features/leagues/lib/leagueUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 
 export function LeaguesPage() {
   const queryClient = useQueryClient()
@@ -61,7 +62,7 @@ export function LeaguesPage() {
   })
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <AdminPageShell>
       {isLoading && !data ? (
         <Skeleton className="h-48 rounded-3xl" />
       ) : (
@@ -92,6 +93,6 @@ export function LeaguesPage() {
         togglingId={togglingId}
         onToggle={(league, isEnabled) => toggleMutation.mutate({ id: league.id, isEnabled })}
       />
-    </div>
+    </AdminPageShell>
   )
 }

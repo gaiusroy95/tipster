@@ -13,6 +13,7 @@ import {
   type ForumStatusFilter,
 } from '@/features/forum/lib/forumUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 
 const PAGE_SIZE = 20
 
@@ -106,7 +107,7 @@ export function ForumModerationPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[90rem] space-y-5 sm:space-y-6">
+    <AdminPageShell compact>
       {isLoading && !data ? (
         <Skeleton className="h-64 rounded-[1.75rem]" />
       ) : (
@@ -151,6 +152,6 @@ export function ForumModerationPage() {
           />
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   )
 }

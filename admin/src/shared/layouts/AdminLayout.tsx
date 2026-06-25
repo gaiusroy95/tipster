@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AdminHeader } from '@/shared/layouts/AdminHeader'
 import { AdminMain } from '@/shared/layouts/AdminMain'
+import { AdminMobileBar } from '@/shared/layouts/AdminMobileBar'
 import { AdminSidebar } from '@/shared/layouts/AdminSidebar'
 import { ADMIN_ROUTE_LABELS } from '@/shared/layouts/adminNav'
 import { useAuthStore } from '@/features/auth/stores/authStore'
@@ -40,14 +40,6 @@ export function AdminLayout() {
 
   return (
     <div className="admin-shell min-h-screen bg-bg-primary">
-      <AdminHeader
-        pageTitle={pageTitle}
-        displayName={displayName}
-        email={user?.email}
-        onSignOut={handleSignOut}
-        onOpenMobileNav={() => setMobileOpen(true)}
-      />
-
       <AdminSidebar
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
@@ -56,7 +48,8 @@ export function AdminLayout() {
         onSignOut={handleSignOut}
       />
 
-      <div className="admin-shell-body min-h-screen lg:ml-[var(--admin-sidebar-width)] lg:pt-[var(--admin-header-height)]">
+      <div className="admin-shell-body flex min-h-screen flex-col lg:pb-[var(--admin-sidebar-inset)] lg:pl-[var(--admin-sidebar-rail)] lg:pr-[var(--admin-sidebar-inset)] lg:pt-[var(--admin-sidebar-inset)]">
+        <AdminMobileBar pageTitle={pageTitle} onOpenMobileNav={() => setMobileOpen(true)} />
         <AdminMain />
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   type BetStatusFilter,
 } from '@/features/bets/lib/betUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 
 const PAGE_SIZE = 20
 
@@ -77,7 +78,7 @@ export function BetsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <AdminPageShell>
       {isLoading && !data ? (
         <Skeleton className="h-56 rounded-3xl" />
       ) : (
@@ -105,6 +106,6 @@ export function BetsPage() {
         onLoadMore={() => setPage((p) => p + 1)}
         isLoadingMore={isFetching && page > 1}
       />
-    </div>
+    </AdminPageShell>
   )
 }

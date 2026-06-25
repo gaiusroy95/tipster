@@ -17,7 +17,7 @@ export function PageShell({
   className?: string
 }) {
   return (
-    <div className={cn('mx-auto w-full max-w-7xl space-y-6', className)}>
+    <div className={cn('admin-page-shell mx-auto w-full space-y-6', className)}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">

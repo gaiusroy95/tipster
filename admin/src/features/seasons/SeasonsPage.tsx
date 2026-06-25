@@ -13,6 +13,7 @@ import {
   type Season,
 } from '@/features/seasons/lib/seasonUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 import { cn } from '@/shared/utils/cn'
 
 export function SeasonsPage() {
@@ -121,7 +122,7 @@ export function SeasonsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <AdminPageShell>
       {isLoading && !data ? (
         <Skeleton className="h-48 rounded-3xl" />
       ) : (
@@ -191,6 +192,6 @@ export function SeasonsPage() {
           />
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   )
 }

@@ -12,6 +12,7 @@ import { PlatformHealthStrip } from '@/features/dashboard/components/PlatformHea
 import { QuickActionsGrid } from '@/features/dashboard/components/QuickActionsGrid'
 import type { DashboardStats } from '@/features/dashboard/lib/dashboardUtils'
 import { useAuthStore } from '@/features/auth/stores/authStore'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 import { Skeleton } from '@/shared/components/ui/Card'
 
 export function DashboardPage() {
@@ -27,7 +28,7 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-6">
+      <AdminPageShell>
         <DashboardHeroSkeleton />
         <DashboardMetricsSkeleton />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -39,25 +40,25 @@ export function DashboardPage() {
           <Skeleton className="h-[420px] rounded-2xl xl:col-span-7" />
           <Skeleton className="h-[420px] rounded-2xl xl:col-span-5" />
         </div>
-      </div>
+      </AdminPageShell>
     )
   }
 
   if (error || !data) {
     return (
-      <div className="mx-auto w-full max-w-7xl">
+      <AdminPageShell>
         <div className="rounded-3xl border border-accent-loss/30 bg-accent-loss/10 p-8 text-center">
           <p className="font-display text-lg font-semibold text-accent-loss">Unable to load dashboard</p>
           <p className="mt-2 text-sm text-text-muted">
             Refresh the page or verify your connection to the admin API.
           </p>
         </div>
-      </div>
+      </AdminPageShell>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <AdminPageShell>
       <DashboardHero adminName={adminName} stats={data} />
       <DashboardMetrics stats={data} />
       <PlatformHealthStrip stats={data} />
@@ -70,6 +71,6 @@ export function DashboardPage() {
           <QuickActionsGrid />
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   )
 }

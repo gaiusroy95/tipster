@@ -14,6 +14,7 @@ import {
   type UserSort,
 } from '@/features/users/lib/userUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { AdminPageShell } from '@/shared/components/AdminPageShell'
 import { cn } from '@/shared/utils/cn'
 
 export function UsersPage() {
@@ -86,7 +87,7 @@ export function UsersPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <AdminPageShell>
       {isLoading && !data ? (
         <Skeleton className="h-48 rounded-3xl" />
       ) : (
@@ -162,6 +163,6 @@ export function UsersPage() {
           />
         </div>
       </div>
-    </div>
+    </AdminPageShell>
   )
 }
