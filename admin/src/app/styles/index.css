@@ -27,6 +27,11 @@
 }
 
 @layer base {
+  :root {
+    --admin-header-height: 4.5rem;
+    --admin-sidebar-width: 17.5rem;
+  }
+
   html {
     @apply antialiased;
   }
@@ -129,6 +134,61 @@
     background-image:
       radial-gradient(ellipse 70% 45% at 50% 0%, rgba(99, 102, 241, 0.08), transparent),
       radial-gradient(ellipse 40% 30% at 100% 100%, rgba(245, 158, 11, 0.04), transparent);
+  }
+
+  @media (min-width: 1024px) {
+    .admin-header-desktop {
+      background:
+        linear-gradient(180deg, rgba(22, 20, 34, 0.98) 0%, rgba(14, 12, 22, 0.96) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(244, 242, 255, 0.06),
+        0 10px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .admin-header-brand {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.05), transparent 72%);
+    }
+
+    .admin-header-page-title {
+      animation: admin-title-enter 0.35s ease-out both;
+    }
+
+    .admin-header-page-title-text {
+      background: linear-gradient(
+        110deg,
+        #ffffff 0%,
+        #f4f2ff 42%,
+        #c4b5fd 78%,
+        #a78bfa 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 18px rgba(167, 139, 250, 0.18));
+    }
+
+    @keyframes admin-title-enter {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .admin-sidebar {
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.14);
+    }
+
+    .admin-main {
+      background-color: color-mix(in srgb, var(--color-bg-primary) 92%, var(--color-bg-surface));
+    }
+
+    .admin-main-content {
+      min-height: calc(100vh - var(--admin-header-height));
+    }
   }
 
   .dashboard-hero {
@@ -392,6 +452,10 @@
   @media (prefers-reduced-motion: reduce) {
     .audit-vault-dot,
     .audit-timeline-stagger {
+      animation: none;
+    }
+
+    .admin-header-page-title {
       animation: none;
     }
   }
