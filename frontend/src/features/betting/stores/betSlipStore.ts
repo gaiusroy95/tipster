@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MarketType } from '@/core/constants/markets'
+import { bettingRules } from '@/core/config/bettingRules'
 
 export interface BetSelection {
   matchId: string
@@ -10,35 +11,54 @@ export interface BetSelection {
   selectionId: string
   selectionLabel: string
   odds: number
+  stake?: number
+}
+
+export function resolveSelectionStake(
+  selection: Pick<BetSelection, 'stake'>,
+  fallback = bettingRules.standardStake,
+): number {
+  return selection.stake ?? fallback
 }
 
 interface BetSlipState {
   selections: BetSelection[]
-  stake: number
+  defaultStake: number
   isPanelOpen: boolean
-  addSelection: (selection: BetSelection) => void
+  addSelection: (selection: Omit<BetSelection, 'stake'> & { stake?: number }) => void
   removeSelection: (matchId: string) => void
   clearSelections: () => void
-  setStake: (stake: number) => void
+  setSelectionStake: (matchId: string, stake: number) => void
+  setDefaultStake: (stake: number) => void
   setPanelOpen: (open: boolean) => void
   togglePanel: () => void
   clear: () => void
+}
+
+type PersistedBetSlip = {
+  selections?: BetSelection[]
+  stake?: number
+  defaultStake?: number
 }
 
 export const useBetSlipStore = create<BetSlipState>()(
   persist(
     (set) => ({
       selections: [],
-      stake: 25000,
+      defaultStake: bettingRules.standardStake,
       isPanelOpen: false,
 
       addSelection: (selection) =>
-        set((state) => ({
-          selections: [
-            ...state.selections.filter((s) => s.matchId !== selection.matchId),
-            selection,
-          ],
-        })),
+        set((state) => {
+          const existing = state.selections.find((s) => s.matchId === selection.matchId)
+          const stake = selection.stake ?? existing?.stake ?? state.defaultStake
+          return {
+            selections: [
+              ...state.selections.filter((s) => s.matchId !== selection.matchId),
+              { ...selection, stake },
+            ],
+          }
+        }),
 
       removeSelection: (matchId) =>
         set((state) => ({
@@ -47,17 +67,43 @@ export const useBetSlipStore = create<BetSlipState>()(
 
       clearSelections: () => set({ selections: [] }),
 
-      setStake: (stake) => set({ stake }),
+      setSelectionStake: (matchId, stake) =>
+        set((state) => ({
+          selections: state.selections.map((s) =>
+            s.matchId === matchId ? { ...s, stake } : s,
+          ),
+        })),
+
+      setDefaultStake: (defaultStake) => set({ defaultStake }),
 
       setPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
 
       togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
 
-      clear: () => set({ selections: [], stake: 25000, isPanelOpen: false }),
+      clear: () =>
+        set({
+          selections: [],
+          defaultStake: bettingRules.standardStake,
+          isPanelOpen: false,
+        }),
     }),
-    { name: 'bet-slip-store', partialize: (state) => ({
-      selections: state.selections,
-      stake: state.stake,
-    }) },
+    {
+      name: 'bet-slip-store',
+      version: 1,
+      migrate: (persisted) => {
+        const state = persisted as PersistedBetSlip
+        const defaultStake =
+          state.defaultStake ?? state.stake ?? bettingRules.standardStake
+        const selections = (state.selections ?? []).map((sel) => ({
+          ...sel,
+          stake: sel.stake ?? defaultStake,
+        }))
+        return { selections, defaultStake }
+      },
+      partialize: (state) => ({
+        selections: state.selections,
+        defaultStake: state.defaultStake,
+      }),
+    },
   ),
 )

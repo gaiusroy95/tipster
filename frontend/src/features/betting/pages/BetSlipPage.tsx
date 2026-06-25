@@ -3,7 +3,7 @@ import { BetSlipPanelContent } from '@/features/betting/components/BetSlipPanelC
 
 export function BetSlipPage() {
   return (
-    <PageShell title="Bet slip" description="Single selection betting (MVP)">
+    <PageShell title="Bet slip" description="Review selections, set stakes, and place virtual bets">
       <BetSlipPanelContent />
     </PageShell>
   )

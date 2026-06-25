@@ -1,15 +1,26 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
 import { BetSlipPanelContent } from '@/features/betting/components/BetSlipPanelContent'
 import { BetSlipIcon } from '@/features/betting/components/BetSlipIcon'
+import { Badge } from '@/shared/components/ui/Badge'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
-import { Badge } from '@/shared/components/ui/Badge'
+
+/** Shared width for bet slip panel and launcher bar. */
+const BET_SLIP_WIDTH =
+  'w-full sm:w-[min(calc(100vw-1.5rem),440px)] xl:w-[400px]'
+
+/** Aligns fixed bet slip with the right profile column inside max-w-[1800px] layout. */
+const BET_SLIP_POSITION = cn(
+  'fixed z-[45] flex flex-col gap-2 pointer-events-none',
+  'bottom-[calc(var(--layout-sticky-offset)+0.5rem)] xl:bottom-6',
+  'left-2 right-2 items-stretch',
+  'sm:left-auto sm:right-4 sm:items-end',
+  'lg:right-6',
+  'xl:right-[max(1.5rem,calc((100vw-min(100vw,1800px))/2+1.5rem))]',
+)
 
 export function BetSlipChatPanel() {
   const user = useAuthStore((s) => s.user)
@@ -24,11 +35,7 @@ export function BetSlipChatPanel() {
 
   return (
     <div
-      className={cn(
-        'fixed z-[45] flex flex-col items-end gap-2 pointer-events-none',
-        'right-3 sm:right-4 lg:right-6',
-        'bottom-[calc(var(--layout-sticky-offset)+0.5rem)] xl:bottom-6',
-      )}
+      className={BET_SLIP_POSITION}
       aria-label="Bet slip"
     >
       <AnimatePresence>
@@ -38,15 +45,20 @@ export function BetSlipChatPanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ type: 'tween', duration: 0.2 }}
-            className="pointer-events-auto w-[min(100vw-1.5rem,520px)] min-w-[min(100%,320px)] max-h-[min(72vh,560px)] flex flex-col rounded-2xl border border-border-default/80 bg-bg-surface shadow-elevated overflow-hidden"
+            className={cn(
+              'pointer-events-auto flex flex-col',
+              BET_SLIP_WIDTH,
+              'max-h-[min(72vh,560px)] overflow-hidden rounded-2xl',
+              'border border-border-default/80 bg-bg-surface shadow-elevated',
+            )}
             role="dialog"
             aria-label="Bet slip panel"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-border-default px-4 py-3 bg-gradient-to-r from-accent-secondary/20 to-bg-elevated">
-              <div className="flex items-center gap-3 min-w-0">
+            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border-default/60 bg-gradient-to-r from-accent-secondary/20 to-bg-elevated px-4 py-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <BetSlipIcon size="sm" />
                 <div className="min-w-0">
-                  <p className="font-display font-bold text-sm leading-tight">Bet slip</p>
+                  <p className="font-display text-sm font-bold leading-tight">Bet slip</p>
                   <p className="text-[11px] text-text-muted font-mono tabular-nums">
                     Balance {formatCredits(user.balance)}
                   </p>
@@ -55,13 +67,14 @@ export function BetSlipChatPanel() {
               <button
                 type="button"
                 onClick={() => setPanelOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted hover:bg-bg-elevated hover:text-text-primary transition-colors"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-bg-elevated hover:text-text-primary"
                 aria-label="Minimize bet slip"
               >
                 <ChevronDownIcon className="h-5 w-5" />
               </button>
-            </div>
-            <div className="scrollbar-panel flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+            </header>
+
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-3">
               <BetSlipPanelContent compact />
             </div>
           </motion.div>
@@ -72,29 +85,30 @@ export function BetSlipChatPanel() {
         type="button"
         onClick={togglePanel}
         className={cn(
-          'pointer-events-auto flex items-center gap-2.5 rounded-2xl px-3 py-2.5 min-h-[52px]',
-          'w-[min(calc(100vw-1.5rem),300px)] min-w-[240px]',
-          'bg-gradient-to-r from-accent-secondary to-indigo-500 text-white font-semibold text-sm shadow-glow-accent',
-          'hover:opacity-95 transition-opacity border border-accent-secondary/30',
+          'pointer-events-auto flex min-h-[52px] items-center gap-2.5',
+          BET_SLIP_WIDTH,
+          'rounded-2xl px-3 py-2.5 text-sm font-semibold text-white shadow-glow-accent transition-opacity',
+          'bg-gradient-to-r from-accent-secondary to-indigo-500 border border-accent-secondary/30',
+          'hover:opacity-95',
           isPanelOpen && 'ring-2 ring-accent-secondary/40',
         )}
         aria-expanded={isPanelOpen}
         aria-label={`Bet slip, ${slipCount} selections, balance ${formatCredits(user.balance)}`}
       >
-        <BetSlipIcon size="sm" className="text-white shrink-0" />
-        <span className="font-display shrink-0">Bet slip</span>
+        <BetSlipIcon size="sm" className="shrink-0 text-white" />
+        <span className="shrink-0 font-display">Bet slip</span>
         {slipCount > 0 && (
-          <Badge variant="live" className="bg-accent-live text-white border-0 min-w-[22px] shrink-0">
+          <Badge variant="live" className="min-w-[22px] shrink-0 border-0 bg-accent-live text-white">
             {slipCount}
           </Badge>
         )}
-        <span className="font-mono text-sm sm:text-base font-bold tabular-nums flex-1 text-right min-w-[4.5rem] truncate">
+        <span className="ml-auto min-w-[4.5rem] flex-1 truncate text-right font-mono text-sm font-bold tabular-nums sm:text-base">
           {formatCredits(user.balance)}
         </span>
         {isPanelOpen ? (
-          <ChevronDownIcon className="h-4 w-4 opacity-80 shrink-0" aria-hidden="true" />
+          <ChevronDownIcon className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
         ) : (
-          <ChevronUpIcon className="h-4 w-4 opacity-80 shrink-0" aria-hidden="true" />
+          <ChevronUpIcon className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
         )}
       </button>
     </div>
