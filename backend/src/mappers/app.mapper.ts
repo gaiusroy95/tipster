@@ -24,6 +24,7 @@ export interface SeasonDto {
   name: string;
   startDate: string;
   endDate: string;
+  status: string;
   isActive: boolean;
   description: string;
   prizes: PrizeTierDto[];
@@ -77,6 +78,7 @@ export function toSeasonDto(
     name: season.name,
     startDate: season.startDate.toISOString().slice(0, 10),
     endDate: season.endDate.toISOString().slice(0, 10),
+    status: season.status,
     isActive: season.isActive,
     description: season.description,
     prizes: prizes.map(toPrizeTierDto),

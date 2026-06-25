@@ -1,33 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminClient } from '@/core/api/client'
 import { queryKeys } from '@/core/constants/queryKeys'
 import type { ApiResponse } from '@/core/types/api'
-import { Button } from '@/shared/components/ui/Button'
-import { Input } from '@/shared/components/ui/Input'
-import { Card, Skeleton } from '@/shared/components/ui/Card'
-
-interface Season {
-  id: string
-  name: string
-  description: string
-  startDate: string
-  endDate: string
-  status: string
-  isActive: boolean
-  prizes: Array<{
-    id: string
-    rankFrom: number
-    rankTo: number
-    name: string
-    description: string
-  }>
-}
+import { SeasonDetailPanel } from '@/features/seasons/components/SeasonDetailPanel'
+import { SeasonListPanel } from '@/features/seasons/components/SeasonListPanel'
+import { SeasonsPageHeader } from '@/features/seasons/components/SeasonsPageHeader'
+import {
+  filterSeasons,
+  sortSeasons,
+  summarizeSeasons,
+  type Season,
+} from '@/features/seasons/lib/seasonUtils'
+import { Skeleton } from '@/shared/components/ui/Card'
+import { cn } from '@/shared/utils/cn'
 
 export function SeasonsPage() {
   const queryClient = useQueryClient()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
+  const [createMode, setCreateMode] = useState(false)
+  const [activatingId, setActivatingId] = useState<string | null>(null)
+  const [deletingPrizeId, setDeletingPrizeId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.seasons(),
@@ -37,93 +33,164 @@ export function SeasonsPage() {
     },
   })
 
+  const seasons = data ?? []
+  const summary = summarizeSeasons(seasons)
+
+  const visibleSeasons = useMemo(() => {
+    const filtered = filterSeasons(seasons, filter, search)
+    return sortSeasons(filtered)
+  }, [seasons, filter, search])
+
+  const selected = seasons.find((s) => s.id === selectedId) ?? null
+
+  useEffect(() => {
+    if (createMode) return
+    if (seasons.length === 0) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !seasons.some((s) => s.id === selectedId)) {
+      const active = seasons.find((s) => s.isActive)
+      setSelectedId(active?.id ?? seasons[0].id)
+    }
+  }, [seasons, selectedId, createMode])
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: queryKeys.seasons() })
+
   const createMutation = useMutation({
-    mutationFn: async () => {
-      const now = new Date()
-      const end = new Date(now)
-      end.setFullYear(end.getFullYear() + 1)
-      await adminClient.post('/seasons', {
-        name: name || `Season ${now.getFullYear()}/${String(now.getFullYear() + 1).slice(-2)}`,
-        description: description || 'Tipster competition season',
-        startDate: now.toISOString(),
-        endDate: end.toISOString(),
+    mutationFn: async (payload: {
+      name: string
+      description: string
+      startDate: string
+      endDate: string
+    }) => {
+      const res = await adminClient.post<ApiResponse<Season>>('/seasons', {
+        ...payload,
         status: 'upcoming',
       })
+      return res.data.data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.seasons() })
-      setName('')
-      setDescription('')
+    onSuccess: (created) => {
+      invalidate()
+      setCreateMode(false)
+      setSelectedId(created.id)
+      setMobileDetailOpen(true)
     },
   })
 
   const activateMutation = useMutation({
     mutationFn: async (id: string) => {
+      setActivatingId(id)
       await adminClient.post(`/seasons/${id}/activate`)
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.seasons() }),
+    onSettled: () => setActivatingId(null),
+    onSuccess: invalidate,
   })
 
+  const addPrizeMutation = useMutation({
+    mutationFn: async ({
+      seasonId,
+      data,
+    }: {
+      seasonId: string
+      data: { rankFrom: number; rankTo: number; name: string; description: string }
+    }) => {
+      await adminClient.post(`/seasons/${seasonId}/prizes`, data)
+    },
+    onSuccess: invalidate,
+  })
+
+  const deletePrizeMutation = useMutation({
+    mutationFn: async (prizeId: string) => {
+      setDeletingPrizeId(prizeId)
+      await adminClient.delete(`/seasons/prizes/${prizeId}`)
+    },
+    onSettled: () => setDeletingPrizeId(null),
+    onSuccess: invalidate,
+  })
+
+  const handleSelect = (id: string) => {
+    setCreateMode(false)
+    setSelectedId(id)
+    setMobileDetailOpen(true)
+  }
+
+  const handleCreateClick = () => {
+    setCreateMode(true)
+    setMobileDetailOpen(true)
+  }
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Seasons</h1>
-
-      <Card className="space-y-3">
-        <h2 className="font-semibold">Create season</h2>
-        <Input placeholder="Season name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Input
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <Button onClick={() => createMutation.mutate()} isLoading={createMutation.isPending}>
-          Create season
-        </Button>
-      </Card>
-
-      {isLoading ? (
-        <Skeleton className="h-40" />
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      {isLoading && !data ? (
+        <Skeleton className="h-48 rounded-3xl" />
       ) : (
-        <div className="space-y-3">
-          {data?.map((season) => (
-            <Card key={season.id} className="space-y-2">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold">
-                    {season.name}
-                    {season.isActive ? (
-                      <span className="ml-2 text-xs text-accent-win">Active</span>
-                    ) : null}
-                  </h3>
-                  <p className="text-sm text-text-muted">{season.description}</p>
-                  <p className="text-xs text-text-muted">
-                    {new Date(season.startDate).toLocaleDateString()} –{' '}
-                    {new Date(season.endDate).toLocaleDateString()} · {season.status}
-                  </p>
-                </div>
-                {!season.isActive ? (
-                  <Button
-                    variant="secondary"
-                    onClick={() => activateMutation.mutate(season.id)}
-                    isLoading={activateMutation.isPending}
-                  >
-                    Activate
-                  </Button>
-                ) : null}
-              </div>
-              {season.prizes.length > 0 ? (
-                <ul className="text-sm text-text-muted">
-                  {season.prizes.map((prize) => (
-                    <li key={prize.id}>
-                      Ranks {prize.rankFrom}–{prize.rankTo}: {prize.name}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </Card>
-          ))}
-        </div>
+        <SeasonsPageHeader
+          total={summary.total}
+          prizeTiers={summary.prizeTiers}
+          upcoming={summary.upcoming}
+          activeName={summary.active?.name ?? null}
+          activeDates={
+            summary.active
+              ? { start: summary.active.startDate, end: summary.active.endDate }
+              : null
+          }
+          progress={summary.progress}
+          daysLeft={summary.daysLeft}
+          onCreateClick={handleCreateClick}
+        />
       )}
+
+      <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
+        <div
+          className={cn(
+            'lg:col-span-5',
+            mobileDetailOpen ? 'hidden lg:block' : 'block',
+          )}
+        >
+          <SeasonListPanel
+            seasons={visibleSeasons}
+            matchCount={visibleSeasons.length}
+            totalCount={summary.total}
+            isLoading={isLoading}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            selectedId={createMode ? null : selectedId}
+            onSelect={handleSelect}
+          />
+        </div>
+
+        <div
+          className={cn(
+            'lg:col-span-7',
+            mobileDetailOpen ? 'block' : 'hidden lg:block',
+          )}
+        >
+          <SeasonDetailPanel
+            season={selected}
+            mode={createMode ? 'create' : 'view'}
+            showBack
+            onBack={() => {
+              setMobileDetailOpen(false)
+              setCreateMode(false)
+            }}
+            onCancelCreate={() => setCreateMode(false)}
+            onCreate={(payload) => createMutation.mutate(payload)}
+            isCreating={createMutation.isPending}
+            onActivate={(id) => activateMutation.mutate(id)}
+            isActivating={activateMutation.isPending}
+            activatingId={activatingId}
+            onAddPrize={(seasonId, prize) =>
+              addPrizeMutation.mutate({ seasonId, data: prize })
+            }
+            isAddingPrize={addPrizeMutation.isPending}
+            onDeletePrize={(prizeId) => deletePrizeMutation.mutate(prizeId)}
+            deletingPrizeId={deletingPrizeId}
+          />
+        </div>
+      </div>
     </div>
   )
 }

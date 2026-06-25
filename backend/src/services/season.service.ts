@@ -50,11 +50,65 @@ const SEED_SEASONS = [
 ];
 
 export const seasonService = {
-  async seedIfEmpty() {
-    const existing = await prisma.season.findFirst();
-    if (existing) return;
+  async removeDuplicateSeasons() {
+    const seasons = await prisma.season.findMany({
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: { _count: { select: { participants: true } } },
+    });
 
+    const groups = new Map<string, typeof seasons>();
+    for (const season of seasons) {
+      const list = groups.get(season.name) ?? [];
+      list.push(season);
+      groups.set(season.name, list);
+    }
+
+    let removed = 0;
+    for (const group of groups.values()) {
+      if (group.length <= 1) continue;
+
+      group.sort((a, b) => {
+        if (b._count.participants !== a._count.participants) {
+          return b._count.participants - a._count.participants;
+        }
+        return a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id);
+      });
+
+      const [, ...dupes] = group;
+      for (const dupe of dupes) {
+        await prisma.season.delete({ where: { id: dupe.id } });
+        removed++;
+      }
+    }
+
+    if (removed > 0) {
+      console.log(`[seed] Removed ${removed} duplicate season row(s)`);
+    }
+  },
+
+  async ensureSingleActiveSeason() {
+    const active = await prisma.season.findMany({
+      where: { isActive: true },
+      orderBy: [{ startDate: 'desc' }, { createdAt: 'asc' }],
+    });
+    if (active.length <= 1) return;
+
+    const [keep, ...rest] = active;
+    await prisma.season.updateMany({
+      where: { id: { in: rest.map((s) => s.id) } },
+      data: { isActive: false, status: 'completed' },
+    });
+    console.log(`[seed] Deactivated ${rest.length} extra active season(s); kept "${keep.name}"`);
+  },
+
+  async seedIfEmpty() {
+    await this.removeDuplicateSeasons();
+
+    let created = 0;
     for (const seasonData of SEED_SEASONS) {
+      const existing = await prisma.season.findFirst({ where: { name: seasonData.name } });
+      if (existing) continue;
+
       await prisma.season.create({
         data: {
           name: seasonData.name,
@@ -68,8 +122,14 @@ export const seasonService = {
           },
         },
       });
+      created++;
     }
-    console.log('[seed] Seasons and prize tiers created');
+
+    await this.ensureSingleActiveSeason();
+
+    if (created > 0) {
+      console.log(`[seed] Created ${created} season(s) with prize tiers`);
+    }
   },
 
   async getActiveSeason() {
