@@ -1,64 +1,132 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { adminClient } from '@/core/api/client'
 import { queryKeys } from '@/core/constants/queryKeys'
 import type { ApiResponse, Paginated } from '@/core/types/api'
-import { Card, Skeleton } from '@/shared/components/ui/Card'
+import { AuditDossierPanel } from '@/features/audit/components/AuditDossierPanel'
+import { AuditFilterRail } from '@/features/audit/components/AuditFilterRail'
+import { AuditTimelineStream } from '@/features/audit/components/AuditTimelineStream'
+import { AuditVaultHero } from '@/features/audit/components/AuditVaultHero'
+import {
+  filterAuditEntries,
+  summarizeAuditEntries,
+  type AdminAuditEntry,
+  type AuditEntityFilter,
+} from '@/features/audit/lib/auditUtils'
+import { Skeleton } from '@/shared/components/ui/Card'
 
-interface AuditEntry {
-  id: string
-  action: string
-  entityType: string
-  entityId?: string
-  createdAt: string
-  admin: { email: string; displayName: string }
-  metadata?: Record<string, unknown>
-}
+const PAGE_SIZE = 30
 
 export function AuditLogPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.audit({}),
+  const dossierRef = useRef<HTMLDivElement>(null)
+  const [search, setSearch] = useState('')
+  const [entityType, setEntityType] = useState<AuditEntityFilter>('all')
+  const [page, setPage] = useState(1)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [accumulated, setAccumulated] = useState<AdminAuditEntry[]>([])
+
+  const queryParams = {
+    entityType: entityType === 'all' ? undefined : entityType,
+    limit: PAGE_SIZE,
+    page,
+  }
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: queryKeys.audit(queryParams),
     queryFn: async () => {
-      const res = await adminClient.get<ApiResponse<Paginated<AuditEntry>>>('/audit-logs', {
-        params: { limit: 100 },
+      const res = await adminClient.get<ApiResponse<Paginated<AdminAuditEntry>>>('/audit-logs', {
+        params: queryParams,
       })
       return res.data.data
     },
   })
 
+  useEffect(() => {
+    if (!data) return
+    setAccumulated((prev) => {
+      if (page === 1) return data.items
+      const ids = new Set(prev.map((e) => e.id))
+      const next = data.items.filter((e) => !ids.has(e.id))
+      return [...prev, ...next]
+    })
+  }, [data, page])
+
+  useEffect(() => {
+    setPage(1)
+    setAccumulated([])
+    setSelectedId(null)
+  }, [entityType])
+
+  const visibleEntries = useMemo(
+    () => filterAuditEntries(accumulated, search),
+    [accumulated, search],
+  )
+
+  useEffect(() => {
+    if (!selectedId) return
+    const stillVisible = visibleEntries.some((e) => e.id === selectedId)
+    if (!stillVisible && visibleEntries.length > 0) {
+      setSelectedId(visibleEntries[0]?.id ?? null)
+    }
+  }, [visibleEntries, selectedId])
+
+  const total = data?.total ?? 0
+  const summary = useMemo(
+    () => summarizeAuditEntries(visibleEntries, search ? visibleEntries.length : total),
+    [visibleEntries, search, total],
+  )
+  const selectedEntry = visibleEntries.find((e) => e.id === selectedId) ?? null
+  const hasMore = accumulated.length < total
+
+  const handleSelect = (entry: AdminAuditEntry) => {
+    setSelectedId(entry.id)
+    if (window.matchMedia('(max-width: 1023px)').matches) {
+      requestAnimationFrame(() => {
+        dossierRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
+  }
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Audit log</h1>
-      <Card className="p-0 overflow-auto max-h-[75vh]">
-        {isLoading ? (
-          <Skeleton className="h-48 m-4" />
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="text-left text-text-muted border-b border-border-default sticky top-0 bg-bg-surface">
-              <tr>
-                <th className="p-3">Time</th>
-                <th className="p-3">Admin</th>
-                <th className="p-3">Action</th>
-                <th className="p-3">Entity</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.items.map((entry) => (
-                <tr key={entry.id} className="border-b border-border-default/50">
-                  <td className="p-3 whitespace-nowrap text-text-muted">
-                    {new Date(entry.createdAt).toLocaleString()}
-                  </td>
-                  <td className="p-3">{entry.admin.displayName}</td>
-                  <td className="p-3 font-medium">{entry.action}</td>
-                  <td className="p-3 text-text-muted">
-                    {entry.entityType}
-                    {entry.entityId ? ` · ${entry.entityId.slice(0, 8)}…` : ''}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
+    <div className="mx-auto w-full max-w-[90rem] space-y-5 sm:space-y-6">
+      {isLoading && !data ? (
+        <Skeleton className="h-64 rounded-[1.75rem]" />
+      ) : (
+        <AuditVaultHero
+          total={summary.total}
+          loaded={summary.loaded}
+          recent24h={summary.recent24h}
+          admins={summary.admins}
+          critical={summary.critical}
+        />
+      )}
+
+      <AuditFilterRail
+        search={search}
+        onSearchChange={setSearch}
+        entityType={entityType}
+        onEntityTypeChange={setEntityType}
+        total={total}
+        visible={visibleEntries.length}
+      />
+
+      <div className="grid gap-5 lg:grid-cols-12 lg:gap-6 xl:gap-8">
+        <div className="lg:col-span-5 xl:col-span-5">
+          <AuditTimelineStream
+            entries={visibleEntries}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+            isLoading={isLoading}
+            hasMore={hasMore && !search}
+            onLoadMore={() => setPage((p) => p + 1)}
+            isLoadingMore={isFetching && page > 1}
+          />
+        </div>
+
+        <div ref={dossierRef} className="lg:col-span-7 xl:col-span-7">
+          <AuditDossierPanel entry={selectedEntry} />
+        </div>
+      </div>
     </div>
   )
 }
