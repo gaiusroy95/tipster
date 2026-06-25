@@ -10,6 +10,8 @@ export interface CuratedLeague {
 
 export type LeagueFilter = 'all' | 'enabled' | 'disabled'
 
+export type LeagueSportFilter = 'all' | string
+
 export type LeagueSort = 'order' | 'name-asc' | 'name-desc' | 'country'
 
 export const LEAGUE_SORT_OPTIONS: { id: LeagueSort; label: string }[] = [
@@ -28,15 +30,29 @@ export function summarizeLeagues(leagues: CuratedLeague[]) {
   }
 }
 
+export function listLeagueSports(leagues: CuratedLeague[]) {
+  return [...new Set(leagues.map((l) => l.sportId))].sort((a, b) => a.localeCompare(b))
+}
+
+export function formatSportLabel(sportId: string) {
+  return sportId
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export function filterLeagues(
   leagues: CuratedLeague[],
   filter: LeagueFilter,
   search: string,
+  sportFilter: LeagueSportFilter = 'all',
 ) {
   let result = leagues
 
   if (filter === 'enabled') result = result.filter((l) => l.isEnabled)
   if (filter === 'disabled') result = result.filter((l) => !l.isEnabled)
+  if (sportFilter !== 'all') result = result.filter((l) => l.sportId === sportFilter)
 
   const q = search.trim().toLowerCase()
   if (q) {
@@ -44,6 +60,7 @@ export function filterLeagues(
       (l) =>
         l.name.toLowerCase().includes(q) ||
         l.country.toLowerCase().includes(q) ||
+        l.sportId.toLowerCase().includes(q) ||
         String(l.overtimeLeagueId).includes(q),
     )
   }

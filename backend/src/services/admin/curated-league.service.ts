@@ -59,7 +59,6 @@ export const curatedLeagueService = {
 
     for (const [category, leagues] of Object.entries(grouped)) {
       const sportId = mapOvertimeCategoryToSportId(category);
-      if (sportId !== 'soccer') continue;
 
       for (const league of leagues) {
         const seed = matchSeedLeague(league.name);
@@ -97,7 +96,7 @@ export const curatedLeagueService = {
       metadata: { created },
     });
 
-    return this.listForAdmin('soccer');
+    return this.listForAdmin();
   },
 
   async update(adminUserId: string, id: string, data: { isEnabled?: boolean; sortOrder?: number; name?: string; country?: string }) {

@@ -63,15 +63,15 @@ export function LeaguesPageHeader({
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="win">Arena curation</Badge>
-            <span className="text-xs text-text-muted">Soccer · Overtime API · sidebar order</span>
+            <span className="text-xs text-text-muted">All sports · Overtime API · sidebar order</span>
           </div>
           <div>
             <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
               Curated leagues
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-              Control which soccer leagues appear in the Tipster Arena sidebar. Sync new competitions
-              from Overtime, then enable or hide them for players.
+              Control which leagues appear in the Tipster Arena sidebar. Sync competitions from
+              Overtime across every sport, then enable or hide them for players.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">

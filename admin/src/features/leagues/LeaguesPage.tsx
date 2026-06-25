@@ -7,11 +7,13 @@ import { LeagueCatalogPanel } from '@/features/leagues/components/LeagueCatalogP
 import { LeaguesPageHeader } from '@/features/leagues/components/LeaguesPageHeader'
 import {
   filterLeagues,
+  listLeagueSports,
   sortLeagues,
   summarizeLeagues,
   type CuratedLeague,
   type LeagueFilter,
   type LeagueSort,
+  type LeagueSportFilter,
 } from '@/features/leagues/lib/leagueUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
 
@@ -19,26 +21,26 @@ export function LeaguesPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<LeagueFilter>('all')
+  const [sportFilter, setSportFilter] = useState<LeagueSportFilter>('all')
   const [sort, setSort] = useState<LeagueSort>('order')
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.leagues(),
     queryFn: async () => {
-      const res = await adminClient.get<ApiResponse<CuratedLeague[]>>('/leagues', {
-        params: { sportId: 'soccer' },
-      })
+      const res = await adminClient.get<ApiResponse<CuratedLeague[]>>('/leagues')
       return res.data.data
     },
   })
 
   const leagues = data ?? []
+  const sports = useMemo(() => listLeagueSports(leagues), [leagues])
   const summary = summarizeLeagues(leagues)
 
   const visibleLeagues = useMemo(() => {
-    const filtered = filterLeagues(leagues, filter, search)
+    const filtered = filterLeagues(leagues, filter, search, sportFilter)
     return sortLeagues(filtered, sort)
-  }, [leagues, filter, search, sort])
+  }, [leagues, filter, search, sportFilter, sort])
 
   const syncMutation = useMutation({
     mutationFn: async () => {
@@ -79,6 +81,9 @@ export function LeaguesPage() {
         onSearchChange={setSearch}
         filter={filter}
         onFilterChange={setFilter}
+        sports={sports}
+        sportFilter={sportFilter}
+        onSportFilterChange={setSportFilter}
         sort={sort}
         onSortChange={setSort}
         togglingId={togglingId}

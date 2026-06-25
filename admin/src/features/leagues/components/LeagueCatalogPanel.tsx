@@ -2,9 +2,11 @@ import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outlin
 import { EnableToggle } from '@/features/leagues/components/EnableToggle'
 import {
   LEAGUE_SORT_OPTIONS,
+  formatSportLabel,
   type CuratedLeague,
   type LeagueFilter,
   type LeagueSort,
+  type LeagueSportFilter,
 } from '@/features/leagues/lib/leagueUtils'
 import { Badge } from '@/shared/components/Badge'
 import { LeagueLogo } from '@/shared/components/LeagueLogo'
@@ -28,6 +30,9 @@ export function LeagueCatalogPanel({
   onSearchChange,
   filter,
   onFilterChange,
+  sports,
+  sportFilter,
+  onSportFilterChange,
   sort,
   onSortChange,
   togglingId,
@@ -41,6 +46,9 @@ export function LeagueCatalogPanel({
   onSearchChange: (value: string) => void
   filter: LeagueFilter
   onFilterChange: (filter: LeagueFilter) => void
+  sports: string[]
+  sportFilter: LeagueSportFilter
+  onSportFilterChange: (sport: LeagueSportFilter) => void
   sort: LeagueSort
   onSortChange: (sort: LeagueSort) => void
   togglingId: string | null
@@ -67,7 +75,7 @@ export function LeagueCatalogPanel({
           />
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             {FILTERS.map((item) => (
               <button
@@ -86,7 +94,39 @@ export function LeagueCatalogPanel({
             ))}
           </div>
 
-          <div className="relative w-full sm:w-auto sm:min-w-[180px]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {sports.length > 0 ? (
+              <div className="relative w-full sm:w-auto sm:min-w-[160px]">
+                <label htmlFor="league-sport-filter" className="sr-only">
+                  Filter by sport
+                </label>
+                <select
+                  id="league-sport-filter"
+                  value={sportFilter}
+                  onChange={(e) => onSportFilterChange(e.target.value)}
+                  className={cn(
+                    'h-9 w-full appearance-none rounded-full border border-border-default bg-bg-elevated/50',
+                    'pl-3 pr-9 text-xs font-semibold text-text-primary transition-colors',
+                    'hover:border-border-strong focus:border-accent-secondary focus:outline-none focus:ring-1 focus:ring-accent-secondary/30',
+                  )}
+                >
+                  <option value="all" className="bg-bg-surface text-text-primary">
+                    All sports
+                  </option>
+                  {sports.map((sportId) => (
+                    <option key={sportId} value={sportId} className="bg-bg-surface text-text-primary">
+                      {formatSportLabel(sportId)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+                  aria-hidden="true"
+                />
+              </div>
+            ) : null}
+
+            <div className="relative w-full sm:w-auto sm:min-w-[180px]">
             <label htmlFor="league-sort" className="sr-only">
               Sort leagues
             </label>
@@ -111,6 +151,7 @@ export function LeagueCatalogPanel({
               aria-hidden="true"
             />
           </div>
+          </div>
         </div>
       </div>
 
@@ -128,7 +169,7 @@ export function LeagueCatalogPanel({
           <p className="mt-4 font-display text-base font-semibold">No leagues found</p>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-text-muted">
             {totalCount === 0
-              ? 'Run Sync from Overtime to import soccer leagues into the catalog.'
+              ? 'Run Sync from Overtime to import leagues from every sport into the catalog.'
               : 'Try a different search, filter, or sort option.'}
           </p>
         </div>
