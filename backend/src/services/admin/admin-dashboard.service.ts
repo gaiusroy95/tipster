@@ -40,11 +40,15 @@ export const adminUsersService = {
     limit?: number;
     banned?: boolean;
     role?: 'USER' | 'ADMIN';
+    sortBy?: 'createdAt' | 'displayName' | 'balance' | 'rank';
+    sortOrder?: 'asc' | 'desc';
   }) {
     const page = Math.max(1, params.page ?? 1);
     const limit = Math.min(100, Math.max(1, params.limit ?? 20));
     const skip = (page - 1) * limit;
     const search = params.search?.trim();
+    const sortBy = params.sortBy ?? 'createdAt';
+    const sortOrder = params.sortOrder ?? 'desc';
 
     const where = {
       ...(params.banned !== undefined ? { isBanned: params.banned } : {}),
@@ -60,10 +64,12 @@ export const adminUsersService = {
         : {}),
     };
 
+    const orderBy = { [sortBy]: sortOrder } as const;
+
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

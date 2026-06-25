@@ -24,6 +24,7 @@ export interface AdminUser {
   email: string
   displayName: string
   username: string
+  avatarUrl?: string
   balance: number
   rank: number
   role: 'USER' | 'ADMIN'

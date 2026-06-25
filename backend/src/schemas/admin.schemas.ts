@@ -13,6 +13,8 @@ export const adminUsersListSchema = adminListQuerySchema.extend({
       z.boolean().optional(),
     ),
   role: z.enum(['USER', 'ADMIN']).optional(),
+  sortBy: z.enum(['createdAt', 'displayName', 'balance', 'rank']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
 export const adminUpdateUserSchema = z.object({

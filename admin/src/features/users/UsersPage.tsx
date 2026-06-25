@@ -1,33 +1,65 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminClient } from '@/core/api/client'
 import { queryKeys } from '@/core/constants/queryKeys'
 import type { AdminUser, ApiResponse, Paginated } from '@/core/types/api'
-import { Button } from '@/shared/components/ui/Button'
-import { Input } from '@/shared/components/ui/Input'
-import { Card, Skeleton } from '@/shared/components/ui/Card'
+import { UserDetailPanel } from '@/features/users/components/UserDetailPanel'
+import { UserListPanel } from '@/features/users/components/UserListPanel'
+import { UsersPageHeader } from '@/features/users/components/UsersPageHeader'
+import {
+  filterParams,
+  sortParams,
+  summarizeUsers,
+  type UserFilter,
+  type UserSort,
+} from '@/features/users/lib/userUtils'
+import { Skeleton } from '@/shared/components/ui/Card'
+import { cn } from '@/shared/utils/cn'
 
 export function UsersPage() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<UserFilter>('all')
+  const [sort, setSort] = useState<UserSort>('newest')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
   const [balanceAdj, setBalanceAdj] = useState('')
   const [banReason, setBanReason] = useState('')
 
+  const listParams = {
+    search: search || undefined,
+    limit: 50,
+    ...filterParams(filter),
+    ...sortParams(sort),
+  }
+
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.users({ search }),
+    queryKey: queryKeys.users(listParams),
     queryFn: async () => {
       const res = await adminClient.get<ApiResponse<Paginated<AdminUser>>>('/users', {
-        params: { search: search || undefined, limit: 50 },
+        params: listParams,
       })
       return res.data.data
     },
   })
 
-  const selected = data?.items.find((u) => u.id === selectedId)
+  const users = data?.items ?? []
+  const selected = users.find((u) => u.id === selectedId) ?? null
+  const summary = summarizeUsers(users, data?.total ?? 0)
+
+  useEffect(() => {
+    if (users.length === 0) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !users.some((u) => u.id === selectedId)) {
+      setSelectedId(users[0].id)
+    }
+  }, [users, selectedId])
 
   const updateMutation = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
+      if (!selectedId) throw new Error('No user selected')
       const res = await adminClient.patch<ApiResponse<AdminUser>>(`/users/${selectedId}`, payload)
       return res.data.data
     },
@@ -38,121 +70,97 @@ export function UsersPage() {
 
   const verifyMutation = useMutation({
     mutationFn: async () => {
+      if (!selectedId) throw new Error('No user selected')
       await adminClient.post(`/users/${selectedId}/verify-email`)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
   })
 
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+    setMobileDetailOpen(true)
+  }
+
+  const handleBack = () => {
+    setMobileDetailOpen(false)
+  }
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Users</h1>
-      <Input
-        placeholder="Search email, username…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-md"
-      />
+    <div className="mx-auto w-full max-w-7xl space-y-6">
+      {isLoading && !data ? (
+        <Skeleton className="h-48 rounded-3xl" />
+      ) : (
+        <UsersPageHeader
+          total={summary.total}
+          admins={summary.admins}
+          banned={summary.banned}
+          loaded={summary.loaded}
+        />
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="overflow-auto max-h-[70vh] p-0">
-          {isLoading ? (
-            <Skeleton className="h-64 m-4" />
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-text-muted border-b border-border-default">
-                <tr>
-                  <th className="p-3">User</th>
-                  <th className="p-3">Role</th>
-                  <th className="p-3">Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.items.map((user) => (
-                  <tr
-                    key={user.id}
-                    className={`border-b border-border-default/50 cursor-pointer hover:bg-bg-elevated/50 ${selectedId === user.id ? 'bg-bg-elevated' : ''}`}
-                    onClick={() => setSelectedId(user.id)}
-                  >
-                    <td className="p-3">
-                      <p className="font-medium">{user.displayName}</p>
-                      <p className="text-xs text-text-muted">{user.email}</p>
-                      {user.isBanned ? (
-                        <span className="text-xs text-accent-loss">Banned</span>
-                      ) : null}
-                    </td>
-                    <td className="p-3">{user.role}</td>
-                    <td className="p-3 tabular-nums">{user.balance}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="grid gap-4 lg:grid-cols-12 lg:items-start">
+        <div
+          className={cn(
+            'lg:col-span-5',
+            mobileDetailOpen ? 'hidden lg:block' : 'block',
           )}
-        </Card>
+        >
+          <UserListPanel
+            users={users}
+            total={data?.total ?? 0}
+            isLoading={isLoading}
+            search={search}
+            onSearchChange={setSearch}
+            filter={filter}
+            onFilterChange={setFilter}
+            sort={sort}
+            onSortChange={setSort}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+          />
+        </div>
 
-        <Card className="space-y-3">
-          {!selected ? (
-            <p className="text-text-muted text-sm">Select a user to manage.</p>
-          ) : (
-            <>
-              <h2 className="font-semibold">{selected.displayName}</h2>
-              <p className="text-sm text-text-muted">@{selected.username}</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    updateMutation.mutate({
-                      role: selected.role === 'ADMIN' ? 'USER' : 'ADMIN',
-                    })
-                  }
-                >
-                  {selected.role === 'ADMIN' ? 'Demote to user' : 'Promote to admin'}
-                </Button>
-                <Button
-                  variant={selected.isBanned ? 'secondary' : 'danger'}
-                  onClick={() =>
-                    updateMutation.mutate({
-                      isBanned: !selected.isBanned,
-                      banReason: selected.isBanned ? null : banReason || 'Suspended by admin',
-                    })
-                  }
-                >
-                  {selected.isBanned ? 'Unban' : 'Ban'}
-                </Button>
-                <Button variant="ghost" onClick={() => verifyMutation.mutate()}>
-                  Force verify email
-                </Button>
-              </div>
-              {!selected.isBanned ? (
-                <Input
-                  placeholder="Ban reason (optional)"
-                  value={banReason}
-                  onChange={(e) => setBanReason(e.target.value)}
-                />
-              ) : null}
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <label className="text-xs text-text-muted">Balance adjustment</label>
-                  <Input
-                    type="number"
-                    placeholder="e.g. 100 or -50"
-                    value={balanceAdj}
-                    onChange={(e) => setBalanceAdj(e.target.value)}
-                  />
-                </div>
-                <Button
-                  onClick={() => {
-                    const n = Number(balanceAdj)
-                    if (!Number.isFinite(n) || n === 0) return
-                    updateMutation.mutate({ balanceAdjustment: n, balanceReason: 'Admin adjustment' })
-                    setBalanceAdj('')
-                  }}
-                >
-                  Apply
-                </Button>
-              </div>
-            </>
+        <div
+          className={cn(
+            'lg:col-span-7',
+            mobileDetailOpen ? 'block' : 'hidden lg:block',
           )}
-        </Card>
+        >
+          <UserDetailPanel
+            user={selected}
+            showBack
+            onBack={handleBack}
+            banReason={banReason}
+            onBanReasonChange={setBanReason}
+            balanceAdj={balanceAdj}
+            onBalanceAdjChange={setBalanceAdj}
+            isUpdating={updateMutation.isPending}
+            isVerifying={verifyMutation.isPending}
+            onPromoteToggle={() =>
+              selected &&
+              updateMutation.mutate({
+                role: selected.role === 'ADMIN' ? 'USER' : 'ADMIN',
+              })
+            }
+            onBanToggle={() =>
+              selected &&
+              updateMutation.mutate({
+                isBanned: !selected.isBanned,
+                banReason: selected.isBanned ? null : banReason || 'Suspended by admin',
+              })
+            }
+            onVerifyEmail={() => verifyMutation.mutate()}
+            onApplyBalance={() => {
+              const n = Number(balanceAdj)
+              if (!Number.isFinite(n) || n === 0) return
+              updateMutation.mutate({
+                balanceAdjustment: n,
+                balanceReason: 'Admin adjustment',
+              })
+              setBalanceAdj('')
+            }}
+          />
+        </div>
       </div>
     </div>
   )
