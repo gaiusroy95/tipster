@@ -6,8 +6,9 @@ import type { ApiResponse } from '@/core/types/api'
 import { LeagueCatalogPanel } from '@/features/leagues/components/LeagueCatalogPanel'
 import { LeaguesPageHeader } from '@/features/leagues/components/LeaguesPageHeader'
 import {
+  buildLeagueRankMap,
   filterLeagues,
-  listLeagueSports,
+  listSportFilterOptions,
   sortLeagues,
   summarizeLeagues,
   type CuratedLeague,
@@ -22,7 +23,7 @@ export function LeaguesPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<LeagueFilter>('all')
   const [sportFilter, setSportFilter] = useState<LeagueSportFilter>('all')
-  const [sort, setSort] = useState<LeagueSort>('order')
+  const [sort, setSort] = useState<LeagueSort>('rank')
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const { data, isLoading } = useQuery({
@@ -34,7 +35,8 @@ export function LeaguesPage() {
   })
 
   const leagues = data ?? []
-  const sports = useMemo(() => listLeagueSports(leagues), [leagues])
+  const sportOptions = useMemo(() => listSportFilterOptions(leagues), [leagues])
+  const rankMap = useMemo(() => buildLeagueRankMap(leagues), [leagues])
   const summary = summarizeLeagues(leagues)
 
   const visibleLeagues = useMemo(() => {
@@ -74,6 +76,7 @@ export function LeaguesPage() {
 
       <LeagueCatalogPanel
         leagues={visibleLeagues}
+        rankMap={rankMap}
         matchCount={visibleLeagues.length}
         totalCount={summary.total}
         isLoading={isLoading}
@@ -81,7 +84,7 @@ export function LeaguesPage() {
         onSearchChange={setSearch}
         filter={filter}
         onFilterChange={setFilter}
-        sports={sports}
+        sportOptions={sportOptions}
         sportFilter={sportFilter}
         onSportFilterChange={setSportFilter}
         sort={sort}

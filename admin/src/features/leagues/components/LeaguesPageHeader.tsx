@@ -63,7 +63,7 @@ export function LeaguesPageHeader({
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="win">Arena curation</Badge>
-            <span className="text-xs text-text-muted">All sports · Overtime API · sidebar order</span>
+            <span className="text-xs text-text-muted">Soccer, baseball & more · ranked sidebar</span>
           </div>
           <div>
             <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
