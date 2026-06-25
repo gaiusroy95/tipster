@@ -1,3 +1,4 @@
+import type { ComponentType, SVGProps } from 'react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -7,11 +8,11 @@ import {
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
-  TicketIcon,
   TrophyIcon,
   UsersIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { BetSlipNavIcon } from '@/shared/components/icons/BetSlipIcon'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { UserAvatar } from '@/shared/components/UserAvatar'
@@ -21,7 +22,7 @@ import { cn } from '@/shared/utils/cn'
 type NavItem = {
   to: string
   label: string
-  icon: typeof ChartBarSquareIcon
+  icon: ComponentType<SVGProps<SVGSVGElement>>
   end?: boolean
 }
 
@@ -41,7 +42,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: '/users', label: 'Users', icon: UsersIcon },
       { to: '/leagues', label: 'Leagues', icon: TrophyIcon },
       { to: '/seasons', label: 'Seasons', icon: CalendarDaysIcon },
-      { to: '/bets', label: 'Bets', icon: TicketIcon },
+      { to: '/bets', label: 'Bets', icon: BetSlipNavIcon },
     ],
   },
   {

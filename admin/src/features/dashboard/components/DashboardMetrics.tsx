@@ -4,10 +4,10 @@ import {
   ArrowUpRightIcon,
   BoltIcon,
   ChatBubbleLeftRightIcon,
-  TicketIcon,
   TrophyIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
+import { BetSlipNavIcon } from '@/shared/components/icons/BetSlipIcon'
 import type { DashboardStats } from '@/features/dashboard/lib/dashboardUtils'
 import { cn } from '@/shared/utils/cn'
 
@@ -66,7 +66,7 @@ const METRICS: MetricConfig[] = [
     label: 'Active bets',
     caption: 'Open positions in the arena',
     to: '/bets',
-    icon: TicketIcon,
+    icon: BetSlipNavIcon,
     accent: 'primary',
   },
   {

@@ -5,10 +5,10 @@ import {
   CalendarDaysIcon,
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
-  TicketIcon,
   TrophyIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
+import { BetSlipNavIcon } from '@/shared/components/icons/BetSlipIcon'
 import { PanelCard } from '@/shared/components/PanelCard'
 import { cn } from '@/shared/utils/cn'
 
@@ -45,7 +45,7 @@ const ACTIONS = [
     to: '/bets',
     label: 'Review bets',
     description: 'Inspect open positions',
-    icon: TicketIcon,
+    icon: BetSlipNavIcon,
     accent: 'primary' as const,
   },
   {
