@@ -33,8 +33,7 @@ const topNav = [
     to: ROUTES.HOME,
     label: 'Arena',
     icon: HomeIcon,
-    match: (pathname: string) =>
-      pathname === ROUTES.HOME || pathname.startsWith('/fixtures'),
+    match: (pathname: string) => pathname === ROUTES.HOME,
   },
   {
     to: ROUTES.LEADERBOARD,

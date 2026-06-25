@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRightIcon,
@@ -190,8 +190,10 @@ function buildProfileStats(
 export function ProfileSidebarPanel() {
   const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
+  const location = useLocation()
   const dashboard = useDashboard()
   const activeBets = useBets('active')
+  const hideMobilePanel = location.pathname === ROUTES.FIXTURES
 
   useEffect(() => {
     if (user?.id) {
@@ -212,7 +214,10 @@ export function ProfileSidebarPanel() {
           </div>
         </aside>
         <section
-          className="lg:hidden w-full shrink-0 mt-6 pb-layout-nav"
+          className={cn(
+            'lg:hidden w-full shrink-0 pb-layout-nav',
+            hideMobilePanel && 'max-lg:hidden',
+          )}
           aria-label="Profile sidebar"
         >
           <GuestSidebarCard />
@@ -245,7 +250,10 @@ export function ProfileSidebarPanel() {
       </aside>
 
       <section
-        className="lg:hidden w-full shrink-0 mt-6 pb-layout-nav"
+        className={cn(
+          'lg:hidden w-full shrink-0 pb-layout-nav',
+          hideMobilePanel && 'max-lg:hidden',
+        )}
         aria-label="Profile sidebar"
       >
         <ProfileSidebarContent {...contentProps} />

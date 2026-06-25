@@ -21,7 +21,7 @@ import { cn } from '@/shared/utils/cn'
 import { ROUTES } from '@/core/constants/routes'
 import { FIXTURE_VIEWS } from '@/core/constants/sports'
 
-const BROWSE_MATCHES_PATH = `${ROUTES.HOME}?tab=cup&view=${FIXTURE_VIEWS.UPCOMING}`
+const BROWSE_MATCHES_PATH = `${ROUTES.FIXTURES}?view=${FIXTURE_VIEWS.UPCOMING}`
 
 function selectionStake(sel: BetSelection): number {
   return resolveSelectionStake(sel)

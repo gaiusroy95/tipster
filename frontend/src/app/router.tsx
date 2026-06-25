@@ -30,6 +30,7 @@ const ResetPasswordPage = lazy(() => import('@/features/auth/pages/ResetPassword
 const VerifyEmailPage = lazy(() => import('@/features/auth/pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })))
 const RegisterPendingPage = lazy(() => import('@/features/auth/pages/RegisterPendingPage').then((m) => ({ default: m.RegisterPendingPage })))
 import { TipsterHubPage } from '@/features/arena/pages/TipsterHubPage'
+import { MatchesPage } from '@/features/fixtures/pages/MatchesPage'
 const WalletPage = lazy(() => import('@/features/wallet/pages/WalletPage').then((m) => ({ default: m.WalletPage })))
 const MatchDetailPage = lazy(() => import('@/features/fixtures/pages/MatchDetailPage').then((m) => ({ default: m.MatchDetailPage })))
 const BetSlipPage = lazy(() => import('@/features/betting/pages/BetSlipPage').then((m) => ({ default: m.BetSlipPage })))
@@ -83,7 +84,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { path: ROUTES.HOME, element: <TipsterHubPage /> },
-      { path: ROUTES.FIXTURES, element: <Navigate to={`${ROUTES.HOME}?tab=cup`} replace /> },
+      { path: ROUTES.FIXTURES, element: <MatchesPage /> },
       { path: ROUTES.MATCH, element: withSuspense(MatchDetailPage) },
       { path: ROUTES.LEADERBOARD, element: withSuspense(LeaderboardPage) },
       { path: ROUTES.FORUM, element: withSuspense(ForumPage) },

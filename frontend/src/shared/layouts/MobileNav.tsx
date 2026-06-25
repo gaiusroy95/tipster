@@ -7,7 +7,7 @@ import {
   UserIcon,
   WalletIcon,
   EllipsisHorizontalIcon,
-  ChartBarIcon,
+  CalendarDaysIcon,
   InboxStackIcon,
 } from '@heroicons/react/24/outline'
 import type { ComponentType, SVGProps } from 'react'
@@ -39,13 +39,13 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
     badge?: number
   }> = user
     ? [
-        { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
+        { to: ROUTES.FIXTURES, label: 'Matches', icon: CalendarDaysIcon },
         { to: ROUTES.BET_SLIP, label: 'Bet slip', icon: InboxStackIcon, badge: slipCount },
         { to: ROUTES.NOTIFICATIONS, label: 'Notifications', icon: BellIcon },
         { to: ROUTES.SETTINGS, label: 'Settings', icon: Cog6ToothIcon },
       ]
     : [
-        { to: `${ROUTES.HOME}?tab=cup`, label: 'Tipster Cup', icon: ChartBarIcon },
+        { to: ROUTES.FIXTURES, label: 'Matches', icon: CalendarDaysIcon },
         { to: ROUTES.LEADERBOARD, label: 'Rankings', icon: TrophyIcon },
       ]
 
@@ -116,7 +116,6 @@ interface MobileBottomNavProps {
 export function MobileBottomNav({ onMoreOpen }: MobileBottomNavProps) {
   const location = useLocation()
   const pathname = location.pathname
-  const search = location.search
 
   const items = [
     {
@@ -124,7 +123,14 @@ export function MobileBottomNav({ onMoreOpen }: MobileBottomNavProps) {
       label: 'Arena',
       icon: HomeIcon,
       to: ROUTES.HOME,
-      active: pathname === ROUTES.HOME && !search.includes('tab=leaderboard'),
+      active: pathname === ROUTES.HOME,
+    },
+    {
+      key: 'matches',
+      label: 'Matches',
+      icon: CalendarDaysIcon,
+      to: ROUTES.FIXTURES,
+      active: pathname.startsWith('/fixtures'),
     },
     {
       key: 'rankings',

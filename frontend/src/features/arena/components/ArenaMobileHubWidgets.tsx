@@ -9,7 +9,7 @@ export function ArenaMobileHubWidgets() {
   const topThree = leaderboard.data?.slice(0, 3) ?? []
 
   return (
-    <section className="xl:hidden glass-panel rounded-xl p-4 mb-6">
+    <section className="xl:hidden glass-panel rounded-xl p-4 mb-0">
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-sm font-semibold">Top tipsters</h2>
         <Link to={ROUTES.LEADERBOARD} className="text-xs font-semibold text-accent-secondary">

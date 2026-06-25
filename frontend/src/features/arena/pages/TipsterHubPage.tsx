@@ -42,36 +42,45 @@ export function TipsterHubPage() {
   useArenaPrefetch()
 
   return (
-    <div className="min-w-0 max-w-full">
-      <ArenaMasthead />
+    <div className="min-w-0 max-w-full flex flex-col gap-5 max-xl:pb-layout-nav">
+      <ArenaMasthead className="max-xl:mb-0" />
 
       <ArenaMobileHubWidgets />
 
-      <ArenaTabBar />
+      {/* Cup / board / rewards tabs and match lists — desktop only; mobile uses Matches nav */}
+      <div className="hidden xl:block">
+        <ArenaTabBar />
 
-      {tab === 'cup' && <SportsCategorySlider />}
+        {tab === 'cup' && (
+          <div className="flex flex-col">
+            <SportsCategorySlider />
+            <CupTabPanel />
+          </div>
+        )}
 
-      <div>
-        {tab === 'cup' && <CupTabPanel />}
-        {tab === 'leaderboard' && (
-          <Suspense fallback={<TabPanelFallback />}>
-            <LeaderboardTabPanel />
-          </Suspense>
-        )}
-        {tab === 'rewards' && (
-          <Suspense fallback={<TabPanelFallback />}>
-            <RewardsTabPanel />
-          </Suspense>
-        )}
-        {tab === 'achievements' && (
-          <Suspense fallback={<TabPanelFallback />}>
-            <AchievementsTabPanel />
-          </Suspense>
-        )}
-        {tab === 'results' && (
-          <Suspense fallback={<TabPanelFallback />}>
-            <ResultsTabPanel />
-          </Suspense>
+        {tab !== 'cup' && (
+          <div>
+            {tab === 'leaderboard' && (
+              <Suspense fallback={<TabPanelFallback />}>
+                <LeaderboardTabPanel />
+              </Suspense>
+            )}
+            {tab === 'rewards' && (
+              <Suspense fallback={<TabPanelFallback />}>
+                <RewardsTabPanel />
+              </Suspense>
+            )}
+            {tab === 'achievements' && (
+              <Suspense fallback={<TabPanelFallback />}>
+                <AchievementsTabPanel />
+              </Suspense>
+            )}
+            {tab === 'results' && (
+              <Suspense fallback={<TabPanelFallback />}>
+                <ResultsTabPanel />
+              </Suspense>
+            )}
+          </div>
         )}
       </div>
     </div>

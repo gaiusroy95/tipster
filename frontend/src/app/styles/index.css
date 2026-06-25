@@ -159,6 +159,12 @@
     padding-bottom: var(--layout-sticky-offset);
   }
 
+  @media (max-width: 1023px) {
+    .pb-bet-slip-safe {
+      padding-bottom: calc(var(--layout-sticky-offset) + 3.5rem);
+    }
+  }
+
   .bottom-nav-offset {
     bottom: var(--layout-sticky-offset);
   }
@@ -231,29 +237,24 @@
     background-color: var(--color-text-muted);
   }
 
-  /* Tipster Cup — fixed-height scroll panel (min = max); cards scroll inside, page does not grow */
-  .arena-match-list-scroll {
-    --arena-match-list-size: calc(
-      100dvh - var(--layout-header-height) - var(--layout-main-padding-y) -
-        var(--arena-matches-scroll-offset) - var(--layout-sticky-offset) -
-        var(--layout-footer-reserve) + var(--arena-matches-list-extra)
-    );
-    min-height: max(14rem, var(--arena-match-list-size));
-    max-height: max(14rem, var(--arena-match-list-size));
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  @media (min-width: 640px) {
-    .arena-match-list-scroll {
-      --arena-matches-scroll-offset: 22rem;
-      --arena-matches-list-extra: 18rem;
+  /* Match list — mobile: full page scroll; desktop (lg+): fixed-height panel */
+  @media (min-width: 1024px) {
+    .arena-match-list {
+      --arena-match-list-size: calc(
+        100dvh - var(--layout-header-height) - var(--layout-main-padding-y) -
+          var(--arena-matches-scroll-offset) - var(--layout-sticky-offset) -
+          var(--layout-footer-reserve) + var(--arena-matches-list-extra)
+      );
+      min-height: max(14rem, var(--arena-match-list-size));
+      max-height: max(14rem, var(--arena-match-list-size));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
   }
 
   @media (min-width: 1024px) {
-    .arena-match-list-scroll {
+    .arena-match-list {
       --layout-main-padding-y: 4rem;
       --arena-matches-scroll-offset: 23rem;
       --arena-matches-list-extra: 22rem;
@@ -263,7 +264,7 @@
   }
 
   @media (min-width: 1280px) {
-    .arena-match-list-scroll {
+    .arena-match-list {
       --arena-matches-scroll-offset: 22rem;
       --arena-matches-list-extra: 26rem;
       --layout-footer-reserve: 0rem;

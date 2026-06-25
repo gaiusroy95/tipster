@@ -4,11 +4,22 @@ import { SPORTS_SLIDER_ITEMS } from '@/core/constants/sportSvgIcons'
 import { useFixtureNavParams } from '@/features/fixtures/hooks/useFixtureNavParams'
 import { cn } from '@/shared/utils/cn'
 
-export function SportsCategorySlider({ className }: { className?: string }) {
+interface SportsCategorySliderProps {
+  className?: string
+  /** Compact embedded style for matches discovery header */
+  variant?: 'default' | 'compact'
+}
+
+export function SportsCategorySlider({
+  className,
+  variant = 'default',
+}: SportsCategorySliderProps) {
   const { sportId, setSportId } = useFixtureNavParams()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const isCompact = variant === 'compact'
 
   const updateScrollHints = useCallback(() => {
     const el = scrollRef.current
@@ -43,68 +54,113 @@ export function SportsCategorySlider({ className }: { className?: string }) {
 
   const arrowBtnClass = (enabled: boolean) =>
     cn(
-      'flex h-9 w-9 shrink-0 items-center justify-center self-center rounded-full border border-border-default bg-bg-surface shadow-card transition-colors',
+      'flex shrink-0 items-center justify-center self-center rounded-full border transition-colors',
+      isCompact ? 'h-8 w-8' : 'h-9 w-9',
+      isCompact
+        ? 'border-border-default/60 bg-bg-surface/80 text-text-muted hover:text-text-primary hover:bg-bg-elevated'
+        : 'border-border-default bg-bg-surface shadow-card',
       enabled
-        ? 'text-text-primary hover:border-border-strong hover:bg-bg-elevated'
-        : 'text-text-muted/40 border-border-default/50 cursor-default',
+        ? isCompact
+          ? 'hover:border-border-strong'
+          : 'text-text-primary hover:border-border-strong hover:bg-bg-elevated'
+        : 'text-text-muted/40 border-border-default/50 cursor-default opacity-50',
+    )
+
+  const pillClass = (active: boolean) =>
+    cn(
+      'flex shrink-0 scroll-snap-item items-center gap-2 rounded-full border transition-all duration-200',
+      isCompact
+        ? 'px-3 py-1.5 text-xs min-h-[36px]'
+        : 'px-3.5 py-2 text-sm min-h-[44px]',
+      active
+        ? isCompact
+          ? 'border-accent-secondary/60 bg-accent-secondary/15 text-text-primary font-semibold ring-1 ring-accent-secondary/25'
+          : 'border-accent-secondary bg-accent-secondary text-white font-semibold shadow-sm'
+        : isCompact
+          ? 'border-border-default/60 bg-bg-surface/40 text-text-muted font-medium hover:border-border-strong hover:text-text-primary'
+          : 'border-border-default bg-bg-surface text-text-muted font-medium hover:border-border-strong hover:text-text-primary',
+    )
+
+  const iconClass = (active: boolean) =>
+    cn(
+      'shrink-0 object-contain',
+      isCompact ? 'h-4 w-4' : 'h-5 w-5',
+      active && !isCompact ? 'brightness-0 invert' : 'opacity-80',
+      active && isCompact && 'opacity-100',
     )
 
   return (
-    <div className={cn('mb-4 flex min-w-0 w-full max-w-full items-center gap-1.5 sm:gap-2', className)}>
+    <div
+      className={cn(
+        'flex min-w-0 w-full max-w-full items-center',
+        isCompact ? 'gap-1' : 'gap-1.5 sm:gap-2 mb-4',
+        className,
+      )}
+    >
       <button
         type="button"
         onClick={() => scrollBy('left')}
         disabled={!canScrollLeft}
-        className={arrowBtnClass(canScrollLeft)}
+        className={cn(arrowBtnClass(canScrollLeft), isCompact && 'max-lg:hidden')}
         aria-label="Scroll sports left"
       >
         <ChevronLeftIcon className="h-4 w-4" />
       </button>
 
-      <div
-        ref={scrollRef}
-        className="sports-category-scroll horizontal-scroll-strip flex min-w-0 flex-1 gap-2 scroll-snap-x py-0.5"
-        role="tablist"
-        aria-label="Sport categories"
-      >
-        {SPORTS_SLIDER_ITEMS.map((sport) => {
-          const active = sportId === sport.id
-          return (
-            <button
-              key={sport.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setSportId(sport.id)}
-              className={cn(
-                'flex shrink-0 scroll-snap-item items-center gap-2 rounded-full border px-3.5 py-2 text-sm min-h-[44px] transition-colors',
-                active
-                  ? 'border-accent-secondary bg-accent-secondary text-white font-semibold shadow-sm'
-                  : 'border-border-default bg-bg-surface text-text-muted font-medium hover:border-border-strong hover:text-text-primary',
-              )}
-            >
-              <img
-                src={sport.iconSrc}
-                alt=""
-                className={cn(
-                  'h-5 w-5 shrink-0 object-contain',
-                  active ? 'brightness-0 invert' : 'opacity-85',
-                )}
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="whitespace-nowrap">{sport.name}</span>
-            </button>
-          )
-        })}
-        <div className="shrink-0 w-2" aria-hidden="true" />
+      <div className={cn('relative min-w-0 flex-1', isCompact && 'max-lg:mx-0')}>
+        {isCompact && canScrollLeft && (
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-bg-surface to-transparent"
+            aria-hidden="true"
+          />
+        )}
+        {isCompact && canScrollRight && (
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-bg-surface to-transparent"
+            aria-hidden="true"
+          />
+        )}
+
+        <div
+          ref={scrollRef}
+          className={cn(
+            'sports-category-scroll horizontal-scroll-strip flex min-w-0 gap-1.5 scroll-snap-x',
+            isCompact ? 'py-0.5 px-0.5' : 'flex-1 gap-2 py-0.5',
+          )}
+          role="tablist"
+          aria-label="Sport categories"
+        >
+          {SPORTS_SLIDER_ITEMS.map((sport) => {
+            const active = sportId === sport.id
+            return (
+              <button
+                key={sport.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSportId(sport.id)}
+                className={pillClass(active)}
+              >
+                <img
+                  src={sport.iconSrc}
+                  alt=""
+                  className={iconClass(active)}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="whitespace-nowrap">{sport.name}</span>
+              </button>
+            )
+          })}
+          <div className="shrink-0 w-3" aria-hidden="true" />
+        </div>
       </div>
 
       <button
         type="button"
         onClick={() => scrollBy('right')}
         disabled={!canScrollRight}
-        className={arrowBtnClass(canScrollRight)}
+        className={cn(arrowBtnClass(canScrollRight), isCompact && 'max-lg:hidden')}
         aria-label="Scroll sports right"
       >
         <ChevronRightIcon className="h-4 w-4" />
