@@ -18,6 +18,8 @@ export interface User {
   postCount?: number
   balance: number
   rank: number
+  role?: 'USER' | 'ADMIN'
+  isBanned?: boolean
   createdAt: string
   authProviders?: AuthProviderKind[]
   primaryAuthProvider?: AuthProviderKind

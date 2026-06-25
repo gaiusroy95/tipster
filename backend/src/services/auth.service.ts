@@ -157,7 +157,7 @@ export const authService = {
 
       return {
         user: toUserDto(updated),
-        token: signToken(updated.id),
+        token: signToken(updated),
         message: wasVerified
           ? 'Email verified for this location. You can sign in now.'
           : 'Email verified successfully. Welcome to Tipster Arena!',
@@ -229,7 +229,11 @@ export const authService = {
         throw new ApiException('INVALID_CREDENTIALS', 'Invalid email or password', 401);
       }
 
-      if (needsEmailVerification(user, clientIp)) {
+      if (user.isBanned) {
+        throw new ApiException('ACCOUNT_BANNED', 'This account has been suspended', 403);
+      }
+
+      if (user.role !== 'ADMIN' && needsEmailVerification(user, clientIp)) {
         if (isIpReverification(user, clientIp)) {
           void this.issueVerificationToken(user.id, user.email).catch((error) => {
             console.error('[auth] Failed to issue IP reverification token:', error);
@@ -249,7 +253,10 @@ export const authService = {
       }
 
       const { twoFactorService } = await import('./two-factor.service');
-      const twoFactor = await twoFactorService.loginRequiresTwoFactor(user.id, dto.trustToken);
+      const twoFactor =
+        user.role === 'ADMIN'
+          ? { required: false as const }
+          : await twoFactorService.loginRequiresTwoFactor(user.id, dto.trustToken);
       if (twoFactor.required) {
         const challenge = await twoFactorService.beginLoginChallenge(user.id);
         return {
@@ -262,7 +269,7 @@ export const authService = {
 
       return {
         user: toUserDto(user),
-        token: signToken(user.id),
+        token: signToken(user),
       };
     });
   },

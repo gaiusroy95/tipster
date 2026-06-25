@@ -8,18 +8,36 @@ import { healthRouter } from './routes/health.routes';
 import { sportsRouter } from './routes/sports.routes';
 import { apiRouter } from './routes/api.routes';
 import { forumRouter } from './routes/forum.routes';
+import { adminRouter } from './routes/admin.routes';
+
+function buildCorsOptions(): cors.CorsOptions {
+  const origins = [
+    process.env.FRONTEND_URL?.trim(),
+    process.env.ADMIN_FRONTEND_URL?.trim() || 'http://localhost:5174',
+  ].filter(Boolean) as string[];
+
+  if (origins.length === 0) {
+    return {};
+  }
+
+  return {
+    origin: origins,
+    credentials: true,
+  };
+}
 
 export function createApp() {
   const app = express();
 
   app.set('trust proxy', true);
-  app.use(cors());
+  app.use(cors(buildCorsOptions()));
   app.use(express.json());
 
   app.use(healthRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/auth/oauth', oauthRouter);
   app.use('/api/auth/2fa', twoFactorRouter);
+  app.use('/api/admin', adminRouter);
   app.use('/api', apiRouter);
   app.use('/api/forum', forumRouter);
   app.use('/sports', sportsRouter);

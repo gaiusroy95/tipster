@@ -1,4 +1,6 @@
 import { sportsClient } from '@/core/api/sportsClient'
+import { apiClient } from '@/core/api/client'
+import type { ApiResponse } from '@/core/types/api'
 import { MATCH_STATUS } from '@/core/constants/markets'
 import type { League } from '@/mocks/data/types'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
@@ -23,6 +25,50 @@ import type {
 } from '@/features/fixtures/types/overtime'
 
 const NETWORK_ID = 10
+
+export interface CuratedLeagueRow {
+  id: string
+  overtimeLeagueId: number
+  name: string
+  country: string
+  sportId: string
+  isEnabled: boolean
+  sortOrder: number
+}
+
+async function fetchCuratedLeagues(sportId?: string): Promise<CuratedLeagueRow[]> {
+  try {
+    const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated', {
+      params: sportId ? { sportId } : undefined,
+    })
+    return data.data ?? []
+  } catch {
+    return []
+  }
+}
+
+function applyCuratedLeagueFilter(leagues: League[], curated: CuratedLeagueRow[]): League[] {
+  if (curated.length === 0) return leagues
+
+  const byOvertimeId = new Map(curated.map((row) => [String(row.overtimeLeagueId), row]))
+
+  return leagues
+    .filter((league) => byOvertimeId.has(league.id))
+    .map((league) => {
+      const row = byOvertimeId.get(league.id)!
+      return { ...league, name: row.name, country: row.country }
+    })
+    .sort((a, b) => {
+      const sortA = byOvertimeId.get(a.id)?.sortOrder ?? 999
+      const sortB = byOvertimeId.get(b.id)?.sortOrder ?? 999
+      return sortA - sortB || a.name.localeCompare(b.name)
+    })
+}
+
+function curatedLeagueIdSet(curated: CuratedLeagueRow[]): Set<string> | null {
+  if (curated.length === 0) return null
+  return new Set(curated.map((row) => String(row.overtimeLeagueId)))
+}
 
 let cachedMarketTypes: Record<number, OvertimeMarketTypeMeta> | null = null
 let cachedSportsCatalog: Record<number, { sport: string; label: string }> | null = null
@@ -117,8 +163,12 @@ function filterBySportAndLeague(
 }
 
 export async function fetchLeaguesFromApi(sportId?: string): Promise<League[]> {
-  const { data } = await sportsClient.get<Record<string, OvertimeLeagueGroup[]>>('/sports/leagues')
-  return mapLeaguesResponse(data, sportId)
+  const [{ data }, curated] = await Promise.all([
+    sportsClient.get<Record<string, OvertimeLeagueGroup[]>>('/sports/leagues'),
+    fetchCuratedLeagues(sportId),
+  ])
+  const leagues = mapLeaguesResponse(data, sportId)
+  return applyCuratedLeagueFilter(leagues, curated)
 }
 
 export async function fetchFixturesFromApi(filters?: {
@@ -129,6 +179,12 @@ export async function fetchFixturesFromApi(filters?: {
   const typeById = await getMarketTypes()
   const sportsCatalog = await getSportsCatalog()
   const status = filters?.status ?? MATCH_STATUS.SCHEDULED
+  const curatedIds = curatedLeagueIdSet(await fetchCuratedLeagues(filters?.sportId))
+
+  const applyCuratedMatchFilter = (matches: MatchWithTeams[]) => {
+    if (!curatedIds) return matches
+    return matches.filter((match) => curatedIds.has(match.leagueId))
+  }
 
   if (status === MATCH_STATUS.LIVE) {
     const liveMarkets = await fetchLiveMarketsRaw()
@@ -136,8 +192,10 @@ export async function fetchFixturesFromApi(filters?: {
       mapOvertimeMarketToMatch(live, [], typeById, sportsCatalog, live, status),
     )
     return filterMatchesWithDisplayableOdds(
-      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      applyCuratedMatchFilter(
+        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+        ),
       ),
     )
   }
@@ -177,15 +235,19 @@ export async function fetchFixturesFromApi(filters?: {
 
   if (status === MATCH_STATUS.FINISHED) {
     return filterMatchesWithDisplayableOdds(
-      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-        (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+      applyCuratedMatchFilter(
+        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+          (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+        ),
       ),
     )
   }
 
   return filterMatchesWithDisplayableOdds(
-    filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    applyCuratedMatchFilter(
+      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      ),
     ),
   )
 }

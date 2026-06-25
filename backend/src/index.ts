@@ -5,6 +5,7 @@ import { verifyOAuthSchema } from './lib/verify-schema';
 import { seasonService } from './services/season.service';
 import { leaderboardService } from './services/leaderboard.service';
 import { betSettlementService } from './services/bet-settlement.service';
+import { adminBootstrapService } from './services/admin/admin-bootstrap.service';
 
 const SETTLEMENT_INTERVAL_MS = 2 * 60 * 1000;
 
@@ -25,6 +26,7 @@ async function bootstrap() {
   await connectPrisma();
   await verifyOAuthSchema();
   await seasonService.seedIfEmpty();
+  await adminBootstrapService.ensureAdminAccount();
   await leaderboardService.syncAllUsersToActiveSeason();
 
   const app = createApp();

@@ -241,7 +241,7 @@ export const oauthService = {
         );
         return {
           user: toUserDto(user),
-          token: signToken(user.id),
+          token: signToken(user),
           isNewUser: false,
         };
       }
@@ -257,7 +257,7 @@ export const oauthService = {
         );
         return {
           user: toUserDto(user),
-          token: signToken(user.id),
+          token: signToken(user),
           isNewUser: false,
         };
       }
@@ -275,7 +275,7 @@ export const oauthService = {
       );
       return {
         user: toUserDto(user),
-        token: signToken(user.id),
+        token: signToken(user),
         isNewUser: true,
       };
     });

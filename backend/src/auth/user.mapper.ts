@@ -13,6 +13,8 @@ export interface UserDto {
   postCount?: number;
   balance: number;
   rank: number;
+  role: User['role'];
+  isBanned: boolean;
   createdAt: string;
   authProviders: string[];
   primaryAuthProvider: string;
@@ -26,6 +28,8 @@ export function toUserDto(user: User): UserDto {
     username: user.username,
     balance: user.balance,
     rank: user.rank,
+    role: user.role,
+    isBanned: user.isBanned,
     createdAt: user.createdAt.toISOString(),
     authProviders: user.authProviders,
     primaryAuthProvider: user.primaryAuthProvider,

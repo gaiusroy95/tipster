@@ -388,7 +388,7 @@ export const twoFactorService = {
 
     const result: { user: UserDto; token: string; trustToken?: string } = {
       user: toUserDto(user),
-      token: signToken(user.id),
+      token: signToken(user),
     };
 
     if (trustDevice) {

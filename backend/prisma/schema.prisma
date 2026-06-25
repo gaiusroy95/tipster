@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id                  String    @id @default(cuid())
   email               String    @unique
@@ -16,6 +21,10 @@ model User {
   passwordHash        String?
   balance             Int       @default(1000000)
   rank                Int       @default(0)
+  role                UserRole  @default(USER)
+  isBanned            Boolean   @default(false)
+  bannedAt            DateTime?
+  banReason           String?
   authProviders       String[]  @default(["email"])
   primaryAuthProvider String    @default("email")
   emailVerifiedAt     DateTime?
@@ -30,6 +39,7 @@ model User {
   updatedAt           DateTime  @updatedAt
 
   settings                  UserSettings?
+  adminAuditLogs            AdminAuditLog[]
   passwordResetTokens       PasswordResetToken[]
   emailVerificationTokens   EmailVerificationToken[]
   walletTransactions        WalletTransaction[]
@@ -429,4 +439,33 @@ model UserAchievement {
 
   @@id([userId, achievementId])
   @@index([userId])
+}
+
+model CuratedLeague {
+  id               String   @id @default(cuid())
+  overtimeLeagueId Int      @unique
+  name             String
+  country          String
+  sportId          String
+  isEnabled        Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([sportId, isEnabled, sortOrder])
+}
+
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  admin User @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([entityType, createdAt])
 }

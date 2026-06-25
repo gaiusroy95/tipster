@@ -26,6 +26,7 @@ import { settingsService } from '../services/settings.service';
 import { twoFactorService } from '../services/two-factor.service';
 import { achievementService } from '../services/achievement.service';
 import { newsService } from '../services/news.service';
+import { curatedLeagueService } from '../services/admin/curated-league.service';
 
 export const apiRouter = Router();
 
@@ -269,6 +270,15 @@ apiRouter.get(
   asyncHandler(async (req, res) => {
     const user = (req as AuthenticatedRequest).user;
     const data = await achievementService.getProgress(user.id);
+    res.json({ data });
+  }),
+);
+
+apiRouter.get(
+  '/leagues/curated',
+  asyncHandler(async (req, res) => {
+    const sportId = typeof req.query.sportId === 'string' ? req.query.sportId : undefined;
+    const data = await curatedLeagueService.listCuratedPublic(sportId);
     res.json({ data });
   }),
 );
