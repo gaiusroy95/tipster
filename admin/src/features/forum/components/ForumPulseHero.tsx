@@ -74,8 +74,8 @@ export function ForumPulseHero({
       <div className="forum-pulse-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
 
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
-        <div className="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-2xl space-y-4">
+        <div className="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
+          <div className="min-w-0 max-w-2xl space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-accent-live/30 bg-accent-live/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-accent-live">
                 <span className="forum-live-dot h-2 w-2 rounded-full bg-accent-live" aria-hidden="true" />
@@ -100,25 +100,25 @@ export function ForumPulseHero({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:max-w-3xl xl:flex-1">
+          <div className="grid w-full min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-2 xl:max-w-md xl:flex-1 2xl:max-w-lg">
             {metrics.map((metric) => {
               const Icon = metric.icon
               return (
                 <div
                   key={metric.label}
                   className={cn(
-                    'forum-metric-tile relative overflow-hidden rounded-2xl border p-3.5 backdrop-blur-sm sm:p-4',
+                    'forum-metric-tile relative min-w-0 overflow-hidden rounded-2xl border p-3.5 backdrop-blur-sm sm:p-4',
                     metric.ring,
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={cn('h-4 w-4', metric.tone)} aria-hidden="true" />
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                  <div className="flex items-start gap-2">
+                    <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', metric.tone)} aria-hidden="true" />
+                    <span className="min-w-0 flex-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-text-muted">
                       {metric.label}
                     </span>
                     {metric.pulse ? (
                       <span
-                        className="ml-auto h-2 w-2 rounded-full bg-accent-loss forum-live-dot"
+                        className="mt-1 h-2 w-2 shrink-0 rounded-full bg-accent-loss forum-live-dot"
                         aria-hidden="true"
                       />
                     ) : null}
