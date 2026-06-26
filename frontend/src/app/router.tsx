@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { lazy, Suspense, type LazyExoticComponent, type JSX } from 'react'
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet, ScrollRestoration } from 'react-router-dom'
 import { ROUTES } from '@/core/constants/routes'
 import { AuthLayout } from '@/shared/layouts/AuthLayout'
 import { MainLayout } from '@/shared/layouts/MainLayout'
@@ -54,7 +54,19 @@ const ForumPage = lazy(() => import('@/features/forum/pages/ForumPage').then((m)
 const ForumPostPage = lazy(() => import('@/features/forum/pages/ForumPostPage').then((m) => ({ default: m.ForumPostPage })))
 const NotFoundPage = lazy(() => import('@/shared/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })))
 
+function RootLayout() {
+  return (
+    <>
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  )
+}
+
 export const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
   {
     element: <AuthLayout />,
     children: [
@@ -122,4 +134,6 @@ export const router = createBrowserRouter([
   },
   { path: '*', element: withSuspense(NotFoundPage) },
   { path: '/dashboard', element: <Navigate to={ROUTES.HOME} replace /> },
+    ],
+  },
 ])

@@ -117,6 +117,7 @@ export function MatchBrowsePanel({
       <div
         className={cn(
           'arena-match-list scrollbar-panel',
+          discoveryMode === 'sticky' && 'matches-page-match-list',
           'rounded-lg border border-border-default/60 bg-bg-surface/40',
           'pr-1 pl-1 py-1',
           'max-lg:pb-bet-slip-safe',

@@ -271,6 +271,44 @@
     }
   }
 
+  /*
+   * Matches page — less chrome above the list than Arena Cup tab (no masthead/tabs).
+   * Smaller scroll-offset => taller panel; extra matches Cup tab so bottoms align with sidebars.
+   */
+  @media (min-width: 1024px) {
+    .arena-match-list.matches-page-match-list {
+      --arena-matches-scroll-offset: 11rem;
+      --arena-matches-list-extra: 22rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .arena-match-list.matches-page-match-list {
+      --arena-matches-scroll-offset: 9rem;
+      --arena-matches-list-extra: 26rem;
+    }
+  }
+
+  /* Leaderboard — mobile: full list (page scroll). Desktop: 13 rows, inner scroll */
+  @media (min-width: 1024px) {
+    .leaderboard-rankings-scroll {
+      --leaderboard-visible-rows: 13;
+      /* Tuned to RankBadge lg + RankingRow padding — 13 rows visible on desktop */
+      --leaderboard-row-slot: 4.64rem;
+      --leaderboard-row-gap: 0.5rem;
+      --leaderboard-panel-padding: 1rem;
+      max-height: calc(
+        var(--leaderboard-panel-padding) +
+          var(--leaderboard-visible-rows) * var(--leaderboard-row-slot) +
+          (var(--leaderboard-visible-rows) - 1) * var(--leaderboard-row-gap) -
+          0.125rem
+      );
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   @media (min-width: 640px) {
     .horizontal-scroll-strip:hover {
       scrollbar-width: thin;

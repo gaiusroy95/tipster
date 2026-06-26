@@ -23,10 +23,10 @@ export function MatchesDiscoveryHeader({
   return (
     <header
       className={cn(
-        'sticky z-30 -mx-4 px-4 pt-1 pb-4',
-        'top-[var(--layout-header-height)]',
-        'border-b border-border-default/50',
-        'bg-bg-primary/95 backdrop-blur-md',
+        'mb-4 shrink-0',
+        'max-lg:sticky max-lg:z-30 max-lg:-mx-4 max-lg:px-4 max-lg:pt-1 max-lg:pb-4',
+        'max-lg:top-[var(--layout-header-height)] max-lg:border-b max-lg:border-border-default/50',
+        'max-lg:bg-bg-primary/95 max-lg:backdrop-blur-md',
         className,
       )}
       aria-label="Match discovery"

@@ -91,7 +91,10 @@ export function LeaderboardPage() {
       {isLoading ? (
         <div className="space-y-3">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
       ) : (
-        <div className="space-y-2">
+        <div
+          className="leaderboard-rankings-scroll scrollbar-panel space-y-2 rounded-xl border border-border-default/60 bg-bg-surface/40 p-2"
+          aria-label="Player rankings"
+        >
           {data?.map((entry) => (
             <RankingRow
               key={entry.userId}
