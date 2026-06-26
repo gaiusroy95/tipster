@@ -348,6 +348,12 @@
     animation-play-state: paused;
   }
 
+  /* Nav arrows nudge one card — marquee must keep flowing while they are used */
+  .news-flow:has(.news-flow-nav:hover) .news-flow-track,
+  .news-flow:has(.news-flow-nav:focus) .news-flow-track {
+    animation-play-state: running;
+  }
+
   .news-flow-item {
     width: min(100vw - 2rem, 280px);
     flex-shrink: 0;
