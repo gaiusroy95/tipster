@@ -1,6 +1,6 @@
 import { MARKET_TYPES, MATCH_STATUS, type MarketType, type MatchStatus } from '@/core/constants/markets'
 import type { League, MarketOdds, Match, OddsSelection, Team } from '@/mocks/data/types'
-import { mapOvertimeCategoryToSportId } from '@/features/fixtures/lib/mapOvertimeSport'
+import { mapOvertimeCategoryToSportId, normalizeSportId } from '@/features/fixtures/lib/mapOvertimeSport'
 import { getLeagueLogoSrc } from '@/core/constants/leagueLogos'
 import type {
   OvertimeChildMarket,
@@ -378,7 +378,7 @@ export function mapLeaguesResponse(
 
   for (const [category, items] of Object.entries(grouped)) {
     const mappedSportId = mapOvertimeCategoryToSportId(category)
-    if (sportId && mappedSportId !== sportId) continue
+    if (sportId && normalizeSportId(mappedSportId) !== normalizeSportId(sportId)) continue
 
     for (const item of items) {
       leagues.push({

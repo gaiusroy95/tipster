@@ -2,6 +2,7 @@ import { prisma } from '../../lib/prisma';
 import { toUserDto } from '../../auth/user.mapper';
 import { ApiException } from '../../lib/api-exception';
 import { adminAuditService } from './admin-audit.service';
+import { curatedLeagueService } from './curated-league.service';
 
 export const adminDashboardService = {
   async getStats() {
@@ -11,7 +12,7 @@ export const adminDashboardService = {
         prisma.bet.count({ where: { status: 'active' } }),
         prisma.forumPost.count({ where: { status: 'published' } }),
         prisma.season.findFirst({ where: { isActive: true }, include: { prizes: true } }),
-        prisma.curatedLeague.count({ where: { isEnabled: true } }),
+        curatedLeagueService.countEnabledWithActiveMatches(),
         adminAuditService.list({ page: 1, limit: 5 }),
       ]);
 

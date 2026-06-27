@@ -11,8 +11,20 @@ const OVERTIME_CATEGORY_TO_SPORT_ID: Record<string, string> = {
   'Ice Hockey': 'hockey',
   Baseball: 'baseball',
   MMA: 'mma',
+  Fighting: 'mma',
+  Boxing: 'mma',
   Esports: 'esports',
   'E-Sports': 'esports',
+}
+
+/** Legacy or slug sport IDs stored before category mapping was complete. */
+const SPORT_ID_ALIASES: Record<string, string> = {
+  fighting: 'mma',
+  boxing: 'mma',
+}
+
+export function normalizeSportId(sportId: string): string {
+  return SPORT_ID_ALIASES[sportId] ?? sportId
 }
 
 export function mapOvertimeCategoryToSportId(category: string): string {
@@ -30,9 +42,9 @@ export function mapOvertimeCategoryToSportId(category: string): string {
   const byId = SPORT_CATEGORIES.find((s) => s.id === slug)
   if (byId) return byId.id
 
-  return slug
+  return normalizeSportId(slug)
 }
 
 export function sportIdMatchesCategory(sportId: string, category: string): boolean {
-  return mapOvertimeCategoryToSportId(category) === sportId
+  return normalizeSportId(mapOvertimeCategoryToSportId(category)) === normalizeSportId(sportId)
 }

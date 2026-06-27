@@ -1,4 +1,4 @@
-import { mapOvertimeCategoryToSportId } from '../../lib/map-overtime-sport';
+import { mapOvertimeCategoryToSportId, normalizeSportId } from '../../lib/map-overtime-sport';
 import { sportsService } from '../sports.service';
 import { prisma } from '../../lib/prisma';
 import { adminAuditService } from './admin-audit.service';
@@ -24,26 +24,66 @@ function matchSeedLeague(leagueName: string): (typeof SEED_LEAGUE_NAMES)[number]
   );
 }
 
+function withActiveMatchCounts<
+  T extends {
+    overtimeLeagueId: number;
+    sportId: string;
+  },
+>(leagues: T[], activeCounts: Map<number, number>) {
+  return leagues
+    .filter((league) => (activeCounts.get(league.overtimeLeagueId) ?? 0) > 0)
+    .map((league) => ({
+      ...league,
+      sportId: normalizeSportId(league.sportId),
+      matchCount: activeCounts.get(league.overtimeLeagueId) ?? 0,
+    }));
+}
+
 export const curatedLeagueService = {
   async listCuratedPublic(sportId?: string) {
-    return prisma.curatedLeague.findMany({
-      where: {
-        isEnabled: true,
-        ...(sportId ? { sportId } : {}),
-      },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    });
+    const [leagues, activeCounts] = await Promise.all([
+      prisma.curatedLeague.findMany({
+        where: {
+          isEnabled: true,
+          ...(sportId ? { sportId } : {}),
+        },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      }),
+      sportsService.fetchActiveLeagueMatchCounts(),
+    ]);
+
+    return withActiveMatchCounts(leagues, activeCounts);
   },
 
   async listForAdmin(sportId?: string) {
-    return prisma.curatedLeague.findMany({
-      where: sportId ? { sportId } : undefined,
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-    });
+    const [leagues, activeCounts] = await Promise.all([
+      prisma.curatedLeague.findMany({
+        where: sportId ? { sportId } : undefined,
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      }),
+      sportsService.fetchActiveLeagueMatchCounts(),
+    ]);
+
+    return withActiveMatchCounts(leagues, activeCounts);
+  },
+
+  async countEnabledWithActiveMatches() {
+    const [enabled, activeCounts] = await Promise.all([
+      prisma.curatedLeague.findMany({
+        where: { isEnabled: true },
+        select: { overtimeLeagueId: true },
+      }),
+      sportsService.fetchActiveLeagueMatchCounts(),
+    ]);
+
+    return enabled.filter((league) => (activeCounts.get(league.overtimeLeagueId) ?? 0) > 0).length;
   },
 
   async syncFromOvertime(adminUserId: string) {
-    const grouped = await sportsService.fetchLeaguesMapper();
+    const [grouped, activeCounts] = await Promise.all([
+      sportsService.fetchLeaguesMapper(),
+      sportsService.fetchActiveLeagueMatchCounts(),
+    ]);
     const existing = await prisma.curatedLeague.findMany();
     const existingIds = new Set(existing.map((l) => l.overtimeLeagueId));
     let created = 0;
@@ -61,6 +101,8 @@ export const curatedLeagueService = {
       const sportId = mapOvertimeCategoryToSportId(category);
 
       for (const league of leagues) {
+        if ((activeCounts.get(league.id) ?? 0) <= 0) continue;
+
         const seed = matchSeedLeague(league.name);
         entries.push({
           overtimeLeagueId: league.id,

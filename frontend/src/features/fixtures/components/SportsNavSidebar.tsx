@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { useLeagues } from '@/features/fixtures/hooks/useFixtures'
+import { useCuratedSportCategories, useLeagues } from '@/features/fixtures/hooks/useFixtures'
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard'
 import {
   useFixtureNavParams,
@@ -11,7 +12,6 @@ import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { LeaderboardCompactRow } from '@/shared/components/LeaderboardCompactRow'
 import {
   FIXTURE_VIEWS,
-  SPORT_CATEGORIES,
   type FixtureView,
 } from '@/core/constants/sports'
 import { cn } from '@/shared/utils/cn'
@@ -54,8 +54,18 @@ function NavItem({
 
 export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { view, sportId, leagueId, setView, setSportId, setLeagueId } = useFixtureNavParams()
+  const sportCategories = useCuratedSportCategories()
   const leagues = useLeagues(sportId)
   const leaderboard = useLeaderboard(undefined, 'points')
+
+  const visibleSports = sportCategories.data ?? []
+
+  useEffect(() => {
+    if (visibleSports.length === 0) return
+    if (!visibleSports.some((sport) => sport.id === sportId)) {
+      setSportId(visibleSports[0]!.id)
+    }
+  }, [visibleSports, sportId, setSportId])
 
   const handleView = (id: FixtureView) => {
     setView(id)
@@ -92,7 +102,7 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
           <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
             Sports
           </p>
-          {SPORT_CATEGORIES.map((sport) => {
+          {visibleSports.map((sport) => {
             const active = sportId === sport.id
 
             return (

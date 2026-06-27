@@ -276,6 +276,39 @@ export const sportsService = {
     return result;
   },
 
+  /** League IDs with at least one open or live market from Overtime. */
+  async fetchActiveLeagueMatchCounts(): Promise<Map<number, number>> {
+    const counts = new Map<number, number>();
+
+    const grouped = await sportsService.fetchLeaguesMapper();
+    for (const leagues of Object.values(grouped)) {
+      for (const league of leagues) {
+        counts.set(league.id, Math.max(counts.get(league.id) ?? 0, league.count));
+      }
+    }
+
+    try {
+      const liveData = (await sportsService.fetchLiveMarketsMapper()) as LiveMarkets;
+      const liveGamesByLeague = new Map<number, Set<string>>();
+
+      for (const market of liveData.markets ?? []) {
+        if (!market.leagueId || !market.gameId) continue;
+        if (!liveGamesByLeague.has(market.leagueId)) {
+          liveGamesByLeague.set(market.leagueId, new Set());
+        }
+        liveGamesByLeague.get(market.leagueId)!.add(market.gameId);
+      }
+
+      for (const [leagueId, games] of liveGamesByLeague) {
+        counts.set(leagueId, (counts.get(leagueId) ?? 0) + games.size);
+      }
+    } catch {
+      // Live feed is optional; open markets alone still define active leagues.
+    }
+
+    return counts;
+  },
+
   async fetchLiveMarketsMapper(network: number = 10) {
     try {
       const cacheKey = 'overtime-v2-live-markets-merged';

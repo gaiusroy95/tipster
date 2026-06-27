@@ -12,8 +12,9 @@ import {
   normalizeSportsCatalog,
   pickPrimaryMarket,
 } from '@/features/fixtures/lib/mapOvertimeToFixtures'
-import { sportIdMatchesCategory } from '@/features/fixtures/lib/mapOvertimeSport'
+import { sportIdMatchesCategory, normalizeSportId } from '@/features/fixtures/lib/mapOvertimeSport'
 import { getLeagueLogoSrc } from '@/core/constants/leagueLogos'
+import { SPORT_CATEGORIES, type SportCategory } from '@/core/constants/sports'
 import {
   filterMatchesWithDisplayableOdds,
 } from '@/features/fixtures/lib/matchOdds'
@@ -35,45 +36,92 @@ export interface CuratedLeagueRow {
   sportId: string
   isEnabled: boolean
   sortOrder: number
+  matchCount?: number
 }
 
-async function fetchCuratedLeagues(sportId?: string): Promise<CuratedLeagueRow[]> {
+let curatedLeaguesCache: { rows: CuratedLeagueRow[]; expiresAt: number } | null = null
+
+/** All admin-enabled curated leagues (any sport). */
+async function fetchAllCuratedLeagues(): Promise<CuratedLeagueRow[]> {
+  const now = Date.now()
+  if (curatedLeaguesCache && curatedLeaguesCache.expiresAt > now) {
+    return curatedLeaguesCache.rows
+  }
+
   try {
-    const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated', {
-      params: sportId ? { sportId } : undefined,
-    })
-    return data.data ?? []
+    const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated')
+    const rows = data.data ?? []
+    curatedLeaguesCache = { rows, expiresAt: now + 60_000 }
+    return rows
   } catch {
     return []
   }
 }
 
-function applyCuratedLeagueFilter(leagues: League[], curated: CuratedLeagueRow[]): League[] {
-  if (curated.length === 0) return leagues
+type CurationScope = {
+  /** At least one league is enabled in admin — strict filtering applies. */
+  active: boolean
+  /** Enabled curated rows for the requested sport (or all sports when sportId omitted). */
+  rows: CuratedLeagueRow[]
+  allowedLeagueIds: Set<string> | null
+}
 
-  const byOvertimeId = new Map(curated.map((row) => [String(row.overtimeLeagueId), row]))
+async function resolveCurationScope(sportId?: string): Promise<CurationScope> {
+  const allEnabled = await fetchAllCuratedLeagues()
+  const active = allEnabled.length > 0
+  const normalizedSportId = sportId ? normalizeSportId(sportId) : undefined
+  const rows = normalizedSportId
+    ? allEnabled.filter((row) => normalizeSportId(row.sportId) === normalizedSportId)
+    : allEnabled
 
-  return leagues
-    .filter((league) => byOvertimeId.has(league.id))
-    .map((league) => {
-      const row = byOvertimeId.get(league.id)!
+  if (!active) {
+    return { active: false, rows, allowedLeagueIds: null }
+  }
+
+  return {
+    active: true,
+    rows,
+    allowedLeagueIds: new Set(rows.map((row) => String(row.overtimeLeagueId))),
+  }
+}
+
+export async function fetchCuratedSportCategories(): Promise<SportCategory[]> {
+  const allEnabled = await fetchAllCuratedLeagues()
+  if (allEnabled.length === 0) return SPORT_CATEGORIES
+
+  const sportIds = new Set(allEnabled.map((row) => normalizeSportId(row.sportId)))
+  return SPORT_CATEGORIES.filter((sport) => sportIds.has(sport.id))
+}
+
+function applyCuratedLeagueFilter(
+  leagues: League[],
+  scope: CurationScope,
+): League[] {
+  if (!scope.active) return leagues
+  if (scope.rows.length === 0) return []
+
+  const overtimeById = new Map(leagues.map((league) => [league.id, league]))
+
+  return [...scope.rows]
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+    .map((row) => {
+      const id = String(row.overtimeLeagueId)
+      const fromOvertime = overtimeById.get(id)
+
       return {
-        ...league,
+        id,
         name: row.name,
         country: row.country,
-        logoUrl: getLeagueLogoSrc(row.name),
+        sportId: normalizeSportId(row.sportId),
+        logoUrl: fromOvertime?.logoUrl ?? getLeagueLogoSrc(row.name),
       }
-    })
-    .sort((a, b) => {
-      const sortA = byOvertimeId.get(a.id)?.sortOrder ?? 999
-      const sortB = byOvertimeId.get(b.id)?.sortOrder ?? 999
-      return sortA - sortB || a.name.localeCompare(b.name)
     })
 }
 
-function curatedLeagueIdSet(curated: CuratedLeagueRow[]): Set<string> | null {
-  if (curated.length === 0) return null
-  return new Set(curated.map((row) => String(row.overtimeLeagueId)))
+function applyCuratedMatchFilter(matches: MatchWithTeams[], scope: CurationScope): MatchWithTeams[] {
+  if (!scope.active || !scope.allowedLeagueIds) return matches
+  if (scope.allowedLeagueIds.size === 0) return []
+  return matches.filter((match) => scope.allowedLeagueIds!.has(match.leagueId))
 }
 
 let cachedMarketTypes: Record<number, OvertimeMarketTypeMeta> | null = null
@@ -161,20 +209,24 @@ function filterBySportAndLeague(
   sportId?: string,
   leagueId?: string,
 ): MatchWithTeams[] {
+  const normalizedSportId = sportId ? normalizeSportId(sportId) : undefined
+
   return matches.filter((match) => {
-    if (sportId && match.league.sportId !== sportId) return false
+    if (normalizedSportId && normalizeSportId(match.league.sportId) !== normalizedSportId) {
+      return false
+    }
     if (leagueId && match.leagueId !== leagueId) return false
     return true
   })
 }
 
 export async function fetchLeaguesFromApi(sportId?: string): Promise<League[]> {
-  const [{ data }, curated] = await Promise.all([
+  const [{ data }, scope] = await Promise.all([
     sportsClient.get<Record<string, OvertimeLeagueGroup[]>>('/sports/leagues'),
-    fetchCuratedLeagues(sportId),
+    resolveCurationScope(sportId),
   ])
   const leagues = mapLeaguesResponse(data, sportId)
-  return applyCuratedLeagueFilter(leagues, curated)
+  return applyCuratedLeagueFilter(leagues, scope)
 }
 
 export async function fetchFixturesFromApi(filters?: {
@@ -185,12 +237,7 @@ export async function fetchFixturesFromApi(filters?: {
   const typeById = await getMarketTypes()
   const sportsCatalog = await getSportsCatalog()
   const status = filters?.status ?? MATCH_STATUS.SCHEDULED
-  const curatedIds = curatedLeagueIdSet(await fetchCuratedLeagues(filters?.sportId))
-
-  const applyCuratedMatchFilter = (matches: MatchWithTeams[]) => {
-    if (!curatedIds) return matches
-    return matches.filter((match) => curatedIds.has(match.leagueId))
-  }
+  const curationScope = await resolveCurationScope(filters?.sportId)
 
   if (status === MATCH_STATUS.LIVE) {
     const liveMarkets = await fetchLiveMarketsRaw()
@@ -202,6 +249,7 @@ export async function fetchFixturesFromApi(filters?: {
         filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
           (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
         ),
+        curationScope,
       ),
     )
   }
@@ -245,6 +293,7 @@ export async function fetchFixturesFromApi(filters?: {
         filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
           (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
         ),
+        curationScope,
       ),
     )
   }
@@ -254,6 +303,7 @@ export async function fetchFixturesFromApi(filters?: {
       filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
         (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
       ),
+      curationScope,
     ),
   )
 }

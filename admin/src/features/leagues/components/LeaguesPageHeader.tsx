@@ -25,7 +25,7 @@ export function LeaguesPageHeader({
     {
       label: 'Total leagues',
       value: total,
-      caption: 'Imported from Overtime',
+      caption: 'With active Overtime markets',
       icon: TrophyIcon,
       accent: 'secondary' as const,
     },
@@ -70,8 +70,8 @@ export function LeaguesPageHeader({
               Curated leagues
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-              Control which leagues appear in the Tipster Arena sidebar. Sync competitions from
-              Overtime across every sport, then enable or hide them for players.
+              Only leagues with at least one open or live Overtime market appear here. Enable
+              competitions to show them in the Tipster Arena sidebar for players.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">

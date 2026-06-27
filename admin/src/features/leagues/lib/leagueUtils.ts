@@ -6,6 +6,7 @@ export interface CuratedLeague {
   sportId: string
   isEnabled: boolean
   sortOrder: number
+  matchCount: number
 }
 
 export const SPORT_CATALOG = [

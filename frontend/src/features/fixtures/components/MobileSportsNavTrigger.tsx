@@ -1,8 +1,7 @@
 import { Bars3Icon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import { useLeagues } from '@/features/fixtures/hooks/useFixtures'
+import { useCuratedSportCategories, useLeagues } from '@/features/fixtures/hooks/useFixtures'
 import { useFixtureNavParams } from '@/features/fixtures/hooks/useFixtureNavParams'
 import { useSportsNavDrawer } from '@/features/fixtures/context/SportsNavDrawerContext'
-import { SPORT_CATEGORIES } from '@/core/constants/sports'
 import { cn } from '@/shared/utils/cn'
 
 const VIEW_LABELS: Record<string, string> = {
@@ -13,9 +12,11 @@ const VIEW_LABELS: Record<string, string> = {
 export function MobileSportsNavTrigger({ className }: { className?: string }) {
   const { open } = useSportsNavDrawer()
   const { view, sportId, leagueId } = useFixtureNavParams()
+  const sportCategories = useCuratedSportCategories()
   const leagues = useLeagues(sportId)
 
-  const sportName = SPORT_CATEGORIES.find((s) => s.id === sportId)?.name ?? 'Soccer'
+  const sportName =
+    sportCategories.data?.find((s) => s.id === sportId)?.name ?? 'Soccer'
   const leagueName = leagueId
     ? leagues.data?.find((l) => l.id === leagueId)?.name
     : undefined

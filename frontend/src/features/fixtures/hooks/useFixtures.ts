@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/core/constants/queryKeys'
 import {
+  fetchCuratedSportCategories,
   fetchFixturesFromApi,
   fetchLeaguesFromApi,
   fetchMatchFromApi,
 } from '@/features/fixtures/api/sportsApi'
+import { SPORT_CATEGORIES } from '@/core/constants/sports'
 
 export type { MatchWithTeams } from '@/features/fixtures/types/fixture'
 
@@ -19,6 +21,15 @@ export function useLeagues(sportId?: string) {
     queryKey: queryKeys.fixtures.leagues(sportId),
     queryFn: () => fetchLeaguesFromApi(sportId),
     staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useCuratedSportCategories() {
+  return useQuery({
+    queryKey: queryKeys.fixtures.curatedSports(),
+    queryFn: fetchCuratedSportCategories,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: SPORT_CATEGORIES,
   })
 }
 

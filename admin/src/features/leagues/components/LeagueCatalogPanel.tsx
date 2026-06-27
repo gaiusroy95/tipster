@@ -59,7 +59,7 @@ export function LeagueCatalogPanel({
   return (
     <PanelCard
       title="League catalog"
-      subtitle={`${matchCount} of ${totalCount} league${totalCount === 1 ? '' : 's'} match your filters`}
+      subtitle={`${matchCount} of ${totalCount} active league${totalCount === 1 ? '' : 's'} · open or live Overtime markets only`}
       className="overflow-hidden"
       bodyClassName="p-0 sm:p-0"
     >
@@ -185,17 +185,18 @@ export function LeagueCatalogPanel({
           <p className="mt-4 font-display text-base font-semibold">No leagues found</p>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-text-muted">
             {totalCount === 0
-              ? 'Run Sync from Overtime to import leagues from every sport into the catalog.'
+              ? 'No leagues currently have open or live markets on Overtime. Sync to refresh the catalog, or check back when fixtures are available.'
               : 'Try a different search, filter, or sort option.'}
           </p>
         </div>
       ) : (
         <>
-          <div className="hidden border-b border-border-default/60 bg-bg-elevated/20 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted lg:grid lg:grid-cols-[3.5rem_1fr_6.5rem_7rem_6rem_5.5rem] lg:gap-4">
+          <div className="hidden border-b border-border-default/60 bg-bg-elevated/20 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted lg:grid lg:grid-cols-[3.5rem_1fr_6.5rem_7rem_5rem_6rem_5.5rem] lg:gap-4">
             <span>Rank</span>
             <span>League</span>
             <span>Sport</span>
             <span>Overtime ID</span>
+            <span>Markets</span>
             <span>Status</span>
             <span className="text-right">Enabled</span>
           </div>
@@ -212,7 +213,7 @@ export function LeagueCatalogPanel({
                     league.isEnabled && 'bg-accent-win/[0.02]',
                   )}
                 >
-                  <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:grid lg:grid-cols-[3.5rem_1fr_6.5rem_7rem_6rem_5.5rem] lg:items-center lg:gap-4">
+                  <div className="flex flex-col gap-4 px-4 py-4 sm:px-5 lg:grid lg:grid-cols-[3.5rem_1fr_6.5rem_7rem_5rem_6rem_5.5rem] lg:items-center lg:gap-4">
                     <div className="flex items-center gap-3 lg:block">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted lg:hidden">
                         Rank
@@ -246,6 +247,15 @@ export function LeagueCatalogPanel({
                       </span>
                       <span className="inline-flex rounded-md border border-border-default/70 bg-bg-primary/40 px-2 py-1 font-mono text-xs tabular-nums text-text-muted">
                         {league.overtimeLeagueId}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 lg:block">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted lg:hidden">
+                        Markets
+                      </span>
+                      <span className="inline-flex rounded-md border border-border-default/70 bg-bg-primary/40 px-2 py-1 font-mono text-xs tabular-nums text-text-primary">
+                        {league.matchCount}
                       </span>
                     </div>
 

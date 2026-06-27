@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { SPORTS_SLIDER_ITEMS } from '@/core/constants/sportSvgIcons'
+import { useCuratedSportCategories } from '@/features/fixtures/hooks/useFixtures'
 import { useFixtureNavParams } from '@/features/fixtures/hooks/useFixtureNavParams'
 import { cn } from '@/shared/utils/cn'
 
@@ -15,9 +16,23 @@ export function SportsCategorySlider({
   variant = 'default',
 }: SportsCategorySliderProps) {
   const { sportId, setSportId } = useFixtureNavParams()
+  const sportCategories = useCuratedSportCategories()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const visibleItems = useMemo(() => {
+    const allowed = new Set(sportCategories.data?.map((sport) => sport.id) ?? [])
+    if (allowed.size === 0) return SPORTS_SLIDER_ITEMS
+    return SPORTS_SLIDER_ITEMS.filter((item) => allowed.has(item.id))
+  }, [sportCategories.data])
+
+  useEffect(() => {
+    if (visibleItems.length === 0) return
+    if (!visibleItems.some((item) => item.id === sportId)) {
+      setSportId(visibleItems[0]!.id)
+    }
+  }, [visibleItems, sportId, setSportId])
 
   const isCompact = variant === 'compact'
 
@@ -43,7 +58,7 @@ export function SportsCategorySlider({
       el.removeEventListener('scroll', updateScrollHints)
       ro.disconnect()
     }
-  }, [updateScrollHints])
+  }, [updateScrollHints, visibleItems.length])
 
   const scrollBy = (direction: 'left' | 'right') => {
     const el = scrollRef.current
@@ -130,7 +145,7 @@ export function SportsCategorySlider({
           role="tablist"
           aria-label="Sport categories"
         >
-          {SPORTS_SLIDER_ITEMS.map((sport) => {
+          {visibleItems.map((sport) => {
             const active = sportId === sport.id
             return (
               <button

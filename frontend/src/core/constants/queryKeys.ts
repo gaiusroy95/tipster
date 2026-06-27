@@ -15,6 +15,7 @@ export const queryKeys = {
       ['fixtures', 'list', filters?.leagueId, filters?.status, filters?.sportId] as const,
     detail: (matchId: string) => ['fixtures', 'detail', matchId] as const,
     leagues: (sportId?: string) => ['fixtures', 'leagues', sportId] as const,
+    curatedSports: () => ['fixtures', 'curated-sports'] as const,
   },
   bets: {
     all: () => ['bets'] as const,
