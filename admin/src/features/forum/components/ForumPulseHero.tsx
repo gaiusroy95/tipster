@@ -74,7 +74,7 @@ export function ForumPulseHero({
       <div className="forum-pulse-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden="true" />
 
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
-        <div className="flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between xl:gap-6">
+        <div className="flex flex-col gap-8 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
           <div className="min-w-0 max-w-2xl space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-accent-live/30 bg-accent-live/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-accent-live">
