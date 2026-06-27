@@ -4,6 +4,7 @@ import { ApiException } from '../lib/api-exception';
 import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
 import { achievementService } from './achievement.service';
+import { forumService } from './forum.service';
 import { usersService } from './users.service';
 
 const BCRYPT_ROUNDS = 12;
@@ -243,6 +244,7 @@ export const profileService = {
     const achievements = await achievementService.getProfileAchievements(userId);
     const achievementProgress = await achievementService.getProgress(userId);
     const totalPlayers = await leaderboardService.countActiveSeasonParticipants();
+    const forumStats = await forumService.getUserForumStats(userId);
 
     return {
       userId,
@@ -278,6 +280,12 @@ export const profileService = {
       performanceHistory: [],
       achievements,
       achievementProgress,
+      socialStats: {
+        posts: user.postCount,
+        followers: 0,
+        following: 0,
+        views: forumStats.forumViewsTotal,
+      },
     };
   },
 };

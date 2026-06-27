@@ -5,7 +5,7 @@ import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
 import { useEditProfileDrawer } from '@/features/profile/context/EditProfileDrawerContext'
 import { countryFlagEmoji } from '@/features/profile/lib/countryFlag'
-import { rankTier } from '@/features/profile/lib/profileUtils'
+import { rankTier, socialStatsToGridValues } from '@/features/profile/lib/profileUtils'
 import { ROUTES, playerPath } from '@/core/constants/routes'
 import { OpenBetsIcon } from '@/features/profile/components/OpenBetsIcon'
 import { ProfileSocialStatsGrid } from '@/features/profile/components/ProfileSocialStats'
@@ -144,6 +144,13 @@ export function ProfileHeader({
 
             <ProfileSocialStatsGrid
               className="rounded-xl border border-border-default/60 bg-bg-primary/30 p-2 sm:p-3"
+              values={socialStatsToGridValues(profile.socialStats)}
+              links={{
+                Posts: ROUTES.FORUM,
+                Views: ROUTES.FORUM,
+                Followers: `${playerPath(profile.userId)}?tab=social`,
+                Following: `${playerPath(profile.userId)}?tab=social`,
+              }}
             />
           </div>
         </div>

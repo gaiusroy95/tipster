@@ -1,4 +1,26 @@
-import type { UserProfileStats } from '@/mocks/data/types'
+import type { ProfileSocialStats, UserProfileStats } from '@/mocks/data/types'
+
+export function socialStatsToGridValues(stats?: ProfileSocialStats) {
+  return {
+    Posts: stats?.posts ?? 0,
+    Followers: stats?.followers ?? 0,
+    Following: stats?.following ?? 0,
+    Views: stats?.views ?? 0,
+  }
+}
+
+export function resolveProfileSocialStats(
+  socialStats?: ProfileSocialStats,
+  fallback?: { postCount?: number; forumViewsTotal?: number },
+): ProfileSocialStats {
+  if (socialStats) return socialStats
+  return {
+    posts: fallback?.postCount ?? 0,
+    followers: 0,
+    following: 0,
+    views: fallback?.forumViewsTotal ?? 0,
+  }
+}
 
 export function rankTier(rank: number) {
   if (rank <= 0) {

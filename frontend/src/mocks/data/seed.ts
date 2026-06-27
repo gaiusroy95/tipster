@@ -1,5 +1,6 @@
 import { bettingRules } from '@/core/config/bettingRules'
 import { getProfileAchievements, getUserAchievementProgress } from './achievementService'
+import { getMockForumStats } from './mockForum'
 import { buildOverallRankStats } from '@/features/profile/lib/buildOverallRankStats'
 import type {
   User,
@@ -513,6 +514,12 @@ export const mockDb = {
       ],
       achievements: getProfileAchievements(this, userId),
       achievementProgress: getUserAchievementProgress(this, userId),
+      socialStats: {
+        posts: user.postCount ?? 0,
+        followers: 0,
+        following: 0,
+        views: getMockForumStats(userId).forumViewsTotal,
+      },
     }
   },
 

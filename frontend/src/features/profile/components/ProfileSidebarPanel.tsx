@@ -17,8 +17,8 @@ import { ProfileRewardsWidget } from '@/features/profile/components/ProfileRewar
 import { ProfileSocialStatsGrid } from '@/features/profile/components/ProfileSocialStats'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { ProfileBalanceIcon } from '@/features/profile/components/ProfileBalanceIcon'
-import { prefetchPlayerProfile } from '@/features/profile/hooks/useProfile'
-import { rankTier } from '@/features/profile/lib/profileUtils'
+import { prefetchPlayerProfile, usePlayerProfile } from '@/features/profile/hooks/useProfile'
+import { rankTier, resolveProfileSocialStats, socialStatsToGridValues } from '@/features/profile/lib/profileUtils'
 import { CollapsibleSection } from '@/shared/components/CollapsibleSection'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { cn } from '@/shared/utils/cn'
@@ -49,6 +49,7 @@ function ProfileSidebarContent({
   openStake,
   activeCount,
   prefetchProfile,
+  socialStats,
 }: {
   user: NonNullable<ReturnType<typeof useAuthStore.getState>['user']>
   profileStats: UserProfileStats
@@ -57,6 +58,7 @@ function ProfileSidebarContent({
   openStake: number
   activeCount: number
   prefetchProfile: () => void
+  socialStats: ReturnType<typeof resolveProfileSocialStats>
 }) {
   return (
     <div className="space-y-3">
@@ -117,7 +119,16 @@ function ProfileSidebarContent({
             />
           </div>
 
-          <ProfileSocialStatsGrid className="border-t border-border-default/60 pt-3" />
+          <ProfileSocialStatsGrid
+            className="border-t border-border-default/60 pt-3"
+            values={socialStatsToGridValues(socialStats)}
+            links={{
+              Posts: ROUTES.FORUM,
+              Views: ROUTES.FORUM,
+              Followers: `${playerPath(user.id)}?tab=social`,
+              Following: `${playerPath(user.id)}?tab=social`,
+            }}
+          />
         </div>
       </section>
 
@@ -184,6 +195,12 @@ function buildProfileStats(
     performanceHistory: [],
     achievements: [],
     achievementProgress: [],
+    socialStats: {
+      posts: user.postCount ?? 0,
+      followers: 0,
+      following: 0,
+      views: dashboard?.forumViewsTotal ?? 0,
+    },
   }
 }
 
@@ -193,6 +210,7 @@ export function ProfileSidebarPanel() {
   const location = useLocation()
   const dashboard = useDashboard()
   const activeBets = useBets('active')
+  const playerProfile = usePlayerProfile(user?.id ?? '')
   const hideMobilePanel = location.pathname === ROUTES.FIXTURES
 
   useEffect(() => {
@@ -230,6 +248,10 @@ export function ProfileSidebarPanel() {
   const openStake = activeBets.data?.reduce((sum, bet) => sum + bet.stake, 0) ?? 0
   const activeCount = dashboard.data?.activeBetsCount ?? activeBets.data?.length ?? 0
   const profileStats = buildProfileStats(user, activeCount, dashboard.data)
+  const socialStats = resolveProfileSocialStats(playerProfile.data?.socialStats, {
+    postCount: user.postCount,
+    forumViewsTotal: dashboard.data?.forumViewsTotal,
+  })
 
   const contentProps = {
     user,
@@ -239,6 +261,7 @@ export function ProfileSidebarPanel() {
     openStake,
     activeCount,
     prefetchProfile,
+    socialStats,
   }
 
   return (

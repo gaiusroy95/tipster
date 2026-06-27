@@ -154,6 +154,13 @@ export interface OverallRankStats {
   tierProgressPercent: number
 }
 
+export interface ProfileSocialStats {
+  posts: number
+  followers: number
+  following: number
+  views: number
+}
+
 export interface UserProfileStats {
   userId: string
   displayName: string
@@ -183,6 +190,7 @@ export interface UserProfileStats {
   performanceHistory: { date: string; profitLoss: number; cumulative: number }[]
   achievements: { id: string; name: string; description: string; earnedAt: string }[]
   achievementProgress: AchievementProgress[]
+  socialStats: ProfileSocialStats
 }
 
 export interface UserSettings {

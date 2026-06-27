@@ -169,11 +169,11 @@ export function PublicProfilePage() {
           </p>
           <div className="grid grid-cols-2 gap-3 max-w-sm">
             <div className="rounded-xl border border-border-default bg-bg-elevated/40 p-4 text-center">
-              <p className="font-mono text-2xl font-bold">0</p>
+              <p className="font-mono text-2xl font-bold">{p.socialStats.followers.toLocaleString()}</p>
               <p className="text-xs text-text-muted mt-1">Followers</p>
             </div>
             <div className="rounded-xl border border-border-default bg-bg-elevated/40 p-4 text-center">
-              <p className="font-mono text-2xl font-bold">0</p>
+              <p className="font-mono text-2xl font-bold">{p.socialStats.following.toLocaleString()}</p>
               <p className="text-xs text-text-muted mt-1">Following</p>
             </div>
           </div>
