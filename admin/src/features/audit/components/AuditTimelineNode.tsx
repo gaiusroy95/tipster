@@ -40,12 +40,10 @@ export function AuditTimelineNode({
   entry,
   selected,
   onSelect,
-  isLast,
 }: {
   entry: AdminAuditEntry
   selected: boolean
   onSelect: (entry: AdminAuditEntry) => void
-  isLast: boolean
 }) {
   const category = getActionCategory(entry.action)
   const style = getCategoryStyle(category)
@@ -53,22 +51,22 @@ export function AuditTimelineNode({
   const destructive = isDestructiveAction(entry.action)
 
   return (
-    <div className="audit-timeline-node relative flex gap-4 pl-1">
-      <div className="relative flex flex-col items-center">
+    <div className="audit-timeline-node grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-4">
+      <div className="flex justify-center pt-1.5">
         <button
           type="button"
           onClick={() => onSelect(entry)}
           className={cn(
-            'relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-all',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50',
+            'audit-timeline-node-marker relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all',
+            'ring-4 ring-bg-surface/95 focus-visible:outline-none focus-visible:ring-cyan-400/40',
             selected
-              ? 'border-cyan-400/50 bg-cyan-400/15 shadow-[0_0_20px_rgba(34,211,238,0.2)]'
-              : cn(style.ring, 'hover:scale-105'),
-            destructive && !selected && 'border-accent-loss/30',
+              ? 'border-cyan-400/60 bg-cyan-400/15 shadow-[0_0_20px_rgba(34,211,238,0.35)]'
+              : cn(style.ring, 'hover:scale-105 hover:shadow-[0_0_16px_rgba(34,211,238,0.12)]'),
+            destructive && !selected && 'border-accent-loss/40 bg-accent-loss/10',
           )}
           aria-label={`Inspect ${humanizeAction(entry.action)}`}
         >
-          <Icon className={cn('h-5 w-5', destructive ? 'text-accent-loss' : style.text)} aria-hidden="true" />
+          <Icon className={cn('h-[18px] w-[18px]', destructive ? 'text-accent-loss' : style.text)} aria-hidden="true" />
           {destructive ? (
             <span
               className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-bg-surface bg-accent-loss"
@@ -76,20 +74,17 @@ export function AuditTimelineNode({
             />
           ) : null}
         </button>
-        {!isLast ? (
-          <div className="audit-timeline-spine mt-2 w-px flex-1 min-h-[1.5rem]" aria-hidden="true" />
-        ) : null}
       </div>
 
       <button
         type="button"
         onClick={() => onSelect(entry)}
         className={cn(
-          'audit-timeline-card mb-4 min-w-0 flex-1 rounded-2xl border p-4 text-left transition-all sm:p-4',
+          'audit-timeline-card mb-3 min-w-0 rounded-2xl border p-4 text-left transition-all sm:p-4',
           'hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/40',
           selected
-            ? 'border-cyan-400/35 bg-bg-elevated/80 ring-1 ring-cyan-400/20'
-            : 'border-border-default/60 bg-bg-surface/60 hover:border-border-strong hover:bg-bg-elevated/40',
+            ? 'border-cyan-400/35 bg-bg-elevated/80 shadow-[0_0_24px_rgba(34,211,238,0.1)] ring-1 ring-cyan-400/20'
+            : 'border-border-default/60 bg-bg-surface/60 hover:border-cyan-400/20 hover:bg-bg-elevated/40',
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">

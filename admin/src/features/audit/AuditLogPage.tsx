@@ -111,8 +111,8 @@ export function AuditLogPage() {
         visible={visibleEntries.length}
       />
 
-      <div className="grid gap-5 lg:grid-cols-12 lg:gap-6 xl:gap-8">
-        <div className="lg:col-span-5 xl:col-span-5">
+      <div className="grid gap-5 lg:grid-cols-12 lg:items-start lg:gap-6 xl:gap-8">
+        <div className="lg:col-span-5 xl:col-span-5 lg:min-h-0">
           <AuditTimelineStream
             entries={visibleEntries}
             selectedId={selectedId}
