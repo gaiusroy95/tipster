@@ -20,7 +20,7 @@ export function useLeagues(sportId?: string) {
   return useQuery({
     queryKey: queryKeys.fixtures.leagues(sportId),
     queryFn: () => fetchLeaguesFromApi(sportId),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   })
 }
 
@@ -28,7 +28,7 @@ export function useCuratedSportCategories() {
   return useQuery({
     queryKey: queryKeys.fixtures.curatedSports(),
     queryFn: fetchCuratedSportCategories,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     placeholderData: SPORT_CATEGORIES,
   })
 }

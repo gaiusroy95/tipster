@@ -4,6 +4,7 @@ import { RouterProvider } from 'react-router-dom'
 import { ToastProvider } from '@/shared/components/ui/Toast'
 import { router } from '@/app/router'
 import { env } from '@/core/config/env'
+import { useCurationRevisionSync } from '@/features/fixtures/hooks/useCurationRevisionSync'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,9 +16,15 @@ const queryClient = new QueryClient({
   },
 })
 
+function CurationRevisionSync() {
+  useCurationRevisionSync()
+  return null
+}
+
 export function Providers() {
   const app = (
     <QueryClientProvider client={queryClient}>
+      <CurationRevisionSync />
       <ToastProvider>
         <RouterProvider router={router} />
       </ToastProvider>

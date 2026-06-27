@@ -275,10 +275,20 @@ apiRouter.get(
 );
 
 apiRouter.get(
+  '/leagues/curated/revision',
+  asyncHandler(async (_req, res) => {
+    const revision = await curatedLeagueService.getCurationRevision();
+    res.set('Cache-Control', 'no-store');
+    res.json({ data: { revision } });
+  }),
+);
+
+apiRouter.get(
   '/leagues/curated',
   asyncHandler(async (req, res) => {
     const sportId = typeof req.query.sportId === 'string' ? req.query.sportId : undefined;
     const data = await curatedLeagueService.listCuratedPublic(sportId);
+    res.set('Cache-Control', 'no-store');
     res.json({ data });
   }),
 );

@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { X_API_KEY } from '../constants/config';
 import {
+  GameInfo,
   LiveMarkets,
+  LiveScore,
   Market,
   MarketData,
   MarketType,
@@ -96,3 +98,79 @@ export const fetchMarkets = async (networkId: number = 10) => {
   );
   return res.data;
 };
+
+export async function fetchGameScoresWithRetry(
+  gameId: string,
+  maxRetries: number = 2,
+  delay: number = 500,
+): Promise<{ homeScore: number; awayScore: number } | null> {
+  if (!gameId) return null;
+
+  const encodedGameId = encodeURIComponent(gameId);
+  const headers = { 'x-api-key': X_API_KEY };
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const liveScoreResponse = await axios.get<LiveScore>(
+        `${V2_API_URL}/live-scores/${encodedGameId}`,
+        {
+          headers,
+          timeout: 8000,
+          validateStatus: (status) => status === 200 || status === 404,
+        },
+      );
+
+      if (
+        liveScoreResponse.status === 200 &&
+        liveScoreResponse.data?.homeScore != null &&
+        liveScoreResponse.data?.awayScore != null &&
+        Number.isFinite(liveScoreResponse.data.homeScore) &&
+        Number.isFinite(liveScoreResponse.data.awayScore)
+      ) {
+        return {
+          homeScore: liveScoreResponse.data.homeScore,
+          awayScore: liveScoreResponse.data.awayScore,
+        };
+      }
+
+      const gameInfoResponse = await axios.get<Record<string, GameInfo> | GameInfo>(
+        `${V2_API_URL}/games-info/${encodedGameId}`,
+        {
+          headers,
+          timeout: 8000,
+          validateStatus: (status) => status === 200 || status === 404,
+        },
+      );
+
+      if (gameInfoResponse.status === 404) return null;
+
+      const payload = gameInfoResponse.data;
+      const info: GameInfo | undefined =
+        payload && typeof payload === 'object' && 'teams' in payload
+          ? (payload as GameInfo)
+          : (payload as Record<string, GameInfo>)?.[gameId];
+
+      const homeTeam = info?.teams?.find((team) => team.isHome);
+      const awayTeam = info?.teams?.find((team) => !team.isHome);
+      if (
+        homeTeam &&
+        awayTeam &&
+        Number.isFinite(homeTeam.score) &&
+        Number.isFinite(awayTeam.score)
+      ) {
+        return { homeScore: homeTeam.score, awayScore: awayTeam.score };
+      }
+
+      return null;
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(`[overtime] fetchGameScores ${gameId}: ${message}`);
+        return null;
+      }
+      await sleep(delay);
+    }
+  }
+
+  return null;
+}

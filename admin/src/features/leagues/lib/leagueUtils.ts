@@ -16,6 +16,7 @@ export const SPORT_CATALOG = [
   { id: 'tennis', name: 'Tennis' },
   { id: 'hockey', name: 'Hockey' },
   { id: 'baseball', name: 'Baseball' },
+  { id: 'cricket', name: 'Cricket' },
   { id: 'mma', name: 'MMA' },
   { id: 'esports', name: 'Esports' },
 ] as const
@@ -44,6 +45,7 @@ const SPORT_ACCENTS: Record<string, string> = {
   tennis: 'border-lime-400/30 bg-lime-400/10 text-lime-300',
   hockey: 'border-sky-400/30 bg-sky-400/10 text-sky-300',
   baseball: 'border-orange-400/30 bg-orange-400/10 text-orange-300',
+  cricket: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300',
   mma: 'border-accent-loss/30 bg-accent-loss/10 text-accent-loss',
   esports: 'border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300',
 }

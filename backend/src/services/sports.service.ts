@@ -9,7 +9,7 @@ import { Network } from '../types/web3';
 import { getMinMaturity } from '../utils/overtime.util';
 import { ApiException } from '../lib/api-exception';
 import { MemoryCache } from '../lib/memory-cache';
-import { cacheGameScoresFromLiveMarkets } from '../lib/game-score-cache';
+import { cacheGameScoresFromLiveMarkets, getCachedGameScore } from '../lib/game-score-cache';
 
 const cache = new MemoryCache();
 
@@ -71,14 +71,13 @@ export const sportsService = {
     sportsService.activeLiveGameIds = current;
 
     if (removed.length > 0) {
-      void sportsService.archiveFinishedGames(removed);
-      void import('./bet-settlement.service')
-        .then(({ betSettlementService }) =>
-          betSettlementService.settleBetsForMatches(removed),
-        )
-        .catch((error) => {
-          console.error('[bet-settlement] Failed after live transition:', error);
-        });
+      void (async () => {
+        await sportsService.archiveFinishedGames(removed);
+        const { betSettlementService } = await import('./bet-settlement.service');
+        await betSettlementService.settleBetsForMatches(removed);
+      })().catch((error) => {
+        console.error('[bet-settlement] Failed after live transition:', error);
+      });
     }
   },
 
@@ -93,7 +92,13 @@ export const sportsService = {
           market &&
           (market.isResolved || market.statusCode === 'resolved' || market.status === 10)
         ) {
-          sportsService.finishedMarketsCache.set(gameId, market);
+          const cachedScore = getCachedGameScore(gameId);
+          sportsService.finishedMarketsCache.set(gameId, {
+            ...market,
+            ...(cachedScore
+              ? { homeScore: cachedScore.homeScore, awayScore: cachedScore.awayScore }
+              : {}),
+          } as Market);
         }
       } catch {
         // Best-effort archival when a live game disappears from feeds.
@@ -410,6 +415,25 @@ export const sportsService = {
     const markets = Array.from(mergedByGameId.values()).sort((a, b) => b.maturity - a.maturity);
     const result = { markets };
     cache.set(cacheKey, result, 60 * 1000);
+
+    const resolvedGameIds = markets
+      .filter(
+        (market) =>
+          market.isResolved || market.statusCode === 'resolved' || market.status === 10,
+      )
+      .map((market) => market.gameId)
+      .filter(Boolean);
+
+    if (resolvedGameIds.length > 0) {
+      void import('./bet-settlement.service')
+        .then(({ betSettlementService }) =>
+          betSettlementService.settleBetsForMatches(resolvedGameIds),
+        )
+        .catch((error) => {
+          console.error('[bet-settlement] Failed after resolved markets fetch:', error);
+        });
+    }
+
     return result;
   },
 

@@ -17,6 +17,7 @@ export const SPORT_CATEGORIES: SportCategory[] = [
   { id: 'tennis', name: 'Tennis' },
   { id: 'hockey', name: 'Hockey' },
   { id: 'baseball', name: 'Baseball' },
+  { id: 'cricket', name: 'Cricket' },
   { id: 'mma', name: 'MMA' },
   { id: 'esports', name: 'Esports' },
 ]

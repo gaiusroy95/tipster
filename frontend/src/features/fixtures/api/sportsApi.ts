@@ -39,20 +39,11 @@ export interface CuratedLeagueRow {
   matchCount?: number
 }
 
-let curatedLeaguesCache: { rows: CuratedLeagueRow[]; expiresAt: number } | null = null
-
 /** All admin-enabled curated leagues (any sport). */
 async function fetchAllCuratedLeagues(): Promise<CuratedLeagueRow[]> {
-  const now = Date.now()
-  if (curatedLeaguesCache && curatedLeaguesCache.expiresAt > now) {
-    return curatedLeaguesCache.rows
-  }
-
   try {
     const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated')
-    const rows = data.data ?? []
-    curatedLeaguesCache = { rows, expiresAt: now + 60_000 }
-    return rows
+    return data.data ?? []
   } catch {
     return []
   }
@@ -85,12 +76,31 @@ async function resolveCurationScope(sportId?: string): Promise<CurationScope> {
   }
 }
 
+function formatCuratedSportName(sportId: string): string {
+  const known = SPORT_CATEGORIES.find((sport) => sport.id === sportId)
+  if (known) return known.name
+
+  return sportId
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export async function fetchCuratedSportCategories(): Promise<SportCategory[]> {
   const allEnabled = await fetchAllCuratedLeagues()
   if (allEnabled.length === 0) return SPORT_CATEGORIES
 
-  const sportIds = new Set(allEnabled.map((row) => normalizeSportId(row.sportId)))
-  return SPORT_CATEGORIES.filter((sport) => sportIds.has(sport.id))
+  const sportIds = [...new Set(allEnabled.map((row) => normalizeSportId(row.sportId)))]
+  const knownIds = new Set(SPORT_CATEGORIES.map((sport) => sport.id))
+
+  const known = SPORT_CATEGORIES.filter((sport) => sportIds.includes(sport.id))
+  const extras = sportIds
+    .filter((id) => !knownIds.has(id))
+    .sort((a, b) => a.localeCompare(b))
+    .map((id) => ({ id, name: formatCuratedSportName(id) }))
+
+  return [...known, ...extras]
 }
 
 function applyCuratedLeagueFilter(

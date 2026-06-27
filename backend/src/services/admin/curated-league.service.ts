@@ -79,6 +79,20 @@ export const curatedLeagueService = {
     return enabled.filter((league) => (activeCounts.get(league.overtimeLeagueId) ?? 0) > 0).length;
   },
 
+  /** Lightweight token that changes whenever admin curation is mutated. */
+  async getCurationRevision() {
+    const [aggregate, enabledCount] = await Promise.all([
+      prisma.curatedLeague.aggregate({
+        _max: { updatedAt: true },
+        _count: { _all: true },
+      }),
+      prisma.curatedLeague.count({ where: { isEnabled: true } }),
+    ]);
+
+    const updatedAt = aggregate._max.updatedAt?.getTime() ?? 0;
+    return `${updatedAt}:${aggregate._count._all}:${enabledCount}`;
+  },
+
   async syncFromOvertime(adminUserId: string) {
     const [grouped, activeCounts] = await Promise.all([
       sportsService.fetchLeaguesMapper(),

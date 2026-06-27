@@ -10,6 +10,7 @@ const OVERTIME_CATEGORY_TO_SPORT_ID: Record<string, string> = {
   Hockey: 'hockey',
   'Ice Hockey': 'hockey',
   Baseball: 'baseball',
+  Cricket: 'cricket',
   MMA: 'mma',
   Fighting: 'mma',
   Boxing: 'mma',

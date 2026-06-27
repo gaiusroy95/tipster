@@ -5,7 +5,9 @@ import {
   parseSelectionId,
   type BetOutcome,
 } from '../lib/bet-outcome.evaluator';
-import { getCachedGameScore } from '../lib/game-score-cache';
+import { cacheGameScore, getCachedGameScore } from '../lib/game-score-cache';
+import { fetchGameScoresWithRetry } from '../api/overtime';
+import type { Market } from '../types/overtime';
 import { sportsService } from './sports.service';
 import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
@@ -110,6 +112,18 @@ async function settleSingleBet(
   await achievementService.syncUserAchievements(bet.userId);
 }
 
+function isMarketResolved(market: Market): boolean {
+  return market.isResolved || market.statusCode === 'resolved' || market.status === 10;
+}
+
+async function resolveMarketForSettlement(matchId: string): Promise<Market | null> {
+  const live = await sportsService.getMarketOrNull(10, matchId);
+  if (live) return live;
+
+  const archived = sportsService.finishedMarketsCache.get(matchId);
+  return archived ?? null;
+}
+
 async function resolveScoresForMatch(matchId: string): Promise<{
   homeScore: number;
   awayScore: number;
@@ -132,6 +146,12 @@ async function resolveScoresForMatch(matchId: string): Promise<{
     return { homeScore: archived.homeScore, awayScore: archived.awayScore };
   }
 
+  const fetched = await fetchGameScoresWithRetry(matchId);
+  if (fetched) {
+    cacheGameScore(matchId, fetched.homeScore, fetched.awayScore);
+    return fetched;
+  }
+
   return null;
 }
 
@@ -140,7 +160,7 @@ async function settleBetsForMatch(
   bets: Bet[],
   activeSeasonId: string | null,
 ): Promise<number> {
-  const market = await sportsService.getMarketOrNull(10, matchId);
+  const market = await resolveMarketForSettlement(matchId);
   if (!market) return 0;
 
   if (market.isCancelled || market.statusCode === 'cancelled') {
@@ -152,7 +172,7 @@ async function settleBetsForMatch(
     return settled;
   }
 
-  if (!market.isResolved && market.statusCode !== 'resolved') {
+  if (!isMarketResolved(market)) {
     return 0;
   }
 
