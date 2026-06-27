@@ -1,10 +1,47 @@
 export const LEAGUE_LOGO_DIR = '/assets/Leagues'
 export const COUNTRY_FLAG_DIR = '/assets/Countries'
 
+function normalizeForMatch(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
 /** Maps curated/Overtime league names to SVG filenames in public/assets/Leagues. */
 const LEAGUE_LOGO_ALIASES: Record<string, string> = {
   'England Premier League': 'Premier League',
+  'Korea K League 1': 'Korea K1 League',
+  'Korea K League 2': 'Korea K2 League',
 }
+
+/** Overtime league names that should fall back to a country flag when no league SVG exists. */
+const LEAGUE_COUNTRY_SLUG_OVERRIDES: Record<string, string> = {
+  'korea wk league': 'south-korea',
+}
+
+/** Sport categories from Overtime grouped leagues — not geographic countries. */
+const SPORT_CATEGORY_NAMES = new Set(
+  [
+    'Soccer',
+    'Football',
+    'Basketball',
+    'Volleyball',
+    'Tennis',
+    'Hockey',
+    'Ice Hockey',
+    'Baseball',
+    'MMA',
+    'Esports',
+    'E-Sports',
+    'Handball',
+    'Cricket',
+    'Rugby',
+    'Golf',
+    'Boxing',
+    'Darts',
+    'Snooker',
+    'Motorsport',
+    'American Football',
+  ].map(normalizeForMatch),
+)
 
 const COUNTRY_MATCHERS: { slug: string; names: string[] }[] = [
   { slug: 'united-states-of-america', names: ['United States of America', 'United States', 'USA'] },
@@ -14,7 +51,7 @@ const COUNTRY_MATCHERS: { slug: string; names: string[] }[] = [
   { slug: 'north-macedonia', names: ['North Macedonia'] },
   { slug: 'czech-republic', names: ['Czech Republic', 'Czechia'] },
   { slug: 'south-africa', names: ['South Africa'] },
-  { slug: 'south-korea', names: ['South Korea'] },
+  { slug: 'south-korea', names: ['South Korea', 'Republic of Korea', 'Korean', 'Korea'] },
   { slug: 'south-america', names: ['South America'] },
   { slug: 'costa-rica', names: ['Costa Rica'] },
   { slug: 'saudi-arabia', names: ['Saudi Arabia'] },
@@ -96,12 +133,39 @@ const MATCHERS_BY_NAME_LENGTH = [...COUNTRY_MATCHERS].sort(
     Math.max(...b.names.map((n) => n.length)) - Math.max(...a.names.map((n) => n.length)),
 )
 
-function normalizeForMatch(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-}
-
 function slugToDisplay(slug: string) {
   return slug.replace(/-/g, ' ')
+}
+
+function isSportCategory(country?: string) {
+  if (!country) return false
+  return SPORT_CATEGORY_NAMES.has(normalizeForMatch(country))
+}
+
+function resolveCountrySlugFromLeague(leagueName: string): string | undefined {
+  const normalizedLeague = normalizeForMatch(leagueName)
+  const override = LEAGUE_COUNTRY_SLUG_OVERRIDES[normalizedLeague]
+  if (override) return override
+
+  if (normalizedLeague.includes('north korea') || normalizedLeague.includes('dpr korea')) {
+    return undefined
+  }
+
+  for (const matcher of MATCHERS_BY_NAME_LENGTH) {
+    for (const name of [...matcher.names].sort((a, b) => b.length - a.length)) {
+      const normalizedName = normalizeForMatch(name)
+      if (!normalizedLeague.includes(normalizedName)) continue
+      if (
+        normalizedName === 'korea' &&
+        (normalizedLeague.includes('north korea') || normalizedLeague.includes('dpr korea'))
+      ) {
+        continue
+      }
+      return matcher.slug
+    }
+  }
+
+  return undefined
 }
 
 export function getLeagueLogoSrc(leagueName: string): string {
@@ -114,7 +178,7 @@ export function getCountryFlagSrc(slug: string): string {
 }
 
 export function resolveCountrySlug(country?: string, leagueName?: string): string | undefined {
-  if (country) {
+  if (country && !isSportCategory(country)) {
     const normalizedCountry = normalizeForMatch(country)
     for (const matcher of COUNTRY_MATCHERS) {
       if (matcher.names.some((name) => normalizeForMatch(name) === normalizedCountry)) {
@@ -128,17 +192,7 @@ export function resolveCountrySlug(country?: string, leagueName?: string): strin
 
   if (!leagueName) return undefined
 
-  const normalizedLeague = normalizeForMatch(leagueName)
-  for (const matcher of MATCHERS_BY_NAME_LENGTH) {
-    for (const name of [...matcher.names].sort((a, b) => b.length - a.length)) {
-      const normalizedName = normalizeForMatch(name)
-      if (normalizedLeague.includes(normalizedName)) {
-        return matcher.slug
-      }
-    }
-  }
-
-  return undefined
+  return resolveCountrySlugFromLeague(leagueName)
 }
 
 export function resolveLeagueLogoCandidates(leagueName: string, country?: string): string[] {
