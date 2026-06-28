@@ -40,19 +40,24 @@ function withActiveMatchCounts<
 }
 
 export const curatedLeagueService = {
-  async listCuratedPublic(sportId?: string) {
-    const [leagues, activeCounts] = await Promise.all([
-      prisma.curatedLeague.findMany({
-        where: {
-          isEnabled: true,
-          ...(sportId ? { sportId } : {}),
-        },
-        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      }),
-      sportsService.fetchActiveLeagueMatchCounts(),
-    ]);
+  async listCuratedPublic(sportId?: string, options?: { light?: boolean }) {
+    const leagues = await prisma.curatedLeague.findMany({
+      where: {
+        isEnabled: true,
+        ...(sportId ? { sportId } : {}),
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    })
 
-    return withActiveMatchCounts(leagues, activeCounts);
+    if (options?.light) {
+      return leagues.map((league) => ({
+        ...league,
+        sportId: normalizeSportId(league.sportId),
+      }))
+    }
+
+    const activeCounts = await sportsService.fetchActiveLeagueMatchCounts()
+    return withActiveMatchCounts(leagues, activeCounts)
   },
 
   async listForAdmin(sportId?: string) {

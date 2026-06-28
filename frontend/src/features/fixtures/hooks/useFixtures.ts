@@ -20,7 +20,7 @@ export function useLeagues(sportId?: string) {
   return useQuery({
     queryKey: queryKeys.fixtures.leagues(sportId),
     queryFn: () => fetchLeaguesFromApi(sportId),
-    staleTime: 0,
+    staleTime: 5 * 60_000,
   })
 }
 
@@ -28,7 +28,7 @@ export function useCuratedSportCategories() {
   return useQuery({
     queryKey: queryKeys.fixtures.curatedSports(),
     queryFn: fetchCuratedSportCategories,
-    staleTime: 0,
+    staleTime: 5 * 60_000,
     placeholderData: SPORT_CATEGORIES,
   })
 }
@@ -38,6 +38,7 @@ export function useFixtures(filters?: FixtureFilters) {
     queryKey: queryKeys.fixtures.list(filters),
     queryFn: () => fetchFixturesFromApi(filters),
     staleTime: 30 * 1000,
+    placeholderData: (previousData) => previousData,
   })
 }
 

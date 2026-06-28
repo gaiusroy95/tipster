@@ -4,6 +4,7 @@ import {
   ChatBubbleLeftRightIcon,
   ClipboardDocumentListIcon,
   CalendarDaysIcon,
+  Squares2X2Icon,
   TrophyIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
@@ -31,6 +32,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [
       { to: '/users', label: 'Users', icon: UsersIcon },
       { to: '/leagues', label: 'Leagues', icon: TrophyIcon },
+      { to: '/markets', label: 'Markets', icon: Squares2X2Icon },
       { to: '/seasons', label: 'Seasons', icon: CalendarDaysIcon },
       { to: '/bets', label: 'Bets', icon: BetSlipNavIcon },
     ],
@@ -48,6 +50,7 @@ export const ADMIN_ROUTE_LABELS: Record<string, string> = {
   '/': 'Dashboard',
   '/users': 'Users',
   '/leagues': 'Leagues',
+  '/markets': 'Markets',
   '/seasons': 'Seasons',
   '/bets': 'Bets',
   '/forum': 'Forum',

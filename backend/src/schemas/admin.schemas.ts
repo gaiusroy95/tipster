@@ -33,6 +33,12 @@ export const adminUpdateLeagueSchema = z.object({
   country: z.string().max(100).optional(),
 });
 
+export const adminUpdateMarketTypeSchema = z.object({
+  isEnabled: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).optional(),
+  label: z.string().min(1).max(100).optional(),
+});
+
 export const adminReorderLeaguesSchema = z.object({
   orderedIds: z.array(z.string().min(1)).min(1),
 });

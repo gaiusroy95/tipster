@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from '@/app/App'
+import { beginAppShellReady } from '@/app/queryClient'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { env } from '@/core/config/env'
 import '@/app/styles/index.css'
@@ -41,6 +42,7 @@ async function bootstrap() {
   await cleanupProductionServiceWorkers()
   await setupApiMocking()
   await useAuthStore.getState().initialize()
+  void beginAppShellReady()
 
   const root = document.getElementById('root')
   if (!root) throw new Error('Root element not found')

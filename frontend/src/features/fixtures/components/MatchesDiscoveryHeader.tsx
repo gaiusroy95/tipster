@@ -1,5 +1,6 @@
 import { FixtureViewToggle } from '@/features/fixtures/components/FixtureViewToggle'
 import { SportsCategorySlider } from '@/features/fixtures/components/SportsCategorySlider'
+import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { cn } from '@/shared/utils/cn'
 
 interface MatchesDiscoveryHeaderProps {
@@ -14,11 +15,9 @@ export function MatchesDiscoveryHeader({
   className,
 }: MatchesDiscoveryHeaderProps) {
   const countLabel =
-    isLoading
-      ? 'Loading…'
-      : typeof matchCount === 'number'
-        ? `${matchCount} match${matchCount === 1 ? '' : 'es'}`
-        : null
+    !isLoading && typeof matchCount === 'number'
+      ? `${matchCount} match${matchCount === 1 ? '' : 'es'}`
+      : null
 
   return (
     <header
@@ -46,9 +45,11 @@ export function MatchesDiscoveryHeader({
             </h1>
             <FixtureViewToggle variant="refined" className="shrink-0" />
           </div>
-          {countLabel && (
+          {isLoading ? (
+            <Skeleton className="mt-1.5 h-4 w-28" />
+          ) : countLabel ? (
             <p className="mt-1 text-sm font-medium text-text-muted tabular-nums">{countLabel}</p>
-          )}
+          ) : null}
         </div>
 
         <div className="space-y-2">

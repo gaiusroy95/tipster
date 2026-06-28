@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/core/api/client'
+import { clearCuratedLeaguesCache } from '@/features/fixtures/api/sportsApi'
 import { queryKeys } from '@/core/constants/queryKeys'
 import type { ApiResponse } from '@/core/types/api'
 
@@ -39,6 +40,7 @@ export function useCurationRevisionSync() {
     if (lastRevision.current === revision) return
 
     lastRevision.current = revision
+    clearCuratedLeaguesCache()
     void queryClient.invalidateQueries({ queryKey: queryKeys.fixtures.all() })
   }, [revision, queryClient])
 }

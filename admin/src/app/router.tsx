@@ -17,6 +17,9 @@ const UsersPage = lazy(() =>
 const LeaguesPage = lazy(() =>
   import('@/features/leagues/LeaguesPage').then((m) => ({ default: m.LeaguesPage })),
 )
+const MarketsPage = lazy(() =>
+  import('@/features/markets/MarketsPage').then((m) => ({ default: m.MarketsPage })),
+)
 const SeasonsPage = lazy(() =>
   import('@/features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })),
 )
@@ -55,6 +58,7 @@ export function AppRouter() {
             <Route index element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="leagues" element={<LeaguesPage />} />
+            <Route path="markets" element={<MarketsPage />} />
             <Route path="seasons" element={<SeasonsPage />} />
             <Route path="bets" element={<BetsPage />} />
             <Route path="forum" element={<ForumModerationPage />} />

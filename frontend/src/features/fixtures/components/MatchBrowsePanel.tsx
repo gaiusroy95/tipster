@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { MatchFixtureCard } from '@/features/arena/components/MatchFixtureCard'
+import { LazyMatchFixtureList } from '@/features/arena/components/LazyMatchFixtureList'
+import { MatchFixtureListSkeleton } from '@/features/arena/components/MatchFixtureCardSkeleton'
 import { useFixtures, useLeagues } from '@/features/fixtures/hooks/useFixtures'
 import {
   fixtureViewToStatus,
@@ -13,7 +14,6 @@ import {
   type MatchSortId,
   type MatchTimeFilter,
 } from '@/features/fixtures/lib/fixtureListUtils'
-import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { EmptyState } from '@/shared/components/EmptyState'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { useDebounce } from '@/shared/hooks/useDebounce'
@@ -71,6 +71,8 @@ export function MatchBrowsePanel({
   const hasActiveFilters =
     !!debouncedSearch || !!leagueId || timeFilter !== 'all' || sort !== 'kickoff_asc'
 
+  const isInitialLoading = fixtures.isPending && !fixtures.data
+
   const controlsProps = {
     search,
     onSearchChange: setSearch,
@@ -83,15 +85,15 @@ export function MatchBrowsePanel({
     onLeagueChange: setLeagueId,
     leagues: leagues.data,
     leaguesLoading: leagues.isLoading,
-    resultCount: fixtures.isLoading ? undefined : displayedMatches.length,
+    resultCount: isInitialLoading ? undefined : displayedMatches.length,
     collapsibleOnMobile: true,
   }
 
   const discoveryBar =
     discoveryMode === 'sticky' ? (
       <MatchesDiscoveryHeader
-        matchCount={fixtures.isLoading ? undefined : displayedMatches.length}
-        isLoading={fixtures.isLoading}
+        matchCount={isInitialLoading ? undefined : displayedMatches.length}
+        isLoading={isInitialLoading}
         className="mb-4 shrink-0"
       />
     ) : null
@@ -124,12 +126,8 @@ export function MatchBrowsePanel({
         )}
         aria-label={title}
       >
-        {fixtures.isLoading ? (
-          <div className="space-y-3 p-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-36 w-full rounded-lg" />
-            ))}
-          </div>
+        {isInitialLoading ? (
+          <MatchFixtureListSkeleton count={3} featuredFirst={showFeatured} />
         ) : displayedMatches.length === 0 ? (
           <div className="flex min-h-[12rem] items-center justify-center p-4">
             <EmptyState
@@ -142,15 +140,7 @@ export function MatchBrowsePanel({
             />
           </div>
         ) : (
-          <div className="space-y-3 p-2">
-            {displayedMatches.map((match, index) => (
-              <MatchFixtureCard
-                key={match.id}
-                match={match}
-                featured={showFeatured && index === 0}
-              />
-            ))}
-          </div>
+          <LazyMatchFixtureList matches={displayedMatches} showFeatured={showFeatured} />
         )}
       </div>
     </div>

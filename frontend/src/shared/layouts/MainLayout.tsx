@@ -25,7 +25,7 @@ import { MobileBottomNav, MobileMoreMenu } from '@/shared/layouts/MobileNav'
 import { AppLogo } from '@/shared/components/AppLogo'
 import { ProfileAvatar } from '@/features/profile/components/ProfileAvatar'
 import { SiteFooter } from '@/shared/components/SiteFooter'
-import { prefetchActiveSeason } from '@/features/seasons/hooks/useSeasons'
+import { AppShellGate } from '@/app/AppShellGate'
 import { prefetchSportsNews } from '@/features/news/hooks/useSportsNews'
 
 const topNav = [
@@ -91,13 +91,13 @@ export function MainLayout() {
   const pathname = location.pathname
 
   useEffect(() => {
-    if (pathname === ROUTES.HOME) {
-      prefetchActiveSeason(queryClient)
+    if (pathname === ROUTES.HOME || pathname === ROUTES.FIXTURES) {
       prefetchSportsNews(queryClient, { sport: 'soccer', limit: 10 })
     }
   }, [pathname, queryClient])
 
   return (
+    <AppShellGate>
     <EditProfileDrawerProvider>
     <SportsNavDrawerProvider
       open={() => setSportsNavOpen(true)}
@@ -225,5 +225,6 @@ export function MainLayout() {
       </div>
     </SportsNavDrawerProvider>
     </EditProfileDrawerProvider>
+    </AppShellGate>
   )
 }

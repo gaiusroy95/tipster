@@ -3,7 +3,11 @@ import { cn } from '@/shared/utils/cn'
 export function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={cn('animate-pulse rounded-lg bg-bg-elevated', className)}
+      className={cn(
+        'rounded-lg bg-gradient-to-r from-bg-elevated via-bg-elevated/70 to-bg-elevated',
+        'animate-pulse motion-reduce:animate-none',
+        className,
+      )}
       aria-hidden="true"
     />
   )

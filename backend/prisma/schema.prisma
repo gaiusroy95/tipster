@@ -455,6 +455,19 @@ model CuratedLeague {
   @@index([sportId, isEnabled, sortOrder])
 }
 
+model MarketTypeConfig {
+  id          String   @id @default(cuid())
+  marketType  String   @unique
+  label       String
+  description String?
+  isEnabled   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isEnabled, sortOrder])
+}
+
 model AdminAuditLog {
   id          String   @id @default(cuid())
   adminUserId String

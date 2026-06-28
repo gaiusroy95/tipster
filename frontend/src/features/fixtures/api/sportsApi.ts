@@ -18,15 +18,208 @@ import { SPORT_CATEGORIES, type SportCategory } from '@/core/constants/sports'
 import {
   filterMatchesWithDisplayableOdds,
 } from '@/features/fixtures/lib/matchOdds'
+import {
+  clearEnabledMarketTypesCache,
+  filterMatchMarkets,
+  filterMatchesByEnabledMarkets,
+  setEnabledMarketTypes,
+} from '@/features/fixtures/lib/enabledMarketTypes'
 import type {
   OvertimeLeagueGroup,
   OvertimeLiveMarketsResponse,
   OvertimeMarketsResponse,
   OvertimeMarketTypeMeta,
   OvertimeSportMeta,
+  OvertimeMarket,
+  OvertimeLiveMarket,
 } from '@/features/fixtures/types/overtime'
 
+interface ArenaBootstrapCuration {
+  active: boolean
+  rows: CuratedLeagueRow[]
+  allowedLeagueIds: string[] | null
+}
+
+export interface ArenaBootstrapPayload {
+  marketTypes: Record<string, OvertimeMarketTypeMeta>
+  sports: Record<string, OvertimeSportMeta>
+  leagues: Record<string, OvertimeLeagueGroup[]>
+  markets: OvertimeMarket[]
+  enabledMarketTypes: string[]
+  curation: ArenaBootstrapCuration
+}
+
+function curationScopeFromBootstrap(
+  curation: ArenaBootstrapCuration,
+  sportId?: string,
+): CurationScope {
+  const normalizedSportId = sportId ? normalizeSportId(sportId) : undefined
+  const rows = normalizedSportId
+    ? curation.rows.filter((row) => normalizeSportId(row.sportId) === normalizedSportId)
+    : curation.rows
+
+  if (!curation.active) {
+    return { active: false, rows, allowedLeagueIds: null }
+  }
+
+  return {
+    active: true,
+    rows,
+    allowedLeagueIds: new Set(
+      curation.allowedLeagueIds ?? rows.map((row) => String(row.overtimeLeagueId)),
+    ),
+  }
+}
+
+function applyBootstrapPayload(payload: ArenaBootstrapPayload) {
+  cachedMarketTypes = normalizeMarketTypes(payload.marketTypes)
+  cachedSportsCatalog = normalizeSportsCatalog(payload.sports)
+  curatedLeaguesCache.light = payload.curation.rows
+  if (Array.isArray(payload.enabledMarketTypes)) {
+    setEnabledMarketTypes(payload.enabledMarketTypes)
+  }
+}
+
+async function ensureEnabledMarketTypesLoaded(): Promise<void> {
+  try {
+    const { data } = await apiClient.get<ApiResponse<{ marketTypes: string[] }>>(
+      '/market-types/enabled',
+    )
+    if (Array.isArray(data.data?.marketTypes)) {
+      setEnabledMarketTypes(data.data.marketTypes)
+    }
+  } catch {
+    // Keep defaults when the API is unavailable.
+  }
+}
+
+function finalizeFixtureMatches(matches: MatchWithTeams[]): MatchWithTeams[] {
+  return filterMatchesWithDisplayableOdds(filterMatchesByEnabledMarkets(matches))
+}
+
+function buildFixturesFromRawMarkets(
+  rawMarkets: OvertimeMarket[],
+  typeById: Record<number, OvertimeMarketTypeMeta>,
+  sportsCatalog: Record<number, { sport: string; label: string }>,
+  curationScope: CurationScope,
+  filters?: { leagueId?: string; status?: string; sportId?: string },
+  liveMarkets?: OvertimeLiveMarket[],
+): MatchWithTeams[] {
+  const status = filters?.status ?? MATCH_STATUS.SCHEDULED
+
+  if (status === MATCH_STATUS.LIVE && liveMarkets) {
+    const matches = liveMarkets.map((live) =>
+      mapOvertimeMarketToMatch(live, [], typeById, sportsCatalog, live, status),
+    )
+    return finalizeFixtureMatches(
+      applyCuratedMatchFilter(
+        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+        ),
+        curationScope,
+      ),
+    )
+  }
+
+  const groups = groupMarketsByGameId(rawMarkets)
+  const nowSec = Math.floor(Date.now() / 1000)
+  const matches: MatchWithTeams[] = []
+
+  for (const [, gameMarkets] of groups) {
+    const primary = pickPrimaryMarket(gameMarkets)
+    if (!primary) continue
+
+    const sportCategory =
+      primary.sport || sportsCatalog[primary.subLeagueId]?.sport || ''
+    if (
+      filters?.sportId &&
+      sportCategory &&
+      !sportIdMatchesCategory(filters.sportId, sportCategory)
+    ) {
+      continue
+    }
+
+    if (status === MATCH_STATUS.SCHEDULED) {
+      if (primary.statusCode === 'ongoing') continue
+      if (primary.isResolved || primary.statusCode === 'resolved') continue
+      if (primary.maturity < nowSec) continue
+    }
+
+    if (status === MATCH_STATUS.FINISHED) {
+      if (primary.statusCode === 'open' && !primary.isResolved) continue
+    }
+
+    const related = gameMarkets.filter((m) => m !== primary)
+    matches.push(
+      mapOvertimeMarketToMatch(primary, related, typeById, sportsCatalog, undefined, status),
+    )
+  }
+
+  if (status === MATCH_STATUS.FINISHED) {
+    return finalizeFixtureMatches(
+      applyCuratedMatchFilter(
+        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+          (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+        ),
+        curationScope,
+      ),
+    )
+  }
+
+  return finalizeFixtureMatches(
+    applyCuratedMatchFilter(
+      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
+        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      ),
+      curationScope,
+    ),
+  )
+}
+
+/** Single round-trip bootstrap for arena shell (metadata, markets, leagues, curation). */
+export async function loadArenaBootstrap(
+  sportId?: string,
+  status = MATCH_STATUS.SCHEDULED,
+): Promise<{ fixtures: MatchWithTeams[]; leagues: League[] }> {
+  const { data } = await sportsClient.get<ArenaBootstrapPayload>('/sports/bootstrap', {
+    params: { sportId, status },
+    timeout: 45_000,
+  })
+
+  applyBootstrapPayload(data)
+
+  const typeById = await getMarketTypes()
+  const sportsCatalog = await getSportsCatalog()
+  const curationScope = curationScopeFromBootstrap(data.curation, sportId)
+  const liveMarkets =
+    status === MATCH_STATUS.LIVE ? (data.markets as OvertimeLiveMarket[]) : undefined
+
+  const fixtures = buildFixturesFromRawMarkets(
+    data.markets,
+    typeById,
+    sportsCatalog,
+    curationScope,
+    { sportId, status },
+    liveMarkets,
+  )
+
+  const leagues = applyCuratedLeagueFilter(
+    mapLeaguesResponse(data.leagues, sportId),
+    curationScope,
+  )
+
+  return { fixtures, leagues }
+}
+
 const NETWORK_ID = 10
+
+let curatedLeaguesCache: { light?: CuratedLeagueRow[]; full?: CuratedLeagueRow[] } = {}
+const curatedLeaguesInflight: Partial<Record<'light' | 'full', Promise<CuratedLeagueRow[]>>> = {}
+
+export function clearCuratedLeaguesCache(): void {
+  curatedLeaguesCache = {}
+  clearEnabledMarketTypesCache()
+}
 
 export interface CuratedLeagueRow {
   id: string
@@ -40,13 +233,30 @@ export interface CuratedLeagueRow {
 }
 
 /** All admin-enabled curated leagues (any sport). */
-async function fetchAllCuratedLeagues(): Promise<CuratedLeagueRow[]> {
-  try {
-    const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated')
-    return data.data ?? []
-  } catch {
-    return []
+async function fetchAllCuratedLeagues(options?: { light?: boolean }): Promise<CuratedLeagueRow[]> {
+  const light = options?.light ?? false
+  const cacheKey = light ? 'light' : 'full'
+
+  if (curatedLeaguesCache[cacheKey]) return curatedLeaguesCache[cacheKey]!
+
+  if (!curatedLeaguesInflight[cacheKey]) {
+    curatedLeaguesInflight[cacheKey] = (async () => {
+      try {
+        const { data } = await apiClient.get<ApiResponse<CuratedLeagueRow[]>>('/leagues/curated', {
+          params: light ? { light: 'true' } : undefined,
+        })
+        const rows = data.data ?? []
+        curatedLeaguesCache[cacheKey] = rows
+        return rows
+      } catch {
+        return []
+      } finally {
+        delete curatedLeaguesInflight[cacheKey]
+      }
+    })()
   }
+
+  return curatedLeaguesInflight[cacheKey]!
 }
 
 type CurationScope = {
@@ -58,7 +268,7 @@ type CurationScope = {
 }
 
 async function resolveCurationScope(sportId?: string): Promise<CurationScope> {
-  const allEnabled = await fetchAllCuratedLeagues()
+  const allEnabled = await fetchAllCuratedLeagues({ light: true })
   const active = allEnabled.length > 0
   const normalizedSportId = sportId ? normalizeSportId(sportId) : undefined
   const rows = normalizedSportId
@@ -88,7 +298,7 @@ function formatCuratedSportName(sportId: string): string {
 }
 
 export async function fetchCuratedSportCategories(): Promise<SportCategory[]> {
-  const allEnabled = await fetchAllCuratedLeagues()
+  const allEnabled = await fetchAllCuratedLeagues({ light: true })
   if (allEnabled.length === 0) return SPORT_CATEGORIES
 
   const sportIds = [...new Set(allEnabled.map((row) => normalizeSportId(row.sportId)))]
@@ -149,6 +359,13 @@ async function getSportsCatalog() {
   const data = await sportsClient.get<Record<string, OvertimeSportMeta>>('/sports/sports')
   cachedSportsCatalog = normalizeSportsCatalog(data.data)
   return cachedSportsCatalog
+}
+
+/** Fire metadata fetches early so fixture mapping does not wait on them. */
+export function warmupSportsApiCaches(): void {
+  void getMarketTypes()
+  void getSportsCatalog()
+  void ensureEnabledMarketTypesLoaded()
 }
 
 function extractMarketsArray(payload: OvertimeMarketsResponse | unknown[]): unknown[] {
@@ -244,81 +461,44 @@ export async function fetchFixturesFromApi(filters?: {
   status?: string
   sportId?: string
 }): Promise<MatchWithTeams[]> {
-  const typeById = await getMarketTypes()
-  const sportsCatalog = await getSportsCatalog()
+  await ensureEnabledMarketTypesLoaded()
   const status = filters?.status ?? MATCH_STATUS.SCHEDULED
-  const curationScope = await resolveCurationScope(filters?.sportId)
 
   if (status === MATCH_STATUS.LIVE) {
-    const liveMarkets = await fetchLiveMarketsRaw()
-    const matches = liveMarkets.map((live) =>
-      mapOvertimeMarketToMatch(live, [], typeById, sportsCatalog, live, status),
-    )
-    return filterMatchesWithDisplayableOdds(
-      applyCuratedMatchFilter(
-        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-          (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
-        ),
-        curationScope,
-      ),
-    )
-  }
-
-  const rawMarkets =
-    status === MATCH_STATUS.FINISHED ? await fetchResolvedMarkets() : await fetchOpenMarkets()
-
-  const groups = groupMarketsByGameId(rawMarkets as import('@/features/fixtures/types/overtime').OvertimeMarket[])
-  const nowSec = Math.floor(Date.now() / 1000)
-  const matches: MatchWithTeams[] = []
-
-  for (const [, gameMarkets] of groups) {
-    const primary = pickPrimaryMarket(gameMarkets)
-    if (!primary) continue
-
-    const sportCategory =
-      primary.sport || sportsCatalog[primary.subLeagueId]?.sport || ''
-    if (filters?.sportId && sportCategory && !sportIdMatchesCategory(filters.sportId, sportCategory)) {
-      continue
-    }
-
-    if (status === MATCH_STATUS.SCHEDULED) {
-      if (primary.statusCode === 'ongoing') continue
-      if (primary.isResolved || primary.statusCode === 'resolved') continue
-      if (primary.maturity < nowSec) continue
-    }
-
-    if (status === MATCH_STATUS.FINISHED) {
-      if (primary.statusCode === 'open' && !primary.isResolved) continue
-    }
-
-    const related = gameMarkets.filter((m) => m !== primary)
-    matches.push(
-      mapOvertimeMarketToMatch(primary, related, typeById, sportsCatalog, undefined, status),
-    )
-  }
-
-  if (status === MATCH_STATUS.FINISHED) {
-    return filterMatchesWithDisplayableOdds(
-      applyCuratedMatchFilter(
-        filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-          (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
-        ),
-        curationScope,
-      ),
-    )
-  }
-
-  return filterMatchesWithDisplayableOdds(
-    applyCuratedMatchFilter(
-      filterBySportAndLeague(matches, filters?.sportId, filters?.leagueId).sort(
-        (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
-      ),
+    const [typeById, sportsCatalog, curationScope, liveMarkets] = await Promise.all([
+      getMarketTypes(),
+      getSportsCatalog(),
+      resolveCurationScope(filters?.sportId),
+      fetchLiveMarketsRaw(),
+    ])
+    return buildFixturesFromRawMarkets(
+      [],
+      typeById,
+      sportsCatalog,
       curationScope,
-    ),
+      filters,
+      liveMarkets,
+    )
+  }
+
+  const [typeById, sportsCatalog, curationScope, rawMarkets] = await Promise.all([
+    getMarketTypes(),
+    getSportsCatalog(),
+    resolveCurationScope(filters?.sportId),
+    status === MATCH_STATUS.FINISHED ? fetchResolvedMarkets() : fetchOpenMarkets(),
+  ])
+
+  return buildFixturesFromRawMarkets(
+    rawMarkets as OvertimeMarket[],
+    typeById,
+    sportsCatalog,
+    curationScope,
+    { ...filters, status },
   )
 }
 
 export async function fetchMatchFromApi(gameId: string): Promise<MatchWithTeams | null> {
+  await ensureEnabledMarketTypesLoaded()
   const typeById = await getMarketTypes()
   const sportsCatalog = await getSportsCatalog()
 
@@ -335,7 +515,9 @@ export async function fetchMatchFromApi(gameId: string): Promise<MatchWithTeams 
       live = undefined
     }
 
-    return mapOvertimeMarketToMatch(market, [], typeById, sportsCatalog, live)
+    return filterMatchMarkets(
+      mapOvertimeMarketToMatch(market, [], typeById, sportsCatalog, live),
+    )
   } catch {
     return null
   }

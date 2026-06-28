@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { apiClient } from '@/core/api/client'
+import { beginAdminShellReady } from '@/app/queryClient'
 import type { AdminUser, ApiResponse } from '@/core/types/api'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { AuthCard } from '@/features/auth/components/AuthCard'
@@ -43,6 +44,7 @@ export function LoginPage() {
         return
       }
       setAuth(payload.user, payload.token)
+      void beginAdminShellReady()
       navigate('/')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')

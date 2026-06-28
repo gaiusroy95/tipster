@@ -283,6 +283,10 @@ export const sportsService = {
 
   /** League IDs with at least one open or live market from Overtime. */
   async fetchActiveLeagueMatchCounts(): Promise<Map<number, number>> {
+    const cacheKey = 'overtime-active-league-counts-v1';
+    const cached = cache.get<Map<number, number>>(cacheKey);
+    if (cached) return cached;
+
     const counts = new Map<number, number>();
 
     const grouped = await sportsService.fetchLeaguesMapper();
@@ -311,6 +315,7 @@ export const sportsService = {
       // Live feed is optional; open markets alone still define active leagues.
     }
 
+    cache.set(cacheKey, counts, 2 * 60 * 1000);
     return counts;
   },
 

@@ -16,6 +16,7 @@ import {
   adminReorderLeaguesSchema,
   adminUpdateForumPostSchema,
   adminUpdateLeagueSchema,
+  adminUpdateMarketTypeSchema,
   adminUpdateSeasonSchema,
   adminUpdateUserSchema,
   adminUpsertPrizeSchema,
@@ -28,6 +29,7 @@ import {
   adminUsersService,
 } from '../services/admin/admin-dashboard.service';
 import { curatedLeagueService } from '../services/admin/curated-league.service';
+import { marketTypeConfigService } from '../services/admin/market-type-config.service';
 import { adminSeasonsService } from '../services/admin/admin-seasons.service';
 import { adminBetsService, adminForumService } from '../services/admin/admin-moderation.service';
 
@@ -116,6 +118,44 @@ adminRouter.post(
   asyncHandler(async (req, res) => {
     const user = (req as AuthenticatedRequest).user;
     const data = await curatedLeagueService.reorder(user.id, req.body.orderedIds);
+    res.json({ data });
+  }),
+);
+
+adminRouter.get(
+  '/market-types',
+  asyncHandler(async (_req, res) => {
+    const data = await marketTypeConfigService.listForAdmin();
+    res.json({ data });
+  }),
+);
+
+adminRouter.get(
+  '/market-types/overtime-catalog',
+  asyncHandler(async (_req, res) => {
+    const data = await marketTypeConfigService.listOvertimeCatalog();
+    res.json({ data });
+  }),
+);
+
+adminRouter.post(
+  '/market-types/sync',
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const [arena, catalog] = await Promise.all([
+      marketTypeConfigService.ensureDefaults(user.id),
+      marketTypeConfigService.listOvertimeCatalog(),
+    ]);
+    res.json({ data: { arena, catalogCount: catalog.length } });
+  }),
+);
+
+adminRouter.patch(
+  '/market-types/:id',
+  validateBody(adminUpdateMarketTypeSchema),
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const data = await marketTypeConfigService.update(user.id, String(req.params.id), req.body);
     res.json({ data });
   }),
 );

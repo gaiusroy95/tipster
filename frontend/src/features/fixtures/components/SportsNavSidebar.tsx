@@ -52,6 +52,25 @@ function NavItem({
   )
 }
 
+function LeaguesNavSkeleton() {
+  return (
+    <div className="border-t border-border-default py-2" aria-busy="true" aria-label="Loading leagues">
+      <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+        Leagues
+      </p>
+      <div className="space-y-1 px-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-3 py-2">
+            <Skeleton className="h-5 w-5 rounded shrink-0" />
+            <Skeleton className="h-4 flex-1 max-w-[140px]" />
+            <Skeleton className="h-3 w-10 shrink-0" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { view, sportId, leagueId, setView, setSportId, setLeagueId } = useFixtureNavParams()
   const sportCategories = useCuratedSportCategories()
@@ -118,7 +137,9 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
           })}
         </div>
 
-        {leagues.data && leagues.data.length > 0 && (
+        {leagues.isLoading ? (
+          <LeaguesNavSkeleton />
+        ) : leagues.data && leagues.data.length > 0 ? (
           <div className="border-t border-border-default py-2">
             <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               Leagues
@@ -138,7 +159,7 @@ export function SportsNavSidebar({ onNavigate }: { onNavigate?: () => void }) {
               </NavItem>
             ))}
           </div>
-        )}
+        ) : null}
       </nav>
 
       <div className="mt-6 space-y-4 border-t border-border-default pt-4">

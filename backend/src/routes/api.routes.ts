@@ -27,6 +27,7 @@ import { twoFactorService } from '../services/two-factor.service';
 import { achievementService } from '../services/achievement.service';
 import { newsService } from '../services/news.service';
 import { curatedLeagueService } from '../services/admin/curated-league.service';
+import { marketTypeConfigService } from '../services/admin/market-type-config.service';
 
 export const apiRouter = Router();
 
@@ -275,9 +276,22 @@ apiRouter.get(
 );
 
 apiRouter.get(
+  '/market-types/enabled',
+  asyncHandler(async (_req, res) => {
+    const marketTypes = await marketTypeConfigService.listEnabledKeys();
+    res.set('Cache-Control', 'private, max-age=30');
+    res.json({ data: { marketTypes } });
+  }),
+);
+
+apiRouter.get(
   '/leagues/curated/revision',
   asyncHandler(async (_req, res) => {
-    const revision = await curatedLeagueService.getCurationRevision();
+    const [leagueRevision, marketRevision] = await Promise.all([
+      curatedLeagueService.getCurationRevision(),
+      marketTypeConfigService.getRevision(),
+    ]);
+    const revision = `${leagueRevision}|${marketRevision}`;
     res.set('Cache-Control', 'no-store');
     res.json({ data: { revision } });
   }),
@@ -287,8 +301,9 @@ apiRouter.get(
   '/leagues/curated',
   asyncHandler(async (req, res) => {
     const sportId = typeof req.query.sportId === 'string' ? req.query.sportId : undefined;
-    const data = await curatedLeagueService.listCuratedPublic(sportId);
-    res.set('Cache-Control', 'no-store');
+    const light = req.query.light === 'true' || req.query.light === '1';
+    const data = await curatedLeagueService.listCuratedPublic(sportId, { light });
+    res.set('Cache-Control', light ? 'private, max-age=60' : 'no-store');
     res.json({ data });
   }),
 );

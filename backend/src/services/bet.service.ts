@@ -14,6 +14,7 @@ import {
 import { sportsService } from './sports.service';
 import { toBetDto } from '../mappers/bet.mapper';
 import { seasonService } from './season.service';
+import { marketTypeConfigService } from './admin/market-type-config.service';
 import { leaderboardService } from './leaderboard.service';
 import { notificationService } from './notification.service';
 import { achievementService } from './achievement.service';
@@ -142,6 +143,15 @@ export const betService = {
       throw new ApiException(
         'MATCH_FINISHED',
         'Cannot bet on finished match',
+        400,
+      );
+    }
+
+    const marketEnabled = await marketTypeConfigService.isEnabled(body.marketType);
+    if (!marketEnabled) {
+      throw new ApiException(
+        'MARKET_DISABLED',
+        'This market type is not available for betting',
         400,
       );
     }

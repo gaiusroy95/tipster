@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { AdminShellGate } from '@/app/AdminShellGate'
 import { AdminMain } from '@/shared/layouts/AdminMain'
 import { AdminMobileBar } from '@/shared/layouts/AdminMobileBar'
 import { AdminSidebar } from '@/shared/layouts/AdminSidebar'
@@ -39,6 +40,7 @@ export function AdminLayout() {
   }
 
   return (
+    <AdminShellGate>
     <div className="admin-shell min-h-screen bg-bg-primary">
       <AdminSidebar
         mobileOpen={mobileOpen}
@@ -53,5 +55,6 @@ export function AdminLayout() {
         <AdminMain />
       </div>
     </div>
+    </AdminShellGate>
   )
 }

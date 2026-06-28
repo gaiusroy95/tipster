@@ -4,6 +4,7 @@ import { BettingOddsButton } from '@/shared/components/BettingOddsButton'
 import { Button } from '@/shared/components/ui/Button'
 import { ROUTES } from '@/core/constants/routes'
 import { MARKET_TYPES, type MarketType } from '@/core/constants/markets'
+import { getEnabledMarketTypes } from '@/features/fixtures/lib/enabledMarketTypes'
 import { formatSelectionLabel } from '@/shared/utils/formatOdds'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
 import type { MarketOdds } from '@/mocks/data/types'
@@ -34,7 +35,10 @@ interface MatchDetailMarketsProps {
 }
 
 export function getAvailableMarketTabs(markets: MarketOdds[]) {
-  return MARKET_TAB_ORDER.filter((type) => markets.some((m) => m.marketType === type))
+  const enabled = new Set(getEnabledMarketTypes())
+  return MARKET_TAB_ORDER.filter(
+    (type) => enabled.has(type) && markets.some((m) => m.marketType === type),
+  )
 }
 
 export function MatchDetailMarkets({

@@ -1,8 +1,20 @@
 import { Router } from 'express';
 import { asyncHandler } from '../middleware/error.middleware';
 import { sportsService } from '../services/sports.service';
+import { arenaBootstrapService } from '../services/arena-bootstrap.service';
 
 export const sportsRouter = Router();
+
+sportsRouter.get(
+  '/bootstrap',
+  asyncHandler(async (req, res) => {
+    const sportId = typeof req.query.sportId === 'string' ? req.query.sportId : undefined;
+    const status = typeof req.query.status === 'string' ? req.query.status : 'scheduled';
+    const data = await arenaBootstrapService.fetchBootstrap(sportId, status);
+    res.set('Cache-Control', 'private, max-age=15');
+    res.json(data);
+  }),
+);
 
 sportsRouter.get(
   '/sports',
