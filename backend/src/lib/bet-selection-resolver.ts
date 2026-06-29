@@ -2,7 +2,7 @@ import type { Market } from '../types/overtime';
 import { sportsService } from '../services/sports.service';
 import {
   coerceDecimalOdds,
-  decimalToMalay,
+  coerceMalayOdds,
   isValidDecimalOdds,
   isValidMalayOdds,
 } from '../utils/overtime-odds.util';
@@ -69,6 +69,15 @@ function classifyMarketKind(market: Market): string | null {
   return null;
 }
 
+function toMalayOddsValue(
+  odd: Market['odds'][number] | undefined,
+): number {
+  const decimal = coerceDecimalOdds(odd);
+  if (!isValidDecimalOdds(decimal)) return 0;
+  const malay = coerceMalayOdds(odd, decimal);
+  return isValidMalayOdds(malay) ? malay : 0;
+}
+
 function addWinnerSelections(
   market: Market,
   gameId: string,
@@ -83,11 +92,8 @@ function addWinnerSelections(
 
   let added = false;
   market.odds.forEach((odd, index) => {
-    const decimal = coerceDecimalOdds(odd);
-    if (!isValidDecimalOdds(decimal)) return;
-
-    const value = decimalToMalay(decimal);
-    if (!isValidMalayOdds(value)) return;
+    const value = toMalayOddsValue(odd);
+    if (!value) return;
 
     const id = selectionId(gameId, 'winner', index);
     if (selections.some((s) => s.id === id)) return;
@@ -113,35 +119,29 @@ function addHandicapSelections(
 
   const line = market.line;
   const awayLine = -line;
-  const homeDecimal = coerceDecimalOdds(market.odds[0]);
-  const awayDecimal = coerceDecimalOdds(market.odds[1]);
+  const homeMalay = toMalayOddsValue(market.odds[0]);
+  const awayMalay = toMalayOddsValue(market.odds[1]);
 
-  if (isValidDecimalOdds(homeDecimal)) {
-    const value = decimalToMalay(homeDecimal);
-    if (isValidMalayOdds(value)) {
-      const id = selectionId(gameId, 'handicap', 0, line);
-      if (!selections.some((s) => s.id === id)) {
-        selections.push({
-          id,
-          label: `${market.homeTeam} ${line}`,
-          value,
-          marketType: 'handicap',
-        });
-      }
+  if (homeMalay) {
+    const id = selectionId(gameId, 'handicap', 0, line);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `${market.homeTeam} ${line}`,
+        value: homeMalay,
+        marketType: 'handicap',
+      });
     }
   }
-  if (isValidDecimalOdds(awayDecimal)) {
-    const value = decimalToMalay(awayDecimal);
-    if (isValidMalayOdds(value)) {
-      const id = selectionId(gameId, 'handicap', 1, awayLine);
-      if (!selections.some((s) => s.id === id)) {
-        selections.push({
-          id,
-          label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
-          value,
-          marketType: 'handicap',
-        });
-      }
+  if (awayMalay) {
+    const id = selectionId(gameId, 'handicap', 1, awayLine);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
+        value: awayMalay,
+        marketType: 'handicap',
+      });
     }
   }
 }
@@ -154,35 +154,29 @@ function addOverUnderSelections(
   if (market.line == null || !market.odds?.length || market.odds.length < 2) return;
 
   const line = market.line;
-  const overDecimal = coerceDecimalOdds(market.odds[0]);
-  const underDecimal = coerceDecimalOdds(market.odds[1]);
+  const overMalay = toMalayOddsValue(market.odds[0]);
+  const underMalay = toMalayOddsValue(market.odds[1]);
 
-  if (isValidDecimalOdds(overDecimal)) {
-    const value = decimalToMalay(overDecimal);
-    if (isValidMalayOdds(value)) {
-      const id = selectionId(gameId, 'over_under', 0, line);
-      if (!selections.some((s) => s.id === id)) {
-        selections.push({
-          id,
-          label: `Over ${line}`,
-          value,
-          marketType: 'over_under',
-        });
-      }
+  if (overMalay) {
+    const id = selectionId(gameId, 'over_under', 0, line);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `Over ${line}`,
+        value: overMalay,
+        marketType: 'over_under',
+      });
     }
   }
-  if (isValidDecimalOdds(underDecimal)) {
-    const value = decimalToMalay(underDecimal);
-    if (isValidMalayOdds(value)) {
-      const id = selectionId(gameId, 'over_under', 1, line);
-      if (!selections.some((s) => s.id === id)) {
-        selections.push({
-          id,
-          label: `Under ${line}`,
-          value,
-          marketType: 'over_under',
-        });
-      }
+  if (underMalay) {
+    const id = selectionId(gameId, 'over_under', 1, line);
+    if (!selections.some((s) => s.id === id)) {
+      selections.push({
+        id,
+        label: `Under ${line}`,
+        value: underMalay,
+        marketType: 'over_under',
+      });
     }
   }
 }

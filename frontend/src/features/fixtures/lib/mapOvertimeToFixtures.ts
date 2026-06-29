@@ -11,7 +11,7 @@ import type {
   OvertimeSportMeta,
 } from '@/features/fixtures/types/overtime'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
-import { decimalToMalay, isValidMalayOdds } from '@/shared/utils/malayOdds'
+import { coerceMalayOdds, isValidMalayOdds } from '@/shared/utils/malayOdds'
 
 function teamShortName(name: string): string {
   const alpha = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
@@ -61,9 +61,10 @@ function isValidDecimalOdds(value: number): boolean {
   return Number.isFinite(value) && value > 1
 }
 
-function toMalayOdds(decimal: number): number {
+function toMalayOdds(odd: OvertimeOddsValue | undefined): number {
+  const decimal = coerceDecimalOdds(odd)
   if (!isValidDecimalOdds(decimal)) return 0
-  const malay = decimalToMalay(decimal)
+  const malay = coerceMalayOdds(odd, decimal)
   return isValidMalayOdds(malay) ? malay : 0
 }
 
@@ -134,7 +135,7 @@ function mapWinnerMarket(
     .map((odd, index) => ({
       id: selectionId(gameId, MARKET_TYPES.WINNER, index),
       label: labels[index] ?? `Option ${index + 1}`,
-      value: toMalayOdds(coerceDecimalOdds(odd)),
+      value: toMalayOdds(odd),
     }))
     .filter((sel) => isValidMalayOdds(sel.value))
 
@@ -148,10 +149,8 @@ function mapHandicapMarket(market: OvertimeMarket, gameId: string): MarketOdds |
 
   const line = market.line
   const awayLine = -line
-  const homeDecimal = coerceDecimalOdds(market.odds[0])
-  const awayDecimal = coerceDecimalOdds(market.odds[1])
-  const homeMalay = toMalayOdds(homeDecimal)
-  const awayMalay = toMalayOdds(awayDecimal)
+  const homeMalay = toMalayOdds(market.odds[0])
+  const awayMalay = toMalayOdds(market.odds[1])
   if (!homeMalay && !awayMalay) return null
 
   const selections: OddsSelection[] = [
@@ -178,10 +177,8 @@ function mapTotalMarket(market: OvertimeMarket, gameId: string): MarketOdds | nu
   if (!market.odds?.length || market.line == null) return null
 
   const line = market.line
-  const overDecimal = coerceDecimalOdds(market.odds[0])
-  const underDecimal = coerceDecimalOdds(market.odds[1])
-  const overMalay = toMalayOdds(overDecimal)
-  const underMalay = toMalayOdds(underDecimal)
+  const overMalay = toMalayOdds(market.odds[0])
+  const underMalay = toMalayOdds(market.odds[1])
   if (!overMalay && !underMalay) return null
 
   const selections: OddsSelection[] = [
