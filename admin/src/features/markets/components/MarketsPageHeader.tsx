@@ -73,8 +73,8 @@ export function MarketsPageHeader({
             <Badge variant="primary">Odds visibility</Badge>
             <span className="text-xs text-text-muted">
               {overtimeTotal > 0
-                ? `${overtimeTotal} Overtime market types · ${arenaTotal} arena toggles`
-                : 'Sync to load the full Overtime catalog'}
+                ? `${overtimeTotal} Overtime market types · ${enabled} enabled · ${disabled} hidden`
+                : `${enabled} enabled · ${disabled} hidden · sync to load Overtime catalog`}
             </span>
           </div>
           <div>

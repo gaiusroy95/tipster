@@ -1,7 +1,7 @@
 import { sportsClient } from '@/core/api/sportsClient'
 import { apiClient } from '@/core/api/client'
 import type { ApiResponse } from '@/core/types/api'
-import { MATCH_STATUS } from '@/core/constants/markets'
+import { MATCH_STATUS, type MatchStatus } from '@/core/constants/markets'
 import type { League } from '@/mocks/data/types'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
 import {
@@ -179,7 +179,7 @@ function buildFixturesFromRawMarkets(
 /** Single round-trip bootstrap for arena shell (metadata, markets, leagues, curation). */
 export async function loadArenaBootstrap(
   sportId?: string,
-  status = MATCH_STATUS.SCHEDULED,
+  status: MatchStatus = MATCH_STATUS.SCHEDULED,
 ): Promise<{ fixtures: MatchWithTeams[]; leagues: League[] }> {
   const { data } = await sportsClient.get<ArenaBootstrapPayload>('/sports/bootstrap', {
     params: { sportId, status },
