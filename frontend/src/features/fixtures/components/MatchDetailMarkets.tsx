@@ -12,14 +12,13 @@ import { cn } from '@/shared/utils/cn'
 
 const MARKET_TAB_ORDER: MarketType[] = [
   MARKET_TYPES.WINNER,
-  MARKET_TYPES.MALAY,
   MARKET_TYPES.HANDICAP,
   MARKET_TYPES.OVER_UNDER,
 ]
 
 const MARKET_LABELS: Record<MarketType, { label: string; shortLabel: string }> = {
-  [MARKET_TYPES.WINNER]: { label: 'Winner', shortLabel: 'Win' },
-  [MARKET_TYPES.MALAY]: { label: 'Malay', shortLabel: 'Malay' },
+  [MARKET_TYPES.WINNER]: { label: '1x2', shortLabel: '1x2' },
+  [MARKET_TYPES.MALAY]: { label: '1x2', shortLabel: '1x2' },
   [MARKET_TYPES.HANDICAP]: { label: 'Handicap', shortLabel: 'HCP' },
   [MARKET_TYPES.OVER_UNDER]: { label: 'Over/Under', shortLabel: 'O/U' },
 }

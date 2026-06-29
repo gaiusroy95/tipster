@@ -79,7 +79,6 @@ export function MatchDetailPage() {
       selectionLabel: label,
       odds: value,
     })
-    toast('Added to bet slip', 'success')
   }
 
   return (
@@ -100,11 +99,13 @@ export function MatchDetailPage() {
         <p className="text-xs text-text-muted">
           Virtual credits only — odds refresh every 30 seconds.
         </p>
-        <Link to={ROUTES.BET_SLIP}>
-          <Button variant="primary" size="md" className="w-full sm:w-auto">
-            Open bet slip
-          </Button>
-        </Link>
+        {slipCount > 0 && (
+          <Link to={ROUTES.BET_SLIP}>
+            <Button variant="primary" size="md" className="w-full sm:w-auto">
+              Review bet slip ({slipCount})
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   )

@@ -5,7 +5,6 @@ const ALL_MARKET_TYPES: MarketType[] = [
   MARKET_TYPES.WINNER,
   MARKET_TYPES.HANDICAP,
   MARKET_TYPES.OVER_UNDER,
-  MARKET_TYPES.MALAY,
 ]
 
 const DEFAULT_LIST_MARKET_TYPES: MarketType[] = [
@@ -42,7 +41,9 @@ export function filterMatchMarkets(match: MatchWithTeams): MatchWithTeams {
   const enabled = new Set(getEnabledMarketTypes())
   return {
     ...match,
-    markets: match.markets.filter((market) => enabled.has(market.marketType)),
+    markets: match.markets.filter(
+      (market) => enabled.has(market.marketType) && market.marketType !== MARKET_TYPES.MALAY,
+    ),
   }
 }
 

@@ -108,7 +108,13 @@ function checkAchievement(def: AchievementDefinition, ctx: AchievementEvalContex
       const active = ctx.bets.some((b) => b.status === 'active')
       return { earned: active, progress: { current: active ? 1 : 0, target: 1 } }
     case 'first-malay':
-      const malay = placed.some((b) => b.marketType === MARKET_TYPES.MALAY)
+      const malay = placed.some(
+        (b) =>
+          b.marketType === MARKET_TYPES.MALAY ||
+          b.marketType === MARKET_TYPES.WINNER ||
+          b.marketType === MARKET_TYPES.HANDICAP ||
+          b.marketType === MARKET_TYPES.OVER_UNDER,
+      )
       return { earned: malay, progress: { current: malay ? 1 : 0, target: 1 } }
     case 'first-handicap':
       const handicap = placed.some((b) => b.marketType === MARKET_TYPES.HANDICAP)

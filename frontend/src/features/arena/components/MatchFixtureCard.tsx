@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { LiveBadge } from '@/shared/components/LiveBadge'
 import { LeagueLogo } from '@/shared/components/LeagueLogo'
+import { TeamCountryBadge } from '@/shared/components/TeamCountryBadge'
 import { BettingOddsButton } from '@/shared/components/BettingOddsButton'
 import { BettingMarketColumn } from '@/shared/components/BettingMarketColumn'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
@@ -133,7 +134,7 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
 
   const buildDesktopColumns = () => {
     const winnerColumn = winner ? (
-      <BettingMarketColumn title="Winner" titleShort="Win" className={DESKTOP_COLUMN_CLASS}>
+      <BettingMarketColumn title="1x2" titleShort="1x2" className={DESKTOP_COLUMN_CLASS}>
         {winner.selections.map((sel) => (
           <BettingOddsButton
             key={sel.id}
@@ -290,10 +291,14 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
             </div>
 
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <div className="min-w-0 text-center">
-                <p className="text-[11px] font-bold font-mono text-accent-secondary mb-1">
-                  {match.homeTeam.shortName}
-                </p>
+              <div className="min-w-0 flex flex-col items-center gap-1.5 text-center">
+                <TeamCountryBadge
+                  teamName={match.homeTeam.name}
+                  shortName={match.homeTeam.shortName}
+                  logoUrl={match.homeTeam.logoUrl}
+                  side="home"
+                  size="sm"
+                />
                 <p className="text-sm font-semibold leading-tight line-clamp-2">{match.homeTeam.name}</p>
               </div>
               <div className="flex flex-col items-center justify-center px-1 shrink-0">
@@ -307,17 +312,21 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
                   <span className="text-xs font-semibold text-text-muted">vs</span>
                 )}
               </div>
-              <div className="min-w-0 text-center">
-                <p className="text-[11px] font-bold font-mono text-accent-secondary mb-1">
-                  {match.awayTeam.shortName}
-                </p>
+              <div className="min-w-0 flex flex-col items-center gap-1.5 text-center">
+                <TeamCountryBadge
+                  teamName={match.awayTeam.name}
+                  shortName={match.awayTeam.shortName}
+                  logoUrl={match.awayTeam.logoUrl}
+                  side="away"
+                  size="sm"
+                />
                 <p className="text-sm font-semibold leading-tight line-clamp-2">{match.awayTeam.name}</p>
               </div>
             </div>
 
             {winner && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Winner</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">1x2</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {winner.selections.map((sel) => (
                     <BettingOddsButton
@@ -400,15 +409,23 @@ export function MatchFixtureCard({ match, featured = false }: MatchFixtureCardPr
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-bg-elevated text-[11px] font-bold font-mono text-accent-secondary ring-1 ring-border-default/60">
-                {match.homeTeam.shortName}
-              </span>
+              <TeamCountryBadge
+                teamName={match.homeTeam.name}
+                shortName={match.homeTeam.shortName}
+                logoUrl={match.homeTeam.logoUrl}
+                side="home"
+                size="sm"
+              />
               <span className="font-semibold text-sm truncate">{match.homeTeam.name}</span>
             </div>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-bg-elevated text-[11px] font-bold font-mono text-accent-secondary ring-1 ring-border-default/60">
-                {match.awayTeam.shortName}
-              </span>
+              <TeamCountryBadge
+                teamName={match.awayTeam.name}
+                shortName={match.awayTeam.shortName}
+                logoUrl={match.awayTeam.logoUrl}
+                side="away"
+                size="sm"
+              />
               <span className="font-semibold text-sm truncate">{match.awayTeam.name}</span>
             </div>
           </div>

@@ -23,15 +23,23 @@ export function calculateCancellationPenalty(stake: number): number {
 
 export function malayReturn(stake: number, odds: number): number {
   if (odds > 0) return stake + stake * odds;
-  return stake + stake;
+  if (odds < 0) return stake + stake / Math.abs(odds);
+  return stake;
 }
+
+const MALAY_ODDS_MARKET_TYPES = new Set([
+  'winner',
+  'handicap',
+  'over_under',
+  'malay',
+]);
 
 export function computePotentialReturn(
   stake: number,
   odds: number,
   marketType: string,
 ): number {
-  if (marketType === 'malay') {
+  if (MALAY_ODDS_MARKET_TYPES.has(marketType)) {
     return Math.round(malayReturn(stake, odds));
   }
   return Math.round(stake * (odds > 0 ? odds : 2));

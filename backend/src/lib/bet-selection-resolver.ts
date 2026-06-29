@@ -83,8 +83,11 @@ function addWinnerSelections(
 
   let added = false;
   market.odds.forEach((odd, index) => {
-    const value = coerceDecimalOdds(odd);
-    if (!isValidDecimalOdds(value)) return;
+    const decimal = coerceDecimalOdds(odd);
+    if (!isValidDecimalOdds(decimal)) return;
+
+    const value = decimalToMalay(decimal);
+    if (!isValidMalayOdds(value)) return;
 
     const id = selectionId(gameId, 'winner', index);
     if (selections.some((s) => s.id === id)) return;
@@ -114,25 +117,31 @@ function addHandicapSelections(
   const awayDecimal = coerceDecimalOdds(market.odds[1]);
 
   if (isValidDecimalOdds(homeDecimal)) {
-    const id = selectionId(gameId, 'handicap', 0, line);
-    if (!selections.some((s) => s.id === id)) {
-      selections.push({
-        id,
-        label: `${market.homeTeam} ${line}`,
-        value: homeDecimal,
-        marketType: 'handicap',
-      });
+    const value = decimalToMalay(homeDecimal);
+    if (isValidMalayOdds(value)) {
+      const id = selectionId(gameId, 'handicap', 0, line);
+      if (!selections.some((s) => s.id === id)) {
+        selections.push({
+          id,
+          label: `${market.homeTeam} ${line}`,
+          value,
+          marketType: 'handicap',
+        });
+      }
     }
   }
   if (isValidDecimalOdds(awayDecimal)) {
-    const id = selectionId(gameId, 'handicap', 1, awayLine);
-    if (!selections.some((s) => s.id === id)) {
-      selections.push({
-        id,
-        label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
-        value: awayDecimal,
-        marketType: 'handicap',
-      });
+    const value = decimalToMalay(awayDecimal);
+    if (isValidMalayOdds(value)) {
+      const id = selectionId(gameId, 'handicap', 1, awayLine);
+      if (!selections.some((s) => s.id === id)) {
+        selections.push({
+          id,
+          label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
+          value,
+          marketType: 'handicap',
+        });
+      }
     }
   }
 }
@@ -149,64 +158,32 @@ function addOverUnderSelections(
   const underDecimal = coerceDecimalOdds(market.odds[1]);
 
   if (isValidDecimalOdds(overDecimal)) {
-    const id = selectionId(gameId, 'over_under', 0, line);
-    if (!selections.some((s) => s.id === id)) {
-      selections.push({
-        id,
-        label: `Over ${line}`,
-        value: overDecimal,
-        marketType: 'over_under',
-      });
+    const value = decimalToMalay(overDecimal);
+    if (isValidMalayOdds(value)) {
+      const id = selectionId(gameId, 'over_under', 0, line);
+      if (!selections.some((s) => s.id === id)) {
+        selections.push({
+          id,
+          label: `Over ${line}`,
+          value,
+          marketType: 'over_under',
+        });
+      }
     }
   }
   if (isValidDecimalOdds(underDecimal)) {
-    const id = selectionId(gameId, 'over_under', 1, line);
-    if (!selections.some((s) => s.id === id)) {
-      selections.push({
-        id,
-        label: `Under ${line}`,
-        value: underDecimal,
-        marketType: 'over_under',
-      });
+    const value = decimalToMalay(underDecimal);
+    if (isValidMalayOdds(value)) {
+      const id = selectionId(gameId, 'over_under', 1, line);
+      if (!selections.some((s) => s.id === id)) {
+        selections.push({
+          id,
+          label: `Under ${line}`,
+          value,
+          marketType: 'over_under',
+        });
+      }
     }
-  }
-}
-
-function addMalaySelections(
-  winnerMarket: Market,
-  gameId: string,
-  selections: BuiltSelection[],
-): void {
-  if (!winnerMarket.odds?.length) return;
-
-  const homeDecimal = coerceDecimalOdds(winnerMarket.odds[0]);
-  const awayDecimal = coerceDecimalOdds(
-    winnerMarket.odds[winnerMarket.odds.length >= 3 ? 2 : 1],
-  );
-  if (!isValidDecimalOdds(homeDecimal) || !isValidDecimalOdds(awayDecimal)) return;
-
-  const homeMalay = decimalToMalay(homeDecimal);
-  const awayMalay = decimalToMalay(awayDecimal);
-  if (!isValidMalayOdds(homeMalay) || !isValidMalayOdds(awayMalay)) return;
-
-  const homeId = selectionId(gameId, 'malay', 0);
-  const awayId = selectionId(gameId, 'malay', 1);
-
-  if (!selections.some((s) => s.id === homeId)) {
-    selections.push({
-      id: homeId,
-      label: winnerMarket.homeTeam,
-      value: homeMalay,
-      marketType: 'malay',
-    });
-  }
-  if (!selections.some((s) => s.id === awayId)) {
-    selections.push({
-      id: awayId,
-      label: winnerMarket.awayTeam,
-      value: awayMalay,
-      marketType: 'malay',
-    });
   }
 }
 
@@ -218,7 +195,6 @@ function buildSelectionsForMarket(market: Market): BuiltSelection[] {
   );
   const candidates = [market, ...childMarkets];
 
-  let winnerSource: Market | null = null;
   let hasWinner = false;
   let hasHandicap = false;
   let hasOverUnder = false;
@@ -230,7 +206,6 @@ function buildSelectionsForMarket(market: Market): BuiltSelection[] {
     if (kind === 'winner' && !hasWinner) {
       const source = addWinnerSelections(candidate, gameId, selections);
       if (source) {
-        winnerSource = source;
         hasWinner = true;
       }
     } else if (kind === 'handicap' && !hasHandicap) {
@@ -242,10 +217,6 @@ function buildSelectionsForMarket(market: Market): BuiltSelection[] {
       addOverUnderSelections(candidate, gameId, selections);
       if (selections.length > before) hasOverUnder = true;
     }
-  }
-
-  if (winnerSource) {
-    addMalaySelections(winnerSource, gameId, selections);
   }
 
   return selections;

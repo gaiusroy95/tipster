@@ -188,7 +188,7 @@ function buildProfileStats(
       avgStake: 0,
       biggestWin: 0,
       biggestLoss: 0,
-      favoriteMarket: 'malay' as const,
+      favoriteMarket: 'winner' as const,
     },
     form: dashboard?.form ?? [],
     leaguePerformance: [],

@@ -1,4 +1,5 @@
-import { formatDecimalOdds, formatMalayOdds } from '@/shared/utils/formatOdds'
+import { formatMalayOdds } from '@/shared/utils/formatOdds'
+import { isValidMalayOdds } from '@/shared/utils/malayOdds'
 import { cn } from '@/shared/utils/cn'
 import type { MarketType } from '@/core/constants/markets'
 
@@ -20,7 +21,7 @@ interface BettingOddsButtonProps {
 export function BettingOddsButton({
   label,
   value,
-  marketType,
+  marketType: _marketType,
   selected,
   onClick,
   className,
@@ -28,9 +29,8 @@ export function BettingOddsButton({
   disabled,
   labelTitle,
 }: BettingOddsButtonProps) {
-  const displayOdds =
-    marketType === 'malay' ? formatMalayOdds(value) : formatDecimalOdds(value)
-  const isDisabled = disabled || value == null || !Number.isFinite(value) || value <= 1
+  const displayOdds = formatMalayOdds(value)
+  const isDisabled = disabled || !isValidMalayOdds(value)
 
   if (variant === 'stacked') {
     return (

@@ -75,7 +75,12 @@ async function resolveAuthenticatedUser(request: Request): Promise<User | null> 
 
 function malayReturn(stake: number, odds: number): number {
   if (odds > 0) return stake + stake * odds
-  return stake + stake
+  if (odds < 0) return stake + stake / Math.abs(odds)
+  return stake
+}
+
+function usesMalayOddsFormat(marketType: string): boolean {
+  return marketType === 'malay' || marketType === 'winner' || marketType === 'handicap' || marketType === 'over_under'
 }
 
 function isSocialProvider(value: string): value is SocialAuthProvider {
@@ -539,7 +544,9 @@ export const handlers = [
     if (!selection) return error('INVALID_SELECTION', 'Invalid market selection', 400)
 
     const odds = selection.value
-    const potentialReturn = body.marketType === 'malay' ? malayReturn(body.stake, odds) : body.stake * (odds > 0 ? odds : 2)
+    const potentialReturn = usesMalayOddsFormat(body.marketType)
+      ? malayReturn(body.stake, odds)
+      : body.stake * (odds > 0 ? odds : 2)
 
     const bet: Bet = {
       id: `bet-${Date.now()}`,

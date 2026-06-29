@@ -2,28 +2,13 @@ import { Link } from 'react-router-dom'
 import { ArrowLeftIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import { LiveBadge } from '@/shared/components/LiveBadge'
 import { LeagueLogo } from '@/shared/components/LeagueLogo'
+import { TeamCountryBadge } from '@/shared/components/TeamCountryBadge'
 import { ROUTES } from '@/core/constants/routes'
 import { formatMatchDate, formatMatchTime } from '@/shared/utils/formatDate'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
-import { cn } from '@/shared/utils/cn'
 
 interface MatchDetailHeroProps {
   match: MatchWithTeams
-}
-
-function TeamBadge({ shortName, side }: { shortName: string; side: 'home' | 'away' }) {
-  return (
-    <span
-      className={cn(
-        'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border font-mono text-sm font-bold shadow-card sm:h-16 sm:w-16 sm:text-base',
-        side === 'home'
-          ? 'border-accent-secondary/30 bg-accent-secondary/10 text-accent-secondary'
-          : 'border-accent-primary/25 bg-accent-primary/10 text-accent-primary',
-      )}
-    >
-      {shortName}
-    </span>
-  )
 }
 
 export function MatchDetailHero({ match }: MatchDetailHeroProps) {
@@ -79,7 +64,14 @@ export function MatchDetailHero({ match }: MatchDetailHeroProps) {
 
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
           <div className="flex flex-col items-center gap-3 text-center sm:items-end sm:text-right">
-            <TeamBadge shortName={match.homeTeam.shortName} side="home" />
+            <TeamCountryBadge
+              teamName={match.homeTeam.name}
+              shortName={match.homeTeam.shortName}
+              logoUrl={match.homeTeam.logoUrl}
+              side="home"
+              size="lg"
+              className="shadow-card"
+            />
             <div className="min-w-0 max-w-full">
               <p className="font-display text-base font-bold leading-tight sm:text-lg">
                 {match.homeTeam.name}
@@ -114,7 +106,14 @@ export function MatchDetailHero({ match }: MatchDetailHeroProps) {
           </div>
 
           <div className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
-            <TeamBadge shortName={match.awayTeam.shortName} side="away" />
+            <TeamCountryBadge
+              teamName={match.awayTeam.name}
+              shortName={match.awayTeam.shortName}
+              logoUrl={match.awayTeam.logoUrl}
+              side="away"
+              size="lg"
+              className="shadow-card"
+            />
             <div className="min-w-0 max-w-full">
               <p className="font-display text-base font-bold leading-tight sm:text-lg">
                 {match.awayTeam.name}

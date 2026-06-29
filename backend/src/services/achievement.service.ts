@@ -113,7 +113,13 @@ function checkAchievement(
       return { earned: active, progress: { current: active ? 1 : 0, target: 1 } };
     }
     case 'first-malay': {
-      const malay = placed.some((b) => b.marketType === 'malay');
+      const malay = placed.some(
+        (b) =>
+          b.marketType === 'malay' ||
+          b.marketType === 'winner' ||
+          b.marketType === 'handicap' ||
+          b.marketType === 'over_under',
+      );
       return { earned: malay, progress: { current: malay ? 1 : 0, target: 1 } };
     }
     case 'first-handicap': {

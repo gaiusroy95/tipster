@@ -11,6 +11,7 @@ import type {
   OvertimeSportMeta,
 } from '@/features/fixtures/types/overtime'
 import type { MatchWithTeams } from '@/features/fixtures/types/fixture'
+import { decimalToMalay, isValidMalayOdds } from '@/shared/utils/malayOdds'
 
 function teamShortName(name: string): string {
   const alpha = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
@@ -20,12 +21,6 @@ function teamShortName(name: string): string {
 
 function teamIdFromName(name: string): string {
   return `team-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
-}
-
-export function decimalToMalay(decimal: number): number {
-  if (!decimal || decimal <= 1) return 0
-  if (decimal >= 2) return Math.round((decimal - 1) * 100) / 100
-  return Math.round((-1 / (decimal - 1)) * 100) / 100
 }
 
 function americanToDecimal(american: number): number {
@@ -62,8 +57,14 @@ export function coerceDecimalOdds(odd: OvertimeOddsValue | undefined): number {
   return 0
 }
 
-function isValidOddsValue(value: number): boolean {
+function isValidDecimalOdds(value: number): boolean {
   return Number.isFinite(value) && value > 1
+}
+
+function toMalayOdds(decimal: number): number {
+  if (!isValidDecimalOdds(decimal)) return 0
+  const malay = decimalToMalay(decimal)
+  return isValidMalayOdds(malay) ? malay : 0
 }
 
 function marketTypeKey(
@@ -133,9 +134,9 @@ function mapWinnerMarket(
     .map((odd, index) => ({
       id: selectionId(gameId, MARKET_TYPES.WINNER, index),
       label: labels[index] ?? `Option ${index + 1}`,
-      value: coerceDecimalOdds(odd),
+      value: toMalayOdds(coerceDecimalOdds(odd)),
     }))
-    .filter((sel) => isValidOddsValue(sel.value))
+    .filter((sel) => isValidMalayOdds(sel.value))
 
   if (!selections.length) return null
 
@@ -149,22 +150,24 @@ function mapHandicapMarket(market: OvertimeMarket, gameId: string): MarketOdds |
   const awayLine = -line
   const homeDecimal = coerceDecimalOdds(market.odds[0])
   const awayDecimal = coerceDecimalOdds(market.odds[1])
-  if (!isValidOddsValue(homeDecimal) && !isValidOddsValue(awayDecimal)) return null
+  const homeMalay = toMalayOdds(homeDecimal)
+  const awayMalay = toMalayOdds(awayDecimal)
+  if (!homeMalay && !awayMalay) return null
 
   const selections: OddsSelection[] = [
     {
       id: selectionId(gameId, MARKET_TYPES.HANDICAP, 0, line),
       label: `${market.homeTeam} ${line}`,
-      value: homeDecimal,
+      value: homeMalay,
       handicap: line,
     },
     {
       id: selectionId(gameId, MARKET_TYPES.HANDICAP, 1, awayLine),
       label: `${market.awayTeam} ${awayLine > 0 ? '+' : ''}${awayLine}`,
-      value: awayDecimal,
+      value: awayMalay,
       handicap: awayLine,
     },
-  ].filter((sel) => isValidOddsValue(sel.value))
+  ].filter((sel) => isValidMalayOdds(sel.value))
 
   if (!selections.length) return null
 
@@ -177,48 +180,28 @@ function mapTotalMarket(market: OvertimeMarket, gameId: string): MarketOdds | nu
   const line = market.line
   const overDecimal = coerceDecimalOdds(market.odds[0])
   const underDecimal = coerceDecimalOdds(market.odds[1])
-  if (!isValidOddsValue(overDecimal) && !isValidOddsValue(underDecimal)) return null
+  const overMalay = toMalayOdds(overDecimal)
+  const underMalay = toMalayOdds(underDecimal)
+  if (!overMalay && !underMalay) return null
 
   const selections: OddsSelection[] = [
     {
       id: selectionId(gameId, MARKET_TYPES.OVER_UNDER, 0, line),
       label: `Over ${line}`,
-      value: overDecimal,
+      value: overMalay,
       line,
     },
     {
       id: selectionId(gameId, MARKET_TYPES.OVER_UNDER, 1, line),
       label: `Under ${line}`,
-      value: underDecimal,
+      value: underMalay,
       line,
     },
-  ].filter((sel) => isValidOddsValue(sel.value))
+  ].filter((sel) => isValidMalayOdds(sel.value))
 
   if (!selections.length) return null
 
   return { marketType: MARKET_TYPES.OVER_UNDER, selections }
-}
-
-function mapMalayMarket(market: OvertimeMarket, gameId: string): MarketOdds | null {
-  const homeDecimal = coerceDecimalOdds(market.odds[0])
-  const awayDecimal = coerceDecimalOdds(market.odds[market.odds.length >= 3 ? 2 : 1])
-  if (!isValidOddsValue(homeDecimal) || !isValidOddsValue(awayDecimal)) return null
-
-  return {
-    marketType: MARKET_TYPES.MALAY,
-    selections: [
-      {
-        id: selectionId(gameId, MARKET_TYPES.MALAY, 0),
-        label: market.homeTeam,
-        value: decimalToMalay(homeDecimal),
-      },
-      {
-        id: selectionId(gameId, MARKET_TYPES.MALAY, 1),
-        label: market.awayTeam,
-        value: decimalToMalay(awayDecimal),
-      },
-    ],
-  }
 }
 
 function buildMarketOdds(
@@ -230,7 +213,6 @@ function buildMarketOdds(
   const candidates = [primary, ...related.filter((m) => m.gameId === primary.gameId), ...childMarkets]
 
   const result: MarketOdds[] = []
-  let winnerSource: OvertimeMarket | null = null
   const gameId = primary.gameId
 
   for (const market of candidates) {
@@ -242,7 +224,6 @@ function buildMarketOdds(
       if (mapped) {
         if (!result.some((m) => m.marketType === MARKET_TYPES.WINNER)) {
           result.push(mapped)
-          winnerSource = market
         }
       }
     } else if (kind === MARKET_TYPES.HANDICAP) {
@@ -255,13 +236,6 @@ function buildMarketOdds(
         const mapped = mapTotalMarket(market, gameId)
         if (mapped) result.push(mapped)
       }
-    }
-  }
-
-  if (winnerSource) {
-    const malay = mapMalayMarket(winnerSource, gameId)
-    if (malay && !result.some((m) => m.marketType === MARKET_TYPES.MALAY)) {
-      result.push(malay)
     }
   }
 

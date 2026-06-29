@@ -2,7 +2,130 @@ export const LEAGUE_LOGO_DIR = '/assets/Leagues'
 export const COUNTRY_FLAG_DIR = '/assets/Countries'
 
 function normalizeForMatch(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  return value
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+/** Exact filenames in public/assets/Countries (without .svg). */
+const COUNTRY_FLAG_FILES = [
+  'algeria',
+  'argentina',
+  'australia',
+  'austria',
+  'belarus',
+  'belgium',
+  'bolivia',
+  'Bosnia-Herzegovina',
+  'brazil',
+  'bulgaria',
+  'Cabo Verde',
+  'canada',
+  'chile',
+  'china',
+  'colombia',
+  'Congo DR',
+  'costa-rica',
+  "Côte d'Ivoire",
+  'croatia',
+  'cyprus',
+  'czech-republic',
+  'denmark',
+  'ecuador',
+  'egypt',
+  'england',
+  'estonia',
+  'europe',
+  'finland',
+  'france',
+  'georgia',
+  'germany',
+  'Ghana',
+  'greece',
+  'hungary',
+  'iceland',
+  'india',
+  'indonesia',
+  'iran',
+  'ireland',
+  'israel',
+  'italy',
+  'japan',
+  'kazakhstan',
+  'latvia',
+  'lithuania',
+  'malaysia',
+  'malta',
+  'mexico',
+  'Morocco',
+  'netherlands',
+  'northern-ireland',
+  'north-macedonia',
+  'norway',
+  'pakistan',
+  'paraguay',
+  'peru',
+  'philippines',
+  'poland',
+  'portugal',
+  'qatar',
+  'romania',
+  'russia',
+  'saudi-arabia',
+  'scotland',
+  'Senegal',
+  'serbia',
+  'singapore',
+  'slovakia',
+  'slovenia',
+  'south-africa',
+  'south-america',
+  'south-korea',
+  'spain',
+  'sweden',
+  'switzerland',
+  'taiwan',
+  'thailand',
+  'turkey',
+  'ukraine',
+  'united-arab-emirates',
+  'united-kingdom',
+  'united-states-of-america',
+  'uruguay',
+  'uzbekistan',
+  'venezuela',
+  'vietnam',
+  'wales',
+  'world',
+] as const
+
+const COUNTRY_FLAG_FILE_INDEX: Record<string, string> = Object.fromEntries(
+  COUNTRY_FLAG_FILES.map((file) => [normalizeForMatch(file), file]),
+)
+
+/** Alternate team / FIFA names → normalized country keys in COUNTRY_FLAG_FILE_INDEX. */
+const TEAM_COUNTRY_ALIASES: Record<string, string> = {
+  usa: 'united states of america',
+  uae: 'united arab emirates',
+  uk: 'united kingdom',
+  holland: 'netherlands',
+  turkiye: 'turkey',
+  'ivory coast': 'cote d ivoire',
+  'republic of ireland': 'ireland',
+  'korea republic': 'south korea',
+  'republic of korea': 'south korea',
+  korea: 'south korea',
+  korean: 'south korea',
+  'cape verde': 'cabo verde',
+  'dr congo': 'congo dr',
+  'democratic republic of the congo': 'congo dr',
+  drc: 'congo dr',
+  'bosnia and herzegovina': 'bosnia herzegovina',
+  'bosnia herzegovina': 'bosnia herzegovina',
+  czechia: 'czech republic',
 }
 
 /** Maps curated/Overtime league names to SVG filenames in public/assets/Leagues. */
@@ -51,7 +174,7 @@ const COUNTRY_MATCHERS: { slug: string; names: string[] }[] = [
   { slug: 'north-macedonia', names: ['North Macedonia'] },
   { slug: 'czech-republic', names: ['Czech Republic', 'Czechia'] },
   { slug: 'south-africa', names: ['South Africa'] },
-  { slug: 'south-korea', names: ['South Korea', 'Republic of Korea', 'Korean', 'Korea'] },
+  { slug: 'south-korea', names: ['South Korea', 'Republic of Korea', 'Korean', 'Korea', 'Korea Republic'] },
   { slug: 'south-america', names: ['South America'] },
   { slug: 'costa-rica', names: ['Costa Rica'] },
   { slug: 'saudi-arabia', names: ['Saudi Arabia'] },
@@ -124,6 +247,13 @@ const COUNTRY_MATCHERS: { slug: string; names: string[] }[] = [
   { slug: 'qatar', names: ['Qatar'] },
   { slug: 'egypt', names: ['Egypt'] },
   { slug: 'algeria', names: ['Algeria'] },
+  { slug: 'morocco', names: ['Morocco'] },
+  { slug: 'ghana', names: ['Ghana'] },
+  { slug: 'senegal', names: ['Senegal'] },
+  { slug: 'cabo-verde', names: ['Cabo Verde', 'Cape Verde'] },
+  { slug: 'cote-divoire', names: ["Côte d'Ivoire", 'Ivory Coast', "Cote d'Ivoire"] },
+  { slug: 'bosnia-herzegovina', names: ['Bosnia and Herzegovina', 'Bosnia-Herzegovina'] },
+  { slug: 'congo-dr', names: ['Congo DR', 'DR Congo', 'Democratic Republic of the Congo'] },
   { slug: 'europe', names: ['Europe'] },
   { slug: 'world', names: ['World', 'International'] },
 ]
@@ -168,13 +298,27 @@ function resolveCountrySlugFromLeague(leagueName: string): string | undefined {
   return undefined
 }
 
+function countryFlagFileForKey(key: string): string | undefined {
+  const normalized = normalizeForMatch(key)
+  const aliasKey = TEAM_COUNTRY_ALIASES[normalized]
+  if (aliasKey && COUNTRY_FLAG_FILE_INDEX[aliasKey]) {
+    return COUNTRY_FLAG_FILE_INDEX[aliasKey]
+  }
+  if (COUNTRY_FLAG_FILE_INDEX[normalized]) {
+    return COUNTRY_FLAG_FILE_INDEX[normalized]
+  }
+  const fromSlug = COUNTRY_FLAG_FILE_INDEX[normalizeForMatch(slugToDisplay(key))]
+  if (fromSlug) return fromSlug
+  return undefined
+}
+
 export function getLeagueLogoSrc(leagueName: string): string {
   const fileBase = LEAGUE_LOGO_ALIASES[leagueName] ?? leagueName
   return `${LEAGUE_LOGO_DIR}/${encodeURIComponent(fileBase)}.svg`
 }
 
-export function getCountryFlagSrc(slug: string): string {
-  return `${COUNTRY_FLAG_DIR}/${slug}.svg`
+export function getCountryFlagSrc(fileBase: string): string {
+  return `${COUNTRY_FLAG_DIR}/${encodeURIComponent(fileBase)}.svg`
 }
 
 export function resolveCountrySlug(country?: string, leagueName?: string): string | undefined {
@@ -195,13 +339,28 @@ export function resolveCountrySlug(country?: string, leagueName?: string): strin
   return resolveCountrySlugFromLeague(leagueName)
 }
 
+export function resolveTeamCountryFlagFile(teamName: string): string | undefined {
+  if (!teamName) return undefined
+
+  const direct = countryFlagFileForKey(teamName)
+  if (direct) return direct
+
+  const slug = resolveCountrySlug(teamName) ?? resolveCountrySlugFromLeague(teamName)
+  if (!slug) return undefined
+
+  return countryFlagFileForKey(slug) ?? countryFlagFileForKey(slugToDisplay(slug))
+}
+
 export function resolveLeagueLogoCandidates(leagueName: string, country?: string): string[] {
   const candidates: string[] = [getLeagueLogoSrc(leagueName)]
   const countrySlug = resolveCountrySlug(country, leagueName)
   if (countrySlug) {
-    const flagSrc = getCountryFlagSrc(countrySlug)
-    if (!candidates.includes(flagSrc)) {
-      candidates.push(flagSrc)
+    const flagFile = countryFlagFileForKey(countrySlug) ?? countryFlagFileForKey(slugToDisplay(countrySlug))
+    if (flagFile) {
+      const flagSrc = getCountryFlagSrc(flagFile)
+      if (!candidates.includes(flagSrc)) {
+        candidates.push(flagSrc)
+      }
     }
   }
   return candidates

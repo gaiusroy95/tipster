@@ -1,4 +1,5 @@
 import { bettingRules } from '@/core/config/bettingRules'
+import { decimalToMalay, malayReturn } from '@/shared/utils/malayOdds'
 import { getProfileAchievements, getUserAchievementProgress } from './achievementService'
 import { getMockForumStats } from './mockForum'
 import { buildOverallRankStats } from '@/features/profile/lib/buildOverallRankStats'
@@ -50,10 +51,32 @@ function winnerMarket(
   return {
     marketType: 'winner' as const,
     selections: [
-      { id: ids.home, label: homeLabel, value: odds.home },
-      { id: ids.draw, label: 'Draw', value: odds.draw },
-      { id: ids.away, label: awayLabel, value: odds.away },
+      { id: ids.home, label: homeLabel, value: decimalToMalay(odds.home) },
+      { id: ids.draw, label: 'Draw', value: decimalToMalay(odds.draw) },
+      { id: ids.away, label: awayLabel, value: decimalToMalay(odds.away) },
     ],
+  }
+}
+
+function twoWayMalayMarket(
+  marketType: 'handicap' | 'over_under',
+  selections: Array<{
+    id: string
+    label: string
+    decimal: number
+    handicap?: number
+    line?: number
+  }>,
+) {
+  return {
+    marketType,
+    selections: selections.map((sel) => ({
+      id: sel.id,
+      label: sel.label,
+      value: decimalToMalay(sel.decimal),
+      handicap: sel.handicap,
+      line: sel.line,
+    })),
   }
 }
 
@@ -71,27 +94,14 @@ const matches: Match[] = [
         draw: 4.12,
         away: 1.71,
       }),
-      {
-        marketType: 'malay',
-        selections: [
-          { id: 'm1-home', label: 'Arsenal', value: -0.85 },
-          { id: 'm1-away', label: 'Chelsea', value: 0.75 },
-        ],
-      },
-      {
-        marketType: 'handicap',
-        selections: [
-          { id: 'h1-home', label: 'Arsenal -0.5', value: 1.95, handicap: -0.5 },
-          { id: 'h1-away', label: 'Chelsea +0.5', value: 1.85, handicap: 0.5 },
-        ],
-      },
-      {
-        marketType: 'over_under',
-        selections: [
-          { id: 'ou1-over', label: 'Over 2.5', value: 1.90, line: 2.5 },
-          { id: 'ou1-under', label: 'Under 2.5', value: 1.92, line: 2.5 },
-        ],
-      },
+      twoWayMalayMarket('handicap', [
+        { id: 'h1-home', label: 'Arsenal -0.5', decimal: 1.95, handicap: -0.5 },
+        { id: 'h1-away', label: 'Chelsea +0.5', decimal: 1.85, handicap: 0.5 },
+      ]),
+      twoWayMalayMarket('over_under', [
+        { id: 'ou1-over', label: 'Over 2.5', decimal: 1.90, line: 2.5 },
+        { id: 'ou1-under', label: 'Under 2.5', decimal: 1.92, line: 2.5 },
+      ]),
     ],
   },
   {
@@ -110,27 +120,14 @@ const matches: Match[] = [
         draw: 3.65,
         away: 1.88,
       }),
-      {
-        marketType: 'malay',
-        selections: [
-          { id: 'm2-home', label: 'Liverpool', value: 0.45 },
-          { id: 'm2-away', label: 'Man City', value: -0.55 },
-        ],
-      },
-      {
-        marketType: 'handicap',
-        selections: [
-          { id: 'h2-home', label: 'Liverpool -0.25', value: 2.05, handicap: -0.25 },
-          { id: 'h2-away', label: 'Man City +0.25', value: 1.78, handicap: 0.25 },
-        ],
-      },
-      {
-        marketType: 'over_under',
-        selections: [
-          { id: 'ou2-over', label: 'Over 3.0', value: 2.10, line: 3.0 },
-          { id: 'ou2-under', label: 'Under 3.0', value: 1.75, line: 3.0 },
-        ],
-      },
+      twoWayMalayMarket('handicap', [
+        { id: 'h2-home', label: 'Liverpool -0.25', decimal: 2.05, handicap: -0.25 },
+        { id: 'h2-away', label: 'Man City +0.25', decimal: 1.78, handicap: 0.25 },
+      ]),
+      twoWayMalayMarket('over_under', [
+        { id: 'ou2-over', label: 'Over 3.0', decimal: 2.10, line: 3.0 },
+        { id: 'ou2-under', label: 'Under 3.0', decimal: 1.75, line: 3.0 },
+      ]),
     ],
   },
   {
@@ -146,27 +143,14 @@ const matches: Match[] = [
         draw: 3.90,
         away: 2.15,
       }),
-      {
-        marketType: 'malay',
-        selections: [
-          { id: 'm3-home', label: 'Real Madrid', value: -0.70 },
-          { id: 'm3-away', label: 'Barcelona', value: 0.65 },
-        ],
-      },
-      {
-        marketType: 'handicap',
-        selections: [
-          { id: 'h3-home', label: 'Real Madrid -0.5', value: 1.88, handicap: -0.5 },
-          { id: 'h3-away', label: 'Barcelona +0.5', value: 1.94, handicap: 0.5 },
-        ],
-      },
-      {
-        marketType: 'over_under',
-        selections: [
-          { id: 'ou3-over', label: 'Over 2.75', value: 1.85, line: 2.75 },
-          { id: 'ou3-under', label: 'Under 2.75', value: 1.97, line: 2.75 },
-        ],
-      },
+      twoWayMalayMarket('handicap', [
+        { id: 'h3-home', label: 'Real Madrid -0.5', decimal: 1.88, handicap: -0.5 },
+        { id: 'h3-away', label: 'Barcelona +0.5', decimal: 1.94, handicap: 0.5 },
+      ]),
+      twoWayMalayMarket('over_under', [
+        { id: 'ou3-over', label: 'Over 2.75', decimal: 1.85, line: 2.75 },
+        { id: 'ou3-under', label: 'Under 2.75', decimal: 1.97, line: 2.75 },
+      ]),
     ],
   },
   {
@@ -284,12 +268,14 @@ let bets: Bet[] = [
     id: 'bet-1',
     userId: 'user-demo',
     matchId: 'match-2',
-    marketType: 'malay',
-    selectionId: 'm2-home',
+    marketType: 'winner',
+    selectionId: 'w2-home',
     selectionLabel: 'Liverpool',
-    odds: 0.45,
+    odds: decimalToMalay(2.07),
     stake: bettingRules.standardStake,
-    potentialReturn: Math.round(bettingRules.standardStake + bettingRules.standardStake * 0.45),
+    potentialReturn: Math.round(
+      malayReturn(bettingRules.standardStake, decimalToMalay(2.07)),
+    ),
     status: 'active',
     betSize: 'small',
     placedAt: pastHours(1),
@@ -497,7 +483,7 @@ export const mockDb = {
         avgStake: userBets.length ? userBets.reduce((s, b) => s + b.stake, 0) / userBets.length : 0,
         biggestWin: 850,
         biggestLoss: -400,
-        favoriteMarket: 'malay',
+        favoriteMarket: 'winner',
       },
       form: entry?.form ?? ['W', 'L', 'W'],
       leaguePerformance: [

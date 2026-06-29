@@ -1,10 +1,10 @@
 import type { BetSelection } from '@/features/betting/stores/betSlipStore'
-import { formatMalayOdds, formatDecimalOdds } from '@/shared/utils/formatOdds'
+import { formatMalayOdds } from '@/shared/utils/formatOdds'
+import { malayReturn, usesMalayOddsFormat } from '@/shared/utils/malayOdds'
 
 export function calcBetReturn(stake: number, odds: number, marketType: string): number {
-  if (marketType === 'malay') {
-    if (odds > 0) return Math.round(stake + stake * odds)
-    return Math.round(stake + stake)
+  if (usesMalayOddsFormat(marketType)) {
+    return Math.round(malayReturn(stake, odds))
   }
   return Math.round(stake * (odds > 0 ? odds : 2))
 }
@@ -16,14 +16,14 @@ export function betSlipMarketLabel(marketType: BetSelection['marketType']): stri
     case 'handicap':
       return 'Handicap'
     case 'winner':
-      return 'Winner'
+      return '1x2'
     case 'malay':
-      return 'Malay'
+      return '1x2'
     default:
       return String(marketType).replace('_', '/')
   }
 }
 
 export function formatBetSlipOdds(sel: BetSelection): string {
-  return sel.marketType === 'malay' ? formatMalayOdds(sel.odds) : formatDecimalOdds(sel.odds)
+  return formatMalayOdds(sel.odds)
 }
