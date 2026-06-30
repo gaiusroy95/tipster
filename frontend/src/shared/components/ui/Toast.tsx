@@ -55,9 +55,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         className={cn(
-          'pointer-events-none fixed inset-x-0 top-[calc(var(--layout-header-height)+0.5rem)] z-[70]',
+          'pointer-events-none fixed inset-x-0 top-[calc(var(--layout-header-height)+0.75rem)] z-[70]',
           'flex flex-col items-center gap-2 px-4 safe-area-pt',
-          'lg:inset-x-auto lg:right-4 lg:top-4 lg:items-end lg:px-0 lg:max-w-sm',
         )}
         aria-live="polite"
       >

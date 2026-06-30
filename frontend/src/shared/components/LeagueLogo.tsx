@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { TrophyIcon } from '@heroicons/react/24/outline'
-import { resolveLeagueLogoCandidates } from '@/core/constants/leagueLogos'
+import { isKnownLeagueLogoSrc, resolveLeagueLogoCandidates } from '@/core/constants/leagueLogos'
 import { cn } from '@/shared/utils/cn'
 
 const sizeClasses = {
@@ -27,8 +27,9 @@ export function LeagueLogo({
 }) {
   const candidates = useMemo(() => {
     const resolved = resolveLeagueLogoCandidates(name, country)
-    if (!logoUrl) return resolved
-    return [logoUrl, ...resolved.filter((src) => src !== logoUrl)]
+    const safeLogoUrl = logoUrl && isKnownLeagueLogoSrc(logoUrl) ? logoUrl : undefined
+    if (!safeLogoUrl) return resolved
+    return [safeLogoUrl, ...resolved.filter((src) => src !== safeLogoUrl)]
   }, [name, country, logoUrl])
 
   const [index, setIndex] = useState(0)

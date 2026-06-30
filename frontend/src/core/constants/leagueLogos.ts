@@ -1,3 +1,5 @@
+import { LEAGUE_LOGO_FILES } from '@/core/constants/leagueLogoFiles.generated'
+
 export const LEAGUE_LOGO_DIR = '/assets/Leagues'
 export const COUNTRY_FLAG_DIR = '/assets/Countries'
 
@@ -133,6 +135,24 @@ const LEAGUE_LOGO_ALIASES: Record<string, string> = {
   'England Premier League': 'Premier League',
   'Korea K League 1': 'Korea K1 League',
   'Korea K League 2': 'Korea K2 League',
+  'Round of 32': 'FIFA World Cup',
+  'Round of 16': 'FIFA World Cup',
+  'Round of 64': 'FIFA World Cup',
+}
+
+const LEAGUE_LOGO_FILE_BY_KEY = Object.fromEntries(
+  LEAGUE_LOGO_FILES.map((file) => [normalizeForMatch(file), file]),
+) as Record<string, string>
+
+function resolveLeagueLogoAlias(leagueName: string): string {
+  if (LEAGUE_LOGO_ALIASES[leagueName]) return LEAGUE_LOGO_ALIASES[leagueName]
+  if (/^round of \d+/i.test(leagueName.trim())) return 'FIFA World Cup'
+  return leagueName
+}
+
+function resolveLeagueLogoFileBase(leagueName: string): string | undefined {
+  const aliased = resolveLeagueLogoAlias(leagueName)
+  return LEAGUE_LOGO_FILE_BY_KEY[normalizeForMatch(aliased)]
 }
 
 /** Overtime league names that should fall back to a country flag when no league SVG exists. */
@@ -312,9 +332,27 @@ function countryFlagFileForKey(key: string): string | undefined {
   return undefined
 }
 
-export function getLeagueLogoSrc(leagueName: string): string {
-  const fileBase = LEAGUE_LOGO_ALIASES[leagueName] ?? leagueName
+export function getLeagueLogoSrc(leagueName: string): string | undefined {
+  const fileBase = resolveLeagueLogoFileBase(leagueName)
+  if (!fileBase) return undefined
   return `${LEAGUE_LOGO_DIR}/${encodeURIComponent(fileBase)}.svg`
+}
+
+export function isLocalLeagueLogoSrc(src: string): boolean {
+  return src.startsWith(`${LEAGUE_LOGO_DIR}/`)
+}
+
+export function isKnownLeagueLogoSrc(src: string): boolean {
+  if (!isLocalLeagueLogoSrc(src)) return true
+  const encoded = src.slice(`${LEAGUE_LOGO_DIR}/`.length)
+  let fileBase = encoded
+  try {
+    fileBase = decodeURIComponent(encoded)
+  } catch {
+    return false
+  }
+  if (fileBase.endsWith('.svg')) fileBase = fileBase.slice(0, -4)
+  return Boolean(LEAGUE_LOGO_FILE_BY_KEY[normalizeForMatch(fileBase)])
 }
 
 export function getCountryFlagSrc(fileBase: string): string {
@@ -352,7 +390,9 @@ export function resolveTeamCountryFlagFile(teamName: string): string | undefined
 }
 
 export function resolveLeagueLogoCandidates(leagueName: string, country?: string): string[] {
-  const candidates: string[] = [getLeagueLogoSrc(leagueName)]
+  const candidates: string[] = []
+  const primary = getLeagueLogoSrc(leagueName)
+  if (primary) candidates.push(primary)
   const countrySlug = resolveCountrySlug(country, leagueName)
   if (countrySlug) {
     const flagFile = countryFlagFileForKey(countrySlug) ?? countryFlagFileForKey(slugToDisplay(countrySlug))
