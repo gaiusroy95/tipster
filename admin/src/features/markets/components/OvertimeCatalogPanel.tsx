@@ -117,7 +117,7 @@ export function OvertimeCatalogPanel({
             </thead>
             <tbody className="divide-y divide-border-default/50">
               {visible.map((row) => (
-                <tr key={row.id} className="transition-colors hover:bg-bg-elevated/30">
+                <tr key={row.key} className="transition-colors hover:bg-bg-elevated/30">
                   <td className="px-4 py-3.5 sm:px-5">
                     <p className="font-medium text-text-primary">{row.name}</p>
                   </td>

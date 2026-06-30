@@ -424,9 +424,9 @@ export function SeasonDetailPanel({
             {season.prizes
               .slice()
               .sort((a, b) => a.rankFrom - b.rankFrom)
-              .map((prize) => (
+              .map((prize, index) => (
                 <PrizeTierCard
-                  key={prize.id}
+                  key={prize.id || `${season.id}-prize-${prize.rankFrom}-${prize.rankTo}-${index}`}
                   prize={prize}
                   onDelete={() => onDeletePrize(prize.id)}
                   isDeleting={deletingPrizeId === prize.id}

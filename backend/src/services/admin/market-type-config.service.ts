@@ -56,18 +56,32 @@ export const marketTypeConfigService = {
 
   async listOvertimeCatalog() {
     const types = await sportsService.fetchMarketTypesMapper();
-    return Object.values(types)
-      .map((type) => {
-        const category = mapOvertimeMarketTypeToCategory(type.key, type.id);
-        return {
-          id: type.id,
-          key: type.key,
-          name: type.name,
-          category,
-          categoryLabel: arenaCategoryLabel(category),
-        };
-      })
-      .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    const byKey = new Map<
+      string,
+      {
+        id: number;
+        key: string;
+        name: string;
+        category: ReturnType<typeof mapOvertimeMarketTypeToCategory>;
+        categoryLabel: string;
+      }
+    >();
+
+    for (const type of Object.values(types)) {
+      if (byKey.has(type.key)) continue;
+      const category = mapOvertimeMarketTypeToCategory(type.key, type.id);
+      byKey.set(type.key, {
+        id: type.id,
+        key: type.key,
+        name: type.name,
+        category,
+        categoryLabel: arenaCategoryLabel(category),
+      });
+    }
+
+    return [...byKey.values()].sort(
+      (a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
+    );
   },
 
   async ensureDefaults(adminUserId?: string) {

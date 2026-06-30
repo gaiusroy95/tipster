@@ -12,6 +12,7 @@ export interface NotificationDto {
 }
 
 export interface PrizeTierDto {
+  id: string;
   rankFrom: number;
   rankTo: number;
   name: string;
@@ -60,6 +61,7 @@ export function toNotificationDto(n: Notification): NotificationDto {
 
 export function toPrizeTierDto(tier: PrizeTier): PrizeTierDto {
   const dto: PrizeTierDto = {
+    id: tier.id,
     rankFrom: tier.rankFrom,
     rankTo: tier.rankTo,
     name: tier.name,
