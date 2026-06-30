@@ -36,7 +36,7 @@ export function LeaderboardPage() {
         activeSeason.data ? (
           <Link
             to={ROUTES.SEASONS}
-            className="rounded-xl border border-accent-gold/25 bg-accent-gold/5 px-4 py-3 text-left transition-colors hover:border-accent-gold/40 hover:bg-accent-gold/10 min-w-[140px]"
+            className="rounded-xl border border-accent-gold/25 bg-accent-gold/5 px-4 py-3 text-center @3xl:text-left transition-colors hover:border-accent-gold/40 hover:bg-accent-gold/10 min-w-[140px]"
           >
             <p className="text-[10px] font-bold uppercase tracking-wider text-accent-gold">Active season</p>
             <p className="mt-0.5 font-display text-sm font-bold text-text-primary leading-tight">

@@ -23,7 +23,7 @@ export function PageHero({ variant, title, description, extra, className }: Page
     return (
       <header
         className={cn(
-          'relative overflow-hidden rounded-2xl border border-accent-gold/30 bg-bg-surface',
+          '@container relative overflow-hidden rounded-2xl border border-accent-gold/30 bg-bg-surface',
           className,
         )}
       >
@@ -40,12 +40,12 @@ export function PageHero({ variant, title, description, extra, className }: Page
           aria-hidden="true"
         />
 
-        <div className="relative flex flex-wrap items-start gap-x-6 gap-y-4 p-5 sm:p-7">
-          <div className="flex max-w-full shrink-0 items-start gap-4 sm:items-center sm:gap-5">
+        <div className="relative flex flex-col items-center gap-5 p-5 sm:p-7 @3xl:flex-row @3xl:items-center @3xl:justify-between">
+          <div className="flex min-w-0 max-w-full items-start justify-center gap-4 sm:items-center sm:gap-5 @3xl:justify-start">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-accent-gold/35 bg-gradient-to-br from-accent-gold/20 to-accent-gold/5 shadow-[0_0_24px_rgba(252,211,77,0.12)]">
               <TrophyIcon className="h-7 w-7 text-accent-gold" aria-hidden="true" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 text-center @3xl:text-left">
               <span className="inline-flex items-center gap-1.5 rounded-md border border-accent-gold/25 bg-accent-gold/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-accent-gold">
                 <SparklesIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 Season competition
@@ -53,15 +53,15 @@ export function PageHero({ variant, title, description, extra, className }: Page
               <h1 className="mt-2.5 font-display text-2xl sm:text-3xl font-bold text-text-primary tracking-tight">
                 {title}
               </h1>
-              <p className="mt-1.5 text-sm sm:text-base text-text-muted leading-relaxed max-w-xl">
+              <p className="mt-1.5 text-sm sm:text-base text-text-muted leading-relaxed max-w-xl @3xl:mx-0 mx-auto">
                 {description}
               </p>
             </div>
           </div>
 
-          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+          <div className="flex flex-wrap items-center justify-center gap-2 @3xl:shrink-0 @3xl:justify-end">
             {extra}
-            <div className="flex items-center gap-2 rounded-xl border border-border-default/60 bg-bg-elevated/40 px-3 py-2">
+            <div className="hidden sm:flex items-center gap-2 rounded-xl border border-border-default/60 bg-bg-elevated/40 px-3 py-2">
               <ChartBarIcon className="h-4 w-4 text-accent-gold shrink-0" aria-hidden="true" />
               <span className="text-xs font-medium text-text-muted">Sort by performance</span>
             </div>

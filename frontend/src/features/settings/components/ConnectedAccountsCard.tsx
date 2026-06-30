@@ -56,7 +56,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
 
   return (
     <SettingsSection
-      className={className}
+      className={cn('@container', className)}
       icon={<LinkIcon className="h-5 w-5" aria-hidden="true" />}
       title="Connected accounts"
       description="Link social accounts for faster sign-in. Email and password sign-in stays available."
@@ -74,13 +74,13 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
             <div
               key={provider.id}
               className={cn(
-                'flex flex-col gap-3 rounded-xl border px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4',
+                'flex flex-col gap-3 rounded-xl border px-4 py-3.5 @xl:flex-row @xl:items-center @xl:justify-between @xl:gap-4',
                 linked
                   ? 'border-accent-secondary/25 bg-accent-secondary/5'
                   : 'border-border-default/70 bg-bg-elevated/40',
               )}
             >
-              <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
+              <div className="flex min-w-0 flex-1 items-center gap-3 @xl:overflow-hidden">
                 <div
                   className={cn(
                     'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm',
@@ -91,7 +91,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                 >
                   <SocialProviderIcon provider={provider.id} className="h-6 w-6" />
                 </div>
-                <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="min-w-0 flex-1 @xl:overflow-hidden">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-text-primary">{provider.name}</p>
                     {linked ? (
@@ -101,8 +101,8 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                     )}
                   </div>
                   <p
-                    className="mt-0.5 truncate text-sm text-text-muted"
-                    title={linked ? statusLabel : undefined}
+                    className="mt-0.5 text-sm text-text-muted @xl:truncate"
+                    title={statusLabel}
                   >
                     {statusLabel}
                   </p>
@@ -112,7 +112,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full sm:w-auto shrink-0"
+                  className="w-full @xl:w-auto shrink-0"
                   isLoading={isDisconnecting}
                   onClick={() => handleDisconnect(provider.id)}
                 >
@@ -122,7 +122,7 @@ export function ConnectedAccountsCard({ className }: { className?: string }) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-full sm:w-auto shrink-0"
+                  className="w-full @xl:w-auto shrink-0"
                   isLoading={isConnecting}
                   onClick={() => handleConnect(provider.id)}
                 >

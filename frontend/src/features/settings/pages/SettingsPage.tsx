@@ -58,7 +58,7 @@ export function SettingsPage() {
     <PageShell
       title="Settings"
       description="Manage notifications, privacy, and sign-in options"
-      className="pb-24 xl:pb-6"
+      className="pb-24 xl:pb-20"
     >
       <div className="grid min-w-0 gap-5 xl:grid-cols-2 xl:items-start">
         <div className="space-y-5 min-w-0">
