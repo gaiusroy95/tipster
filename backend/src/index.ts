@@ -5,6 +5,7 @@ import { verifyOAuthSchema } from './lib/verify-schema';
 import { seasonService } from './services/season.service';
 import { leaderboardService } from './services/leaderboard.service';
 import { betSettlementService } from './services/bet-settlement.service';
+import { betRepairService } from './services/bet-repair.service';
 import { adminBootstrapService } from './services/admin/admin-bootstrap.service';
 import { marketTypeConfigService } from './services/admin/market-type-config.service';
 
@@ -30,6 +31,10 @@ async function bootstrap() {
   await marketTypeConfigService.seedIfEmpty();
   await adminBootstrapService.ensureAdminAccount();
   await leaderboardService.syncAllUsersToActiveSeason();
+
+  void betRepairService.repairClampedActiveBetOdds().catch((error) => {
+    console.error('[bet-repair] Startup repair failed:', error);
+  });
 
   const app = createApp();
   const port = Number(process.env.PORT ?? 3001);

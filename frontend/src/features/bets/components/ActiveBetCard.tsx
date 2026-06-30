@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { LiveBadge } from '@/shared/components/LiveBadge'
 import { Button } from '@/shared/components/ui/Button'
 import { formatCredits } from '@/shared/utils/formatCredits'
+import { formatMalayOdds } from '@/shared/utils/formatOdds'
 import { formatDateTime } from '@/shared/utils/formatDate'
 import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import { matchPath } from '@/core/constants/routes'
@@ -62,9 +63,12 @@ export function ActiveBetCard({
           </p>
         </div>
         <div className="flex sm:flex-col sm:items-end gap-1 sm:text-right shrink-0">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Potential</p>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Potential return</p>
           <p className="font-mono text-xl font-bold tabular-nums text-accent-primary">
             {formatCredits(bet.potentialReturn)}
+          </p>
+          <p className="font-mono text-xs tabular-nums text-text-muted">
+            @ {formatMalayOdds(bet.odds)}
           </p>
         </div>
       </div>

@@ -84,6 +84,17 @@ apiRouter.get(
 );
 
 apiRouter.post(
+  '/bets/preview',
+  requireAuth,
+  validateBody(placeBetSchema),
+  asyncHandler(async (req, res) => {
+    const user = (req as AuthenticatedRequest).user;
+    const data = await betService.previewBetPlacement(req.body);
+    res.json({ data });
+  }),
+);
+
+apiRouter.post(
   '/bets',
   requireAuth,
   validateBody(placeBetSchema),

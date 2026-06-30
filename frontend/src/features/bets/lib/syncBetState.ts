@@ -12,6 +12,17 @@ export interface PlaceBetPayload {
   stake: number
 }
 
+export interface BetPreview {
+  odds: number
+  potentialReturn: number
+  selectionLabel: string
+}
+
+export async function previewBetPlacement(payload: PlaceBetPayload): Promise<BetPreview> {
+  const res = await apiClient.post<ApiResponse<BetPreview>>('/bets/preview', payload)
+  return res.data.data
+}
+
 const RECENT_BET_WINDOW_MS = 2 * 60 * 1000
 
 export async function findRecentMatchingBet(

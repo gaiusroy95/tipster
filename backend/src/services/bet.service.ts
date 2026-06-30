@@ -46,6 +46,44 @@ async function runPostBetPlacementEffects(
   await achievementService.syncUserAchievements(userId);
 }
 
+async function resolvePlacementSelection(body: {
+  matchId: string;
+  marketType: string;
+  selectionId: string;
+}) {
+  const market = await sportsService.getMarketOrNull(10, body.matchId);
+  if (!market) {
+    throw new ApiException('NOT_FOUND', 'Match not found', 404);
+  }
+  if (isMatchFinished(market)) {
+    throw new ApiException(
+      'MATCH_FINISHED',
+      'Cannot bet on finished match',
+      400,
+    );
+  }
+
+  const marketEnabled = await marketTypeConfigService.isEnabled(body.marketType);
+  if (!marketEnabled) {
+    throw new ApiException(
+      'MARKET_DISABLED',
+      'This market type is not available for betting',
+      400,
+    );
+  }
+
+  const resolved = resolveBetSelectionFromMarket(
+    market,
+    body.marketType,
+    body.selectionId,
+  );
+  if (!resolved) {
+    throw new ApiException('INVALID_SELECTION', 'Invalid market selection', 400);
+  }
+
+  return { market, resolved };
+}
+
 export const betService = {
   async getDailyBetUsage(userId: string) {
     const dateKey = utcDateKey();
@@ -135,35 +173,7 @@ export const betService = {
       );
     }
 
-    const market = await sportsService.getMarketOrNull(10, body.matchId);
-    if (!market) {
-      throw new ApiException('NOT_FOUND', 'Match not found', 404);
-    }
-    if (isMatchFinished(market)) {
-      throw new ApiException(
-        'MATCH_FINISHED',
-        'Cannot bet on finished match',
-        400,
-      );
-    }
-
-    const marketEnabled = await marketTypeConfigService.isEnabled(body.marketType);
-    if (!marketEnabled) {
-      throw new ApiException(
-        'MARKET_DISABLED',
-        'This market type is not available for betting',
-        400,
-      );
-    }
-
-    const resolved = resolveBetSelectionFromMarket(
-      market,
-      body.marketType,
-      body.selectionId,
-    );
-    if (!resolved) {
-      throw new ApiException('INVALID_SELECTION', 'Invalid market selection', 400);
-    }
+    const { resolved } = await resolvePlacementSelection(body);
 
     const potentialReturn = computePotentialReturn(
       body.stake,
@@ -231,6 +241,27 @@ export const betService = {
     });
 
     return betDto;
+  },
+
+  async previewBetPlacement(body: {
+    matchId: string;
+    marketType: string;
+    selectionId: string;
+    stake: number;
+  }) {
+    const { resolved } = await resolvePlacementSelection(body);
+
+    const potentialReturn = computePotentialReturn(
+      body.stake,
+      resolved.odds,
+      body.marketType,
+    );
+
+    return {
+      odds: resolved.odds,
+      potentialReturn,
+      selectionLabel: resolved.selectionLabel,
+    };
   },
 
   async cancelBet(userId: string, betId: string) {

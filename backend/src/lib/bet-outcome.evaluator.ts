@@ -7,7 +7,7 @@ export interface ParsedSelection {
 }
 
 const SELECTION_SUFFIX =
-  /-(winner|malay|handicap|over_under)-(\d+)(?:-([\d.]+))?$/;
+  /-(winner|malay|handicap|over_under)-(\d+)(?:-(-?[\d.]+))?$/;
 
 export function parseSelectionId(selectionId: string): ParsedSelection | null {
   const match = selectionId.match(SELECTION_SUFFIX);

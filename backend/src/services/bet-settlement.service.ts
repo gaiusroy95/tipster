@@ -13,6 +13,7 @@ import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
 import { notificationService } from './notification.service';
 import { achievementService } from './achievement.service';
+import { betRepairService } from './bet-repair.service';
 
 function outcomeStatus(outcome: BetOutcome): 'won' | 'lost' | 'void' {
   return outcome;
@@ -184,7 +185,12 @@ async function settleBetsForMatch(
     return 0;
   }
 
-  const threeWayWinner = (market.odds?.length ?? 0) >= 3;
+  const threeWayWinner =
+    (market.odds?.length ?? 0) >= 3 ||
+    bets.some((bet) => {
+      const parsed = parseSelectionId(bet.selectionId);
+      return parsed?.marketType === 'winner' && parsed.selectionIndex >= 2;
+    });
   let settled = 0;
 
   for (const bet of bets) {
@@ -216,6 +222,10 @@ async function settleBetsForMatch(
 
 export const betSettlementService = {
   async settlePendingBets(): Promise<{ settled: number; skipped: number }> {
+    await betRepairService.repairClampedActiveBetOdds().catch((error) => {
+      console.error('[bet-repair] Failed to repair clamped active bets:', error);
+    });
+
     const activeBets = await prisma.bet.findMany({
       where: { status: 'active' },
       orderBy: { placedAt: 'asc' },

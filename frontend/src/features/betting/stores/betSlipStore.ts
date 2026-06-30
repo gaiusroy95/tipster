@@ -29,6 +29,7 @@ interface BetSlipState {
   removeSelection: (matchId: string) => void
   clearSelections: () => void
   setSelectionStake: (matchId: string, stake: number) => void
+  updateSelectionOdds: (matchId: string, odds: number) => void
   setDefaultStake: (stake: number) => void
   setPanelOpen: (open: boolean) => void
   togglePanel: () => void
@@ -74,6 +75,13 @@ export const useBetSlipStore = create<BetSlipState>()(
           ),
         })),
 
+      updateSelectionOdds: (matchId, odds) =>
+        set((state) => ({
+          selections: state.selections.map((s) =>
+            s.matchId === matchId ? { ...s, odds } : s,
+          ),
+        })),
+
       setDefaultStake: (defaultStake) => set({ defaultStake }),
 
       setPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
@@ -89,8 +97,14 @@ export const useBetSlipStore = create<BetSlipState>()(
     }),
     {
       name: 'bet-slip-store',
-      version: 1,
-      migrate: (persisted) => {
+      version: 2,
+      migrate: (persisted, version) => {
+        if (version < 2) {
+          return {
+            selections: [],
+            defaultStake: bettingRules.standardStake,
+          }
+        }
         const state = persisted as PersistedBetSlip
         const defaultStake =
           state.defaultStake ?? state.stake ?? bettingRules.standardStake

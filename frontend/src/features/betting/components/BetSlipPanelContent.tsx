@@ -10,6 +10,7 @@ import {
   type BetSelection,
 } from '@/features/betting/stores/betSlipStore'
 import { usePlaceBet, useDailyBetLimit, reconcileBetPlacement } from '@/features/bets/hooks/useBets'
+import { previewBetPlacement } from '@/features/bets/lib/syncBetState'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { bettingRules, isValidStake } from '@/core/config/bettingRules'
@@ -30,6 +31,7 @@ function selectionStake(sel: BetSelection): number {
 export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) {
   const selections = useBetSlipStore((s) => s.selections)
   const setSelectionStake = useBetSlipStore((s) => s.setSelectionStake)
+  const updateSelectionOdds = useBetSlipStore((s) => s.updateSelectionOdds)
   const removeSelection = useBetSlipStore((s) => s.removeSelection)
   const clear = useBetSlipStore((s) => s.clear)
   const setPanelOpen = useBetSlipStore((s) => s.setPanelOpen)
@@ -42,6 +44,31 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [stakeError, setStakeError] = useState<string | undefined>()
   const [isPlacingAll, setIsPlacingAll] = useState(false)
+  const [isPreviewing, setIsPreviewing] = useState(false)
+
+  const openConfirmWithPreview = async () => {
+    if (!validateSlip()) return
+
+    setIsPreviewing(true)
+    try {
+      for (const sel of selections) {
+        const stake = selectionStake(sel)
+        const preview = await previewBetPlacement({
+          matchId: sel.matchId,
+          marketType: sel.marketType,
+          selectionId: sel.selectionId,
+          stake,
+        })
+        updateSelectionOdds(sel.matchId, preview.odds)
+      }
+      setConfirmOpen(true)
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Could not refresh odds'
+      toast(msg, 'error')
+    } finally {
+      setIsPreviewing(false)
+    }
+  }
 
   const totalStake = selections.reduce((sum, sel) => sum + selectionStake(sel), 0)
   const totalPotentialReturn = selections.reduce(
@@ -169,8 +196,9 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
     )
   }
 
-  const placeBetLabel =
-    selections.length === 1
+  const placeBetLabel = isPreviewing
+    ? 'Refreshing odds…'
+    : selections.length === 1
       ? 'Place virtual bet'
       : `Place ${selections.length} virtual bets`
 
@@ -185,10 +213,8 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
       tooManySelections={tooManySelections}
       stakeError={stakeError}
       placeBetLabel={placeBetLabel}
-      onPlaceClick={() => {
-        if (validateSlip()) setConfirmOpen(true)
-      }}
-      disabled={dailyLimitReached || tooManySelections}
+      onPlaceClick={() => openConfirmWithPreview()}
+      disabled={dailyLimitReached || tooManySelections || isPreviewing}
     />
   )
 

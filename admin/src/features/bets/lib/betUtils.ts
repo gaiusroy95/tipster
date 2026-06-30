@@ -35,6 +35,9 @@ export function formatStake(value: number) {
 }
 
 export function formatOdds(value: number) {
+  if (!Number.isFinite(value)) return '—'
+  if (value === 0) return '0.00'
+  if (value > 0) return `+${value.toFixed(2)}`
   return value.toFixed(2)
 }
 

@@ -509,6 +509,35 @@ export const handlers = [
     return json(userBets.map((b) => mockDb.enrichBet(b)).sort((a, b) => b.placedAt.localeCompare(a.placedAt)))
   }),
 
+  http.post(p('/bets/preview'), async ({ request }) => {
+    const user = await resolveAuthenticatedUser(request)
+    if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
+    const body = (await request.json()) as {
+      matchId: string
+      marketType: string
+      selectionId: string
+      stake: number
+    }
+    const match = mockDb.getMatch(body.matchId)
+    if (!match) return error('NOT_FOUND', 'Match not found', 404)
+    if (match.status === 'finished') return error('MATCH_FINISHED', 'Cannot bet on finished match', 400)
+
+    const market = match.markets.find((m) => m.marketType === body.marketType)
+    const selection = market?.selections.find((s) => s.id === body.selectionId)
+    if (!selection) return error('INVALID_SELECTION', 'Invalid market selection', 400)
+
+    const odds = selection.value
+    const potentialReturn = usesMalayOddsFormat(body.marketType)
+      ? malayReturn(body.stake, odds)
+      : body.stake * (odds > 0 ? odds : 2)
+
+    return json({
+      odds,
+      potentialReturn: Math.round(potentialReturn),
+      selectionLabel: selection.label,
+    })
+  }),
+
   http.post(p('/bets'), async ({ request }) => {
     const user = await resolveAuthenticatedUser(request)
     if (!user) return error('UNAUTHORIZED', 'Not authenticated', 401)
