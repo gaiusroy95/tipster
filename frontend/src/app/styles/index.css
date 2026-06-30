@@ -31,7 +31,6 @@
 
   --layout-bottom-nav: 4rem;
   --layout-sticky-offset: calc(var(--layout-bottom-nav) + env(safe-area-inset-bottom, 0px));
-  --layout-toast-offset: calc(var(--layout-sticky-offset) + 0.5rem);
   --layout-header-height: 3.75rem;
   --layout-main-padding-y: 4rem;
   /* Space above the match list (masthead, tabs, sport slider, title) */
@@ -167,10 +166,6 @@
 
   .bottom-nav-offset {
     bottom: var(--layout-sticky-offset);
-  }
-
-  .toast-offset {
-    bottom: var(--layout-toast-offset);
   }
 
   .scroll-snap-x {
