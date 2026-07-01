@@ -11,7 +11,7 @@ import { cn } from '@/shared/utils/cn'
 interface BetSlipSelectionRowProps {
   selection: BetSelection
   stake: number
-  potentialReturn: number
+  potentialWin: number
   onStakeChange: (stake: number) => void
   onRemove: () => void
   className?: string
@@ -20,7 +20,7 @@ interface BetSlipSelectionRowProps {
 export function BetSlipSelectionRow({
   selection,
   stake,
-  potentialReturn,
+  potentialWin,
   onStakeChange,
   onRemove,
   className,
@@ -71,10 +71,10 @@ export function BetSlipSelectionRow({
         <BetSlipStakePicker stake={stake} onChange={onStakeChange} />
         <div className="ml-auto shrink-0 text-right">
           <p className="text-[10px] font-medium uppercase tracking-wide text-text-muted/80">
-            Return
+            Potential win
           </p>
           <p className="font-mono text-xs font-semibold tabular-nums text-accent-primary">
-            {formatCredits(potentialReturn)}
+            {formatCredits(potentialWin)}
           </p>
         </div>
       </div>

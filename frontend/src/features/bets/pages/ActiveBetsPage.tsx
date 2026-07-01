@@ -7,7 +7,7 @@ import { Modal } from '@/shared/components/ui/Modal'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { useBets, useCancelBet } from '@/features/bets/hooks/useBets'
+import { useBets, useCancelBet, useActiveBetsSettlementSync } from '@/features/bets/hooks/useBets'
 import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { ApiError } from '@/core/types/api'
@@ -15,6 +15,7 @@ import { useToast } from '@/shared/components/ui/Toast'
 import type { Bet } from '@/mocks/data/types'
 
 export function ActiveBetsPage() {
+  useActiveBetsSettlementSync()
   const { data, isLoading, isError, refetch } = useBets('active')
   const cancelBet = useCancelBet()
   const { toast } = useToast()
@@ -67,7 +68,17 @@ export function ActiveBetsPage() {
           <ActiveBetsSummary bets={bets} />
           <div className="space-y-3">
             {bets.map((bet) => (
-              <ActiveBetCard key={bet.id} bet={bet} onCancel={() => setCancelTarget(bet)} />
+              <ActiveBetCard
+                key={bet.id}
+                bet={bet}
+                onCancel={
+                  bet.isCancellable !== false &&
+                  bet.matchStatus !== 'live' &&
+                  bet.matchStatus !== 'finished'
+                    ? () => setCancelTarget(bet)
+                    : undefined
+                }
+              />
             ))}
           </div>
         </div>

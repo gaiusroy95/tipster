@@ -146,6 +146,15 @@ export function useDeleteForumPost() {
   })
 }
 
+export async function uploadForumImage(file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('image', file)
+  const res = await apiClient.post<ApiResponse<{ url: string }>>('/forum/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data.data.url
+}
+
 export function useRecordForumView() {
   const queryClient = useQueryClient()
   return useMutation({

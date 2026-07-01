@@ -82,7 +82,7 @@ export function ForumPostCard({
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <StatPill icon={EyeIcon}>{post.viewCount.toLocaleString()}</StatPill>
+        <StatPill icon={EyeIcon}>{(post.viewCount ?? 0).toLocaleString()}</StatPill>
         <StatPill icon={ChatBubbleLeftIcon}>{post.commentCount.toLocaleString()}</StatPill>
         {post.attachments.length > 0 && (
           <StatPill icon={PaperClipIcon}>{post.attachments.length}</StatPill>

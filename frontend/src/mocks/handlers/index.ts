@@ -625,6 +625,15 @@ export const handlers = [
     if (!bet) return error('NOT_FOUND', 'Bet not found', 404)
     if (bet.status !== 'active') return error('BET_NOT_ACTIVE', 'Only active bets can be cancelled', 400)
 
+    const enriched = mockDb.enrichBet(bet)
+    if (enriched.isCancellable === false) {
+      return error(
+        'BET_NOT_CANCELLABLE',
+        'This bet can no longer be cancelled — the match has started or finished',
+        400,
+      )
+    }
+
     const penalty = calculateCancellationPenalty(bet.stake)
     const refund = bet.stake - penalty
     user.balance += refund

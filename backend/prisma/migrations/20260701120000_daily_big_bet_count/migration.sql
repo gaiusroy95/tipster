@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "DailyBetUsage" ADD COLUMN "bigCount" INTEGER NOT NULL DEFAULT 0;

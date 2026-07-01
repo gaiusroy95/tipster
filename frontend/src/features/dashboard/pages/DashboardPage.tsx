@@ -5,12 +5,14 @@ import { FormStreak } from '@/shared/components/BetCard'
 import { SkeletonCard } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { Button } from '@/shared/components/ui/Button'
+import { useActiveBetsSettlementSync } from '@/features/bets/hooks/useBets'
 import { useDashboard } from '@/features/dashboard/hooks/useDashboard'
 import { formatCredits, formatProfitLoss } from '@/shared/utils/formatCredits'
 import { formatDateTime } from '@/shared/utils/formatDate'
 import { ROUTES } from '@/core/constants/routes'
 
 export function DashboardPage() {
+  useActiveBetsSettlementSync()
   const { data, isLoading, isError, refetch } = useDashboard()
 
   if (isLoading) {
@@ -56,12 +58,14 @@ export function DashboardPage() {
         />
       </div>
 
-      {data.form.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-sm font-medium text-text-muted mb-3">Current form</h2>
+      <div className="mt-6">
+        <h2 className="text-sm font-medium text-text-muted mb-3">Current form</h2>
+        {data.form.length > 0 ? (
           <FormStreak form={data.form} />
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-text-muted">No settled bets yet — your win/loss form will appear here.</p>
+        )}
+      </div>
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Recent activity</h2>

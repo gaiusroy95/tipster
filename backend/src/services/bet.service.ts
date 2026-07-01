@@ -11,6 +11,7 @@ import {
   resolveBetSelectionFromMarket,
   isMatchFinished,
 } from '../lib/bet-selection-resolver';
+import { assertBetCancellable } from '../lib/bet-cancellability';
 import { sportsService } from './sports.service';
 import { toBetDto } from '../mappers/bet.mapper';
 import { seasonService } from './season.service';
@@ -91,12 +92,15 @@ export const betService = {
       where: { userId_date: { userId, date: dateKey } },
     });
     const betsUsed = usage?.count ?? 0;
+    const bigBetsUsed = usage?.bigCount ?? 0;
     const tomorrow = new Date(`${dateKey}T00:00:00.000Z`);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
     return {
       betsUsed,
       betsLimit: BETTING_RULES.dailyBetLimit,
+      bigBetsUsed,
+      bigBetsLimit: BETTING_RULES.dailyBigBetLimit,
       resetsAt: tomorrow.toISOString(),
     };
   },
@@ -109,7 +113,24 @@ export const betService = {
       },
       orderBy: { placedAt: 'desc' },
     });
-    return bets.map(toBetDto);
+
+    const activeMatchIds = [
+      ...new Set(
+        bets.filter((b) => b.status === 'active').map((b) => b.matchId),
+      ),
+    ];
+
+    const markets = new Map<string, Awaited<ReturnType<typeof sportsService.getMarketOrNull>>>();
+    await Promise.all(
+      activeMatchIds.map(async (matchId) => {
+        const market = await sportsService.getMarketOrNull(10, matchId);
+        markets.set(matchId, market);
+      }),
+    );
+
+    return bets.map((bet) =>
+      toBetDto(bet, bet.status === 'active' ? markets.get(bet.matchId) : null),
+    );
   },
 
   async listPublicBets(userId: string, status?: string) {
@@ -173,6 +194,15 @@ export const betService = {
       );
     }
 
+    const bigBetCount = dailyUsage?.bigCount ?? 0;
+    if (betSize === 'big' && bigBetCount >= BETTING_RULES.dailyBigBetLimit) {
+      throw new ApiException(
+        'DAILY_BIG_BET_LIMIT',
+        `Daily big bet limit (${BETTING_RULES.dailyBigBetLimit}) reached`,
+        400,
+      );
+    }
+
     const { resolved } = await resolvePlacementSelection(body);
 
     const potentialReturn = computePotentialReturn(
@@ -222,8 +252,16 @@ export const betService = {
 
       await tx.dailyBetUsage.upsert({
         where: { userId_date: { userId, date: dateKey } },
-        create: { userId, date: dateKey, count: 1 },
-        update: { count: { increment: 1 } },
+        create: {
+          userId,
+          date: dateKey,
+          count: 1,
+          bigCount: betSize === 'big' ? 1 : 0,
+        },
+        update: {
+          count: { increment: 1 },
+          ...(betSize === 'big' ? { bigCount: { increment: 1 } } : {}),
+        },
       });
 
       return createdBet;
@@ -278,6 +316,9 @@ export const betService = {
         400,
       );
     }
+
+    const market = await sportsService.getMarketOrNull(10, bet.matchId);
+    assertBetCancellable(bet, market);
 
     const penalty = calculateCancellationPenalty(bet.stake);
     const refund = bet.stake - penalty;
@@ -340,6 +381,6 @@ export const betService = {
       console.error('[bet] achievement sync failed:', error);
     });
 
-    return toBetDto(updatedBet);
+    return toBetDto(updatedBet, market);
   },
 };

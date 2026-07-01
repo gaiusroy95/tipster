@@ -222,7 +222,7 @@ export function HelpPage() {
             kickoff, cancellation is not available.
           </HelpFaqItem>
           <HelpFaqItem question="When are bets settled?">
-            Automatically after official results are confirmed. Won bets credit your potential return; lost bets
+            Automatically after official results are confirmed. Won bets credit your total payout (stake + win); lost bets
             keep the stake deducted at placement. Check Active Bets and Bet History for status.
           </HelpFaqItem>
           <HelpFaqItem question="Why was my bet rejected?">

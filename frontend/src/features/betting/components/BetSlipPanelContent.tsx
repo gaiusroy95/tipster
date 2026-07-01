@@ -14,7 +14,7 @@ import { previewBetPlacement } from '@/features/bets/lib/syncBetState'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { bettingRules, isValidStake } from '@/core/config/bettingRules'
-import { calcBetReturn } from '@/features/betting/lib/betSlipUtils'
+import { calcPotentialWin } from '@/features/betting/lib/betSlipUtils'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
@@ -71,16 +71,27 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   }
 
   const totalStake = selections.reduce((sum, sel) => sum + selectionStake(sel), 0)
-  const totalPotentialReturn = selections.reduce(
-    (sum, sel) => sum + calcBetReturn(selectionStake(sel), sel.odds, sel.marketType),
+  const totalPotentialWin = selections.reduce(
+    (sum, sel) => sum + calcPotentialWin(selectionStake(sel), sel.odds, sel.marketType),
     0,
   )
 
   const betsUsed = dailyLimit?.betsUsed ?? 0
   const betsLimit = dailyLimit?.betsLimit ?? bettingRules.dailyBetLimit
+  const bigBetsUsed = dailyLimit?.bigBetsUsed ?? 0
+  const bigBetsLimit = dailyLimit?.bigBetsLimit ?? bettingRules.dailyBigBetLimit
+  const bigBetsRemaining = Math.max(0, bigBetsLimit - bigBetsUsed)
   const betsRemaining = Math.max(0, betsLimit - betsUsed)
   const dailyLimitReached = betsRemaining === 0
   const tooManySelections = selections.length > betsRemaining
+  const bigBetSelectionCount = selections.filter(
+    (sel) => selectionStake(sel) === bettingRules.premiumStake,
+  ).length
+  const bigBetLimitExceeded = bigBetSelectionCount > bigBetsRemaining
+  const hasSmallBetSelection = selections.some(
+    (sel) => selectionStake(sel) === bettingRules.standardStake,
+  )
+  const hasBigBetSelection = bigBetSelectionCount > 0
 
   const validateSlip = (): boolean => {
     const invalidStake = selections.find((sel) => !isValidStake(selectionStake(sel)))
@@ -101,6 +112,12 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
     if (tooManySelections) {
       setStakeError(
         `Only ${betsRemaining} bet${betsRemaining === 1 ? '' : 's'} left today — remove ${selections.length - betsRemaining} selection${selections.length - betsRemaining === 1 ? '' : 's'}`,
+      )
+      return false
+    }
+    if (bigBetLimitExceeded) {
+      setStakeError(
+        `Only ${bigBetsRemaining} big bet${bigBetsRemaining === 1 ? '' : 's'} left today (${bigBetsUsed}/${bigBetsLimit} used)`,
       )
       return false
     }
@@ -205,16 +222,19 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
   const summaryFooter = (
     <BetSlipSummaryFooter
       totalStake={totalStake}
-      totalPotentialReturn={totalPotentialReturn}
+      totalPotentialWin={totalPotentialWin}
       balance={balance}
       betsUsed={betsUsed}
       betsLimit={betsLimit}
+      bigBetsUsed={bigBetsUsed}
+      bigBetsLimit={bigBetsLimit}
+      showBigBetInfo={hasSmallBetSelection}
       dailyLimitReached={dailyLimitReached}
       tooManySelections={tooManySelections}
       stakeError={stakeError}
       placeBetLabel={placeBetLabel}
       onPlaceClick={() => openConfirmWithPreview()}
-      disabled={dailyLimitReached || tooManySelections || isPreviewing}
+      disabled={dailyLimitReached || tooManySelections || bigBetLimitExceeded || isPreviewing}
     />
   )
 
@@ -222,14 +242,14 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
     <div className="space-y-3">
       {selections.map((sel) => {
         const stake = selectionStake(sel)
-        const potentialReturn = calcBetReturn(stake, sel.odds, sel.marketType)
+        const potentialWin = calcPotentialWin(stake, sel.odds, sel.marketType)
 
         return (
           <BetSlipSelectionRow
             key={sel.matchId}
             selection={sel}
             stake={stake}
-            potentialReturn={potentialReturn}
+            potentialWin={potentialWin}
             onStakeChange={(amount) => {
               setSelectionStake(sel.matchId, amount)
               setStakeError(undefined)
@@ -252,8 +272,11 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
         open={confirmOpen}
         selections={selections}
         totalStake={totalStake}
-        totalPotentialReturn={totalPotentialReturn}
+        totalPotentialWin={totalPotentialWin}
         isPlacing={isPlacingAll}
+        hasBigBetSelection={hasBigBetSelection}
+        bigBetsUsed={bigBetsUsed}
+        bigBetsLimit={bigBetsLimit}
         onClose={() => setConfirmOpen(false)}
         onConfirm={handlePlaceAllBets}
       />

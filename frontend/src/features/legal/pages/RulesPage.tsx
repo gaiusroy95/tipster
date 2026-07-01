@@ -189,7 +189,7 @@ export function RulesPage() {
           <li>The fixture is open for betting (not started or suspended).</li>
         </ul>
         <LegalCallout variant="info">
-          Potential return is calculated from the displayed odds at placement. Once confirmed, the stake is
+          Potential win is calculated from the displayed odds at placement (net profit, excluding stake). Once confirmed, the stake is
           deducted immediately from your balance.
         </LegalCallout>
       </InfoSection>
@@ -222,7 +222,7 @@ export function RulesPage() {
             <tbody className="divide-y divide-border-default/50">
               <tr>
                 <td className="px-4 py-3 font-medium text-accent-win">Won</td>
-                <td className="px-4 py-3 text-text-muted">Potential return credited to your wallet</td>
+                <td className="px-4 py-3 text-text-muted">Total payout (stake + win) credited to your wallet</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-medium text-accent-loss">Lost</td>

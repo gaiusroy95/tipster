@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import path from 'node:path';
 import { errorMiddleware } from './middleware/error.middleware';
 import { authRouter } from './routes/auth.routes';
 import { oauthRouter } from './routes/oauth.routes';
@@ -32,6 +33,7 @@ export function createApp() {
   app.set('trust proxy', true);
   app.use(cors(buildCorsOptions()));
   app.use(express.json());
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   app.use(healthRouter);
   app.use('/api/auth', authRouter);

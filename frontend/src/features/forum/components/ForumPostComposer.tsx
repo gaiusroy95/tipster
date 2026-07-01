@@ -10,9 +10,10 @@ import {
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/shared/components/ui/Input'
 import { Label } from '@/shared/components/ui/Label'
-import { useForumCategories } from '@/features/forum/hooks/useForum'
+import { useForumCategories, uploadForumImage } from '@/features/forum/hooks/useForum'
 import type { CreateForumPostPayload, ForumPostStatus } from '@/features/forum/types/forum'
 import { cn } from '@/shared/utils/cn'
+import { useToast } from '@/shared/components/ui/Toast'
 
 interface ForumPostComposerProps {
   onSubmit: (payload: CreateForumPostPayload) => Promise<void>
@@ -52,6 +53,7 @@ const textareaClass =
 
 export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostComposerProps) {
   const { data: categories } = useForumCategories()
+  const { toast } = useToast()
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [status, setStatus] = useState<ForumPostStatus>('published')
@@ -69,6 +71,42 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
   const [pollEnabled, setPollEnabled] = useState(false)
   const [pollQuestion, setPollQuestion] = useState('')
   const [pollOptions, setPollOptions] = useState(['', ''])
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [attachUploading, setAttachUploading] = useState(false)
+
+  const handleCoverFile = async (file: File | undefined) => {
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      toast('Please choose an image file', 'error')
+      return
+    }
+    setCoverUploading(true)
+    try {
+      const url = await uploadForumImage(file)
+      setCoverImageUrl(url)
+    } catch {
+      toast('Failed to upload cover image', 'error')
+    } finally {
+      setCoverUploading(false)
+    }
+  }
+
+  const handleAttachFile = async (file: File | undefined) => {
+    if (!file || attachType !== 'image') return
+    if (!file.type.startsWith('image/')) {
+      toast('Please choose an image file', 'error')
+      return
+    }
+    setAttachUploading(true)
+    try {
+      const url = await uploadForumImage(file)
+      setAttachUrl(url)
+    } catch {
+      toast('Failed to upload image', 'error')
+    } finally {
+      setAttachUploading(false)
+    }
+  }
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase().replace(/\s+/g, '-')
@@ -171,17 +209,36 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
             </select>
           </div>
           <div>
-            <Label htmlFor="forum-cover" className="inline-flex items-center gap-1.5">
+            <Label htmlFor="forum-cover-file" className="inline-flex items-center gap-1.5">
               <PhotoIcon className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
-              Cover image URL
+              Cover image
             </Label>
-            <Input
-              id="forum-cover"
-              value={coverImageUrl}
-              onChange={(e) => setCoverImageUrl(e.target.value)}
-              placeholder="https://…"
-              className="mt-1.5"
-            />
+            <div className="mt-1.5 flex flex-col gap-2">
+              <input
+                id="forum-cover-file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                disabled={coverUploading || isLoading}
+                onChange={(e) => {
+                  void handleCoverFile(e.target.files?.[0])
+                  e.target.value = ''
+                }}
+                className="block w-full text-xs text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-accent-secondary/15 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-accent-secondary hover:file:bg-accent-secondary/25"
+              />
+              <Input
+                id="forum-cover"
+                value={coverImageUrl}
+                onChange={(e) => setCoverImageUrl(e.target.value)}
+                placeholder="Or paste image URL"
+              />
+              {coverImageUrl && (
+                <img
+                  src={coverImageUrl}
+                  alt="Cover preview"
+                  className="max-h-40 w-full rounded-lg border border-border-default/60 object-cover"
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -225,7 +282,7 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
           <p className="mt-2 text-xs text-text-muted">Up to 5 tags. Press Enter to add quickly.</p>
         </ComposerSection>
 
-        <ComposerSection title="Media & attachments" icon={PaperClipIcon} defaultOpen={false}>
+        <ComposerSection title="Media & attachments" icon={PaperClipIcon} defaultOpen>
           <div className="grid gap-3 sm:grid-cols-4">
             <select
               value={attachType}
@@ -236,11 +293,23 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
               <option value="link">Link</option>
               <option value="file">File</option>
             </select>
+            {attachType === 'image' && (
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                disabled={attachUploading || isLoading}
+                onChange={(e) => {
+                  void handleAttachFile(e.target.files?.[0])
+                  e.target.value = ''
+                }}
+                className="sm:col-span-2 block w-full text-xs text-text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-accent-secondary/15 file:px-2 file:py-1.5 file:text-[11px] file:font-semibold file:text-accent-secondary"
+              />
+            )}
             <Input
               value={attachUrl}
               onChange={(e) => setAttachUrl(e.target.value)}
-              placeholder="URL"
-              className="sm:col-span-2"
+              placeholder={attachType === 'image' ? 'Or paste image URL' : 'URL'}
+              className={attachType === 'image' ? 'sm:col-span-4' : 'sm:col-span-2'}
             />
             <Button type="button" variant="secondary" onClick={addAttachment} className="sm:col-span-1">
               Add

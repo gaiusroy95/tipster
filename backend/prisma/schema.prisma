@@ -348,9 +348,10 @@ model Bet {
 }
 
 model DailyBetUsage {
-  userId String
-  date   String
-  count  Int    @default(0)
+  userId   String
+  date     String
+  count    Int    @default(0)
+  bigCount Int    @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

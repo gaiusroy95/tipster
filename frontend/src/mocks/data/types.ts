@@ -81,6 +81,9 @@ export interface Bet {
   placedAt: string
   settledAt?: string
   profitLoss?: number
+  matchStartTime?: string
+  isCancellable?: boolean
+  matchStatus?: 'scheduled' | 'live' | 'finished'
   match?: Match
   homeTeam?: Team
   awayTeam?: Team

@@ -6,6 +6,7 @@ import { leaderboardService } from './leaderboard.service';
 import { achievementService } from './achievement.service';
 import { forumService } from './forum.service';
 import { usersService } from './users.service';
+import { normalizeFormLetters } from '../lib/form-normalizer';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -205,7 +206,7 @@ export const profileService = {
 
     const currentRank = participant?.rank ?? user.rank;
     const seasonPoints = participant?.points ?? 0;
-    const form = (participant?.form ?? []).slice(0, 5) as ('W' | 'L' | 'D')[];
+    const form = normalizeFormLetters((participant?.form ?? []).slice(0, 5));
 
     const stakes = userBets.map((b) => b.stake);
     const avgStake =

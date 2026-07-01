@@ -24,7 +24,9 @@ export function ActiveBetCard({
   const away = bet.awayTeam?.shortName ?? 'Away'
   const penalty = calculateCancellationPenalty(bet.stake)
   const refund = bet.stake - penalty
-  const isLive = bet.match?.status === 'live'
+  const isLive = bet.matchStatus === 'live' || bet.match?.status === 'live'
+  const isFinished = bet.matchStatus === 'finished' || bet.match?.status === 'finished'
+  const canCancel = bet.isCancellable !== false && !isLive && !isFinished
 
   return (
     <article
@@ -41,10 +43,17 @@ export function ActiveBetCard({
                 {bet.league.name}
               </span>
             )}
-            {bet.match && <LiveBadge status={bet.match.status} minute={bet.match.minute} />}
-            <span className="inline-flex items-center rounded-full bg-accent-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-gold">
-              Open
-            </span>
+            {isLive && <LiveBadge status="live" />}
+            {isFinished && !isLive && (
+              <span className="inline-flex items-center rounded-full bg-bg-elevated px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                Finished
+              </span>
+            )}
+            {!isLive && !isFinished && (
+              <span className="inline-flex items-center rounded-full bg-accent-gold/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-gold">
+                Open
+              </span>
+            )}
           </div>
           <Link to={matchPath(bet.matchId)} className="group inline-block">
             <h3 className="text-lg sm:text-xl font-bold tracking-tight group-hover:text-accent-secondary transition-colors">
@@ -63,9 +72,9 @@ export function ActiveBetCard({
           </p>
         </div>
         <div className="flex sm:flex-col sm:items-end gap-1 sm:text-right shrink-0">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Potential return</p>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-text-muted">Potential win</p>
           <p className="font-mono text-xl font-bold tabular-nums text-accent-primary">
-            {formatCredits(bet.potentialReturn)}
+            {formatCredits(bet.potentialReturn - bet.stake)}
           </p>
           <p className="font-mono text-xs tabular-nums text-text-muted">
             @ {formatMalayOdds(bet.odds)}
@@ -84,7 +93,7 @@ export function ActiveBetCard({
         />
       </div>
 
-      {onCancel && (
+      {onCancel && canCancel && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-3.5">
           <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
             Cancel penalty{' '}
@@ -96,6 +105,13 @@ export function ActiveBetCard({
           <Button variant="danger" size="sm" className="sm:shrink-0 w-full sm:w-auto" onClick={onCancel}>
             Cancel bet
           </Button>
+        </div>
+      )}
+      {onCancel && !canCancel && (
+        <div className="px-4 sm:px-5 py-3.5 border-t border-border-default/30">
+          <p className="text-xs sm:text-sm text-text-muted">
+            Match started or finished — cancellation is no longer available.
+          </p>
         </div>
       )}
     </article>

@@ -1,4 +1,10 @@
 import type { Bet } from '@prisma/client';
+import type { Market } from '../types/overtime';
+import {
+  isBetCancellable,
+  resolveBetMatchStatus,
+  type BetMatchStatus,
+} from '../lib/bet-cancellability';
 
 export interface BetDto {
   id: string;
@@ -15,6 +21,9 @@ export interface BetDto {
   placedAt: string;
   settledAt?: string;
   profitLoss?: number;
+  matchStartTime?: string;
+  isCancellable: boolean;
+  matchStatus?: BetMatchStatus;
   homeTeam?: { id: string; name: string; shortName: string };
   awayTeam?: { id: string; name: string; shortName: string };
   league?: { id: string; name: string; country: string; sportId: string };
@@ -26,7 +35,8 @@ function shortName(name: string): string {
   return parts.map((p) => p[0]).join('').slice(0, 3).toUpperCase();
 }
 
-export function toBetDto(bet: Bet): BetDto {
+export function toBetDto(bet: Bet, market?: Market | null): BetDto {
+  const matchStatus = resolveBetMatchStatus(market);
   const dto: BetDto = {
     id: bet.id,
     userId: bet.userId,
@@ -40,6 +50,7 @@ export function toBetDto(bet: Bet): BetDto {
     status: bet.status,
     betSize: bet.betSize,
     placedAt: bet.placedAt.toISOString(),
+    isCancellable: isBetCancellable(bet, market),
     homeTeam: {
       id: bet.matchId,
       name: bet.homeTeamName,
@@ -52,6 +63,8 @@ export function toBetDto(bet: Bet): BetDto {
     },
   };
 
+  if (bet.matchStartTime) dto.matchStartTime = bet.matchStartTime.toISOString();
+  if (bet.status === 'active') dto.matchStatus = matchStatus;
   if (bet.settledAt) dto.settledAt = bet.settledAt.toISOString();
   if (bet.profitLoss != null) dto.profitLoss = bet.profitLoss;
 

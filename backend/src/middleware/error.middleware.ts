@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
+import multer from 'multer';
 import { ApiException } from '../lib/api-exception';
 import { isPrismaConnectionError } from '../lib/prisma';
 
@@ -15,6 +16,22 @@ export function errorMiddleware(
       code: err.code,
       message: err.message,
       ...(err.details ? { details: err.details } : {}),
+    });
+    return;
+  }
+
+  if (err instanceof multer.MulterError) {
+    res.status(400).json({
+      code: 'VALIDATION_ERROR',
+      message: err.code === 'LIMIT_FILE_SIZE' ? 'Image must be 5MB or smaller' : err.message,
+    });
+    return;
+  }
+
+  if (err instanceof Error && err.message.includes('Only JPEG')) {
+    res.status(400).json({
+      code: 'VALIDATION_ERROR',
+      message: err.message,
     });
     return;
   }

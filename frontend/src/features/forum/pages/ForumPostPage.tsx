@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeftIcon, ChatBubbleLeftIcon, EyeIcon } from '@heroicons/react/24/outline'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
@@ -21,12 +21,23 @@ export function ForumPostPage() {
   const { data: comments = [] } = useForumComments(data?.id ?? '')
   const recordView = useRecordForumView()
   const recordedRef = useRef<string | null>(null)
+  const [displayViewCount, setDisplayViewCount] = useState<number | null>(null)
 
   useEffect(() => {
     if (!data?.id || data.status !== 'published' || recordedRef.current === data.id) return
     recordedRef.current = data.id
-    recordView.mutate(data.id)
+    recordView.mutate(data.id, {
+      onSuccess: (result) => {
+        setDisplayViewCount(result.viewCount)
+      },
+    })
   }, [data?.id, data?.status, recordView])
+
+  useEffect(() => {
+    if (data?.viewCount != null) {
+      setDisplayViewCount(data.viewCount)
+    }
+  }, [data?.viewCount])
 
   if (isLoading) {
     return (
@@ -45,7 +56,7 @@ export function ForumPostPage() {
     )
   }
 
-  const viewCount = recordView.data?.viewCount ?? data.viewCount
+  const viewCount = displayViewCount ?? data.viewCount ?? 0
 
   return (
     <div className="space-y-6 pb-8">

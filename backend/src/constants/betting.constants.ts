@@ -4,6 +4,7 @@ export const BETTING_RULES = {
   premiumStake: 100000,
   allowedStakes: [25000, 100000] as const,
   dailyBetLimit: 3,
+  dailyBigBetLimit: 3,
   cancellationPenaltyPercent: 10,
 } as const;
 
@@ -43,6 +44,15 @@ export function computePotentialReturn(
     return Math.round(malayReturn(stake, odds));
   }
   return Math.round(stake * (odds > 0 ? odds : 2));
+}
+
+/** Net profit displayed as "Potential win" (excludes returned stake). */
+export function computePotentialWin(
+  stake: number,
+  odds: number,
+  marketType: string,
+): number {
+  return computePotentialReturn(stake, odds, marketType) - stake;
 }
 
 export function utcDateKey(): string {

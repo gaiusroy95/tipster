@@ -52,9 +52,9 @@ export function BetCard({ bet, showUser }: { bet: Bet; showUser?: boolean }) {
           <p className="font-mono font-medium">{formatCredits(bet.stake)}</p>
         </div>
         <div>
-          <span className="text-text-muted">Potential</span>
+          <span className="text-text-muted">Potential win</span>
           <p className="font-mono font-medium text-accent-primary">
-            {formatCredits(bet.potentialReturn)}
+            {formatCredits(bet.potentialReturn - bet.stake)}
           </p>
         </div>
       </div>

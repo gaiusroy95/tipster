@@ -68,7 +68,9 @@ export function ProfileRewardsWidget({
       action={{ label: 'Post now', to: ROUTES.FORUM }}
       footer={
         forumViewsRemaining > 0
-          ? `You have earned ${formatCredits(forumBonusEarned)} so far. ${forumViewsRemaining.toLocaleString()} more views to earn ${formatCredits(FORUM_VIEW_REWARD)}.`
+          ? forumViews === 0
+            ? `Publish posts to start earning view milestones. ${forumViewsRemaining.toLocaleString()} views to your next ${formatCredits(FORUM_VIEW_REWARD)} bonus.`
+            : `You have earned ${formatCredits(forumBonusEarned)} so far. ${forumViewsRemaining.toLocaleString()} more views to earn ${formatCredits(FORUM_VIEW_REWARD)}.`
           : `View target reached — ${formatCredits(FORUM_VIEW_REWARD)} bonus credited.`
       }
       compact={variant === 'compact'}
@@ -136,6 +138,11 @@ export function ProfileRewardsWidget({
         <ProfileBalanceIcon src={PROFILE_ICON_STREAK} className={REWARD_MISSION_ICON_CLASS} alt="" />
         <p className="text-sm font-semibold tabular-nums">
           {currentWin} win{currentWin !== 1 ? 's' : ''} / {STREAK_BONUS_TARGET} win streak
+          {currentWin === 0 && (
+            <span className="block text-xs font-normal text-text-muted mt-0.5">
+              Place and win bets to start your streak
+            </span>
+          )}
         </p>
       </div>
     </RewardMissionCard>

@@ -444,7 +444,15 @@ export const mockDb = {
     const homeTeam = match ? this.getTeam(match.homeTeamId) : undefined
     const awayTeam = match ? this.getTeam(match.awayTeamId) : undefined
     const league = match ? this.getLeague(match.leagueId) : undefined
-    return { ...bet, match, homeTeam, awayTeam, league }
+    const matchStatus =
+      match?.status === 'live'
+        ? 'live'
+        : match?.status === 'finished'
+          ? 'finished'
+          : 'scheduled'
+    const isCancellable =
+      bet.status === 'active' && matchStatus === 'scheduled'
+    return { ...bet, match, homeTeam, awayTeam, league, matchStatus, isCancellable }
   },
 
   getProfileStats(userId: string): UserProfileStats | null {

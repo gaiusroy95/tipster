@@ -42,6 +42,28 @@ console.log('\n--- Malay return (real odds) ---')
 assert('stake 25k @ +2.70 → 92.5k', malayReturn(25_000, 2.7) === 92_500)
 assert('stake 25k @ -0.65 → 63,462', malayReturn(25_000, -0.65) === 63_462)
 
+console.log('\n--- Potential win (net profit display) ---')
+function potentialWin(stake, odds) {
+  return malayReturn(stake, odds) - stake
+}
+assert('25k @ +2.70 → win 67,500', potentialWin(25_000, 2.7) === 67_500)
+assert('wallet credit on win stays total payout 92,500', malayReturn(25_000, 2.7) === 92_500)
+
+console.log('\n--- Bet cancellability ---')
+function isBetCancellable(bet, market) {
+  if (bet.status !== 'active') return false
+  if (market?.finished) return false
+  if (market?.live) return false
+  if (bet.matchStartTime && bet.matchStartTime <= Date.now()) return false
+  return true
+}
+const future = Date.now() + 60_000
+const past = Date.now() - 60_000
+assert('active pre-kickoff → cancellable', isBetCancellable({ status: 'active', matchStartTime: future }, { finished: false, live: false }))
+assert('match live → not cancellable', !isBetCancellable({ status: 'active', matchStartTime: past }, { finished: false, live: true }))
+assert('match finished → not cancellable', !isBetCancellable({ status: 'active', matchStartTime: past }, { finished: true, live: false }))
+assert('kickoff passed → not cancellable', !isBetCancellable({ status: 'active', matchStartTime: past }, null))
+
 console.log('\n--- Winner settlement (3-way) ---')
 assert('home win, home pick → won', evaluateWinner(0, 2, 1) === 'won')
 assert('away win, away pick → won', evaluateWinner(2, 1, 2) === 'won')

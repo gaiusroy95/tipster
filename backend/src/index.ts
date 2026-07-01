@@ -9,7 +9,7 @@ import { betRepairService } from './services/bet-repair.service';
 import { adminBootstrapService } from './services/admin/admin-bootstrap.service';
 import { marketTypeConfigService } from './services/admin/market-type-config.service';
 
-const SETTLEMENT_INTERVAL_MS = 2 * 60 * 1000;
+const SETTLEMENT_INTERVAL_MS = 30 * 1000;
 
 function logGoogleOAuthStatus(): void {
   const hasId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());

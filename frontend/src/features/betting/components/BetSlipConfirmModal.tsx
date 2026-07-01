@@ -1,7 +1,7 @@
 import { Button } from '@/shared/components/ui/Button'
 import { Modal } from '@/shared/components/ui/Modal'
-import { getStakeLabel } from '@/core/config/bettingRules'
-import { calcBetReturn } from '@/features/betting/lib/betSlipUtils'
+import { getStakeLabel, bettingRules } from '@/core/config/bettingRules'
+import { calcPotentialWin } from '@/features/betting/lib/betSlipUtils'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import type { BetSelection } from '@/features/betting/stores/betSlipStore'
 import { resolveSelectionStake } from '@/features/betting/stores/betSlipStore'
@@ -10,8 +10,11 @@ interface BetSlipConfirmModalProps {
   open: boolean
   selections: BetSelection[]
   totalStake: number
-  totalPotentialReturn: number
+  totalPotentialWin: number
   isPlacing: boolean
+  hasBigBetSelection: boolean
+  bigBetsUsed: number
+  bigBetsLimit: number
   onClose: () => void
   onConfirm: () => void
 }
@@ -20,8 +23,11 @@ export function BetSlipConfirmModal({
   open,
   selections,
   totalStake,
-  totalPotentialReturn,
+  totalPotentialWin,
   isPlacing,
+  hasBigBetSelection,
+  bigBetsUsed,
+  bigBetsLimit,
   onClose,
   onConfirm,
 }: BetSlipConfirmModalProps) {
@@ -34,11 +40,20 @@ export function BetSlipConfirmModal({
           Review your selections before placing virtual bets.
         </p>
 
+        {hasBigBetSelection && (
+          <div className="rounded-lg border border-accent-gold/30 bg-accent-gold/5 px-3 py-2.5 text-xs text-text-muted">
+            You are placing a{' '}
+            <strong className="text-accent-gold">{formatCredits(bettingRules.premiumStake)}</strong> big bet.
+            Daily big bets: {bigBetsUsed + 1}/{bigBetsLimit} after confirmation
+            {bigBetsUsed + 1 > bigBetsLimit ? ' — limit exceeded' : ''}.
+          </div>
+        )}
+
         <div className="overflow-hidden rounded-xl ring-1 ring-border-default/60">
           <ul className="divide-y divide-border-default/50">
             {selections.map((sel) => {
               const stake = resolveSelectionStake(sel)
-              const potentialReturn = calcBetReturn(stake, sel.odds, sel.marketType)
+              const potentialWin = calcPotentialWin(stake, sel.odds, sel.marketType)
               return (
                 <li key={sel.matchId} className="bg-bg-elevated/20 px-4 py-3">
                   <p className="text-sm font-medium leading-snug">
@@ -55,7 +70,7 @@ export function BetSlipConfirmModal({
                       </span>
                     </span>
                     <span className="font-mono font-semibold tabular-nums text-accent-primary">
-                      {formatCredits(potentialReturn)}
+                      {formatCredits(potentialWin)}
                     </span>
                   </div>
                 </li>
@@ -69,9 +84,9 @@ export function BetSlipConfirmModal({
               <span className="font-mono font-semibold tabular-nums">{formatCredits(totalStake)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-text-muted">Est. return</span>
+              <span className="text-text-muted">Est. win</span>
               <span className="font-mono font-semibold tabular-nums text-accent-primary">
-                {formatCredits(totalPotentialReturn)}
+                {formatCredits(totalPotentialWin)}
               </span>
             </div>
           </div>

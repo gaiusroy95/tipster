@@ -4,12 +4,15 @@ import { cn } from '@/shared/utils/cn'
 
 export function ActiveBetsSummary({ bets }: { bets: Bet[] }) {
   const totalStake = bets.reduce((sum, bet) => sum + bet.stake, 0)
-  const totalPotential = bets.reduce((sum, bet) => sum + bet.potentialReturn, 0)
+  const totalPotentialWin = bets.reduce(
+    (sum, bet) => sum + (bet.potentialReturn - bet.stake),
+    0,
+  )
 
   const items = [
     { label: 'Open positions', value: String(bets.length) },
     { label: 'Total at risk', value: formatCredits(totalStake), mono: true },
-    { label: 'Potential return', value: formatCredits(totalPotential), mono: true, accent: true },
+    { label: 'Potential win', value: formatCredits(totalPotentialWin), mono: true, accent: true },
   ]
 
   return (

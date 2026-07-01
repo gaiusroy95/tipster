@@ -56,6 +56,15 @@ export function syncBetStateAfterPlacement(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all() })
   void queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all() })
 
+  void refreshAuthBalance()
+}
+
+/** Refresh wallet, dashboard, and profile after bets settle asynchronously. */
+export function syncBetStateAfterSettlement(queryClient: QueryClient): void {
+  syncBetStateAfterPlacement(queryClient)
+}
+
+function refreshAuthBalance(): void {
   void apiClient
     .get<ApiResponse<{ balance: number } & Record<string, unknown>>>('/auth/me')
     .then((meRes) => {
@@ -68,6 +77,6 @@ export function syncBetStateAfterPlacement(queryClient: QueryClient): void {
       }
     })
     .catch(() => {
-      // Balance refresh is best-effort after placement.
+      // Balance refresh is best-effort.
     })
 }

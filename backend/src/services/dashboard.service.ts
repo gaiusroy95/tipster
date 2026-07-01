@@ -3,6 +3,7 @@ import { toWalletTransactionDto } from '../mappers/wallet.mapper';
 import { seasonService } from './season.service';
 import { leaderboardService } from './leaderboard.service';
 import { forumService } from './forum.service';
+import { normalizeFormLetters } from '../lib/form-normalizer';
 
 export const dashboardService = {
   async getDashboard(userId: string) {
@@ -39,7 +40,7 @@ export const dashboardService = {
         userId,
         activeSeason.id,
       );
-      form = participant?.form.slice(0, 5) ?? [];
+      form = normalizeFormLetters(participant?.form.slice(0, 5) ?? []);
     }
 
     const forumStats = await forumService.getUserForumStats(userId);

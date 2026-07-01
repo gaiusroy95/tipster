@@ -13,6 +13,7 @@ import {
   type ForumStatusFilter,
 } from '@/features/forum/lib/forumUtils'
 import { Skeleton } from '@/shared/components/ui/Card'
+import { Button } from '@/shared/components/ui/Button'
 import { AdminPageShell } from '@/shared/components/AdminPageShell'
 
 const PAGE_SIZE = 20
@@ -33,7 +34,7 @@ export function ForumModerationPage() {
     page,
   }
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: queryKeys.forum(queryParams),
     queryFn: async () => {
       const res = await adminClient.get<ApiResponse<Paginated<AdminForumPost>>>('/posts', {
@@ -104,6 +105,19 @@ export function ForumModerationPage() {
       id: post.id,
       status: post.status === 'hidden' ? 'published' : 'hidden',
     })
+  }
+
+  if (isError) {
+    return (
+      <AdminPageShell compact>
+        <div className="rounded-xl border border-accent-loss/30 bg-accent-loss/5 p-6 text-center space-y-4">
+          <p className="text-sm text-text-muted">Could not load forum threads. Check your connection and try again.</p>
+          <Button variant="secondary" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      </AdminPageShell>
+    )
   }
 
   return (

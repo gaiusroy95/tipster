@@ -95,6 +95,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://127.0.0.1:3000',
           changeOrigin: true,
         },
+        '/uploads': {
+          target: 'http://127.0.0.1:3000',
+          changeOrigin: true,
+        },
       },
       watch: {
         // Windows locks temp exports (e.g. ChatGPT Image*.png) and crashes the dev server.

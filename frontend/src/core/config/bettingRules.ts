@@ -4,6 +4,7 @@ export const bettingRules = {
   premiumStake: 100000,
   allowedStakes: [25000, 100000] as const,
   dailyBetLimit: 3,
+  dailyBigBetLimit: 3,
   cancellationPenaltyPercent: 10,
 } as const
 
