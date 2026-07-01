@@ -32,7 +32,7 @@ export function createApp() {
 
   app.set('trust proxy', true);
   app.use(cors(buildCorsOptions()));
-  app.use(express.json());
+  app.use(express.json({ limit: '12mb' }));
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   app.use(healthRouter);

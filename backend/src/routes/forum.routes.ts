@@ -16,7 +16,7 @@ import {
   voteForumPollSchema,
 } from '../schemas/forum.schemas';
 import { forumService } from '../services/forum.service';
-import { forumImageUpload, forumUploadPublicUrl } from '../lib/forum-upload';
+import { forumImageUpload, forumUploadDataUrl } from '../lib/forum-upload';
 import { ApiException } from '../lib/api-exception';
 
 export const forumRouter = Router();
@@ -35,7 +35,7 @@ forumRouter.post(
     if (!file) {
       throw new ApiException('VALIDATION_ERROR', 'No image file provided', 400);
     }
-    res.json({ data: { url: forumUploadPublicUrl(file.filename) } });
+    res.json({ data: { url: forumUploadDataUrl(file) } });
   }),
 );
 

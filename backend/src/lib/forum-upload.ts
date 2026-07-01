@@ -1,10 +1,5 @@
-import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
 import multer from 'multer';
-
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'forum');
-mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_MIME = new Set([
   'image/jpeg',
@@ -13,23 +8,14 @@ const ALLOWED_MIME = new Set([
   'image/gif',
 ]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, UPLOAD_DIR);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, `${randomUUID()}${ext}`);
-  },
-});
+const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 
 export const forumImageUpload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const allowedExt = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
-    if (ALLOWED_MIME.has(file.mimetype) || allowedExt.has(ext)) {
+    if (ALLOWED_MIME.has(file.mimetype) || ALLOWED_EXT.has(ext)) {
       cb(null, true);
       return;
     }
@@ -37,6 +23,7 @@ export const forumImageUpload = multer({
   },
 });
 
-export function forumUploadPublicUrl(filename: string): string {
-  return `/uploads/forum/${filename}`;
+export function forumUploadDataUrl(file: Express.Multer.File): string {
+  const mime = file.mimetype || 'image/jpeg';
+  return `data:${mime};base64,${file.buffer.toString('base64')}`;
 }

@@ -9,6 +9,10 @@
       "destination": "https://tipster-wqhx.onrender.com/sports/:path*"
     },
     {
+      "source": "/uploads/:path*",
+      "destination": "https://tipster-wqhx.onrender.com/uploads/:path*"
+    },
+    {
       "source": "/((?!api/|sports/|assets/|mockServiceWorker\\.js|favicon\\.svg|favicon\\.png).*)",
       "destination": "/index.html"
     }

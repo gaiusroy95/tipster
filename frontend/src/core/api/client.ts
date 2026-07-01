@@ -37,9 +37,20 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorBody>) => {
+  (error: AxiosError<ApiErrorBody | string>) => {
     if (error.response?.data) {
-      throw new ApiError(error.response.status, error.response.data)
+      const data = error.response.data
+      if (typeof data === 'object' && data !== null && typeof data.message === 'string') {
+        throw new ApiError(error.response.status, data)
+      }
+      const status = error.response.status
+      const message =
+        status === 404
+          ? 'This feature is not available yet. Please refresh and try again.'
+          : status >= 500
+            ? 'Server error. Please try again in a moment.'
+            : `Request failed (${status})`
+      throw new ApiError(status, { code: 'HTTP_ERROR', message })
     }
     if (error.code === 'ECONNABORTED') {
       throw new ApiError(0, {

@@ -10,10 +10,10 @@ import {
 import { Button } from '@/shared/components/ui/Button'
 import { Input } from '@/shared/components/ui/Input'
 import { Label } from '@/shared/components/ui/Label'
-import { useForumCategories, uploadForumImage } from '@/features/forum/hooks/useForum'
+import { useForumCategories } from '@/features/forum/hooks/useForum'
+import { readImageFileAsDataUrl } from '@/shared/utils/readImageFileAsDataUrl'
 import type { CreateForumPostPayload, ForumPostStatus } from '@/features/forum/types/forum'
 import { cn } from '@/shared/utils/cn'
-import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
 
 interface ForumPostComposerProps {
@@ -83,11 +83,10 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
     }
     setCoverUploading(true)
     try {
-      const url = await uploadForumImage(file)
+      const url = await readImageFileAsDataUrl(file)
       setCoverImageUrl(url)
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Failed to upload cover image'
-      toast(msg, 'error')
+      toast(e instanceof Error ? e.message : 'Failed to load cover image', 'error')
     } finally {
       setCoverUploading(false)
     }
@@ -101,11 +100,10 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
     }
     setAttachUploading(true)
     try {
-      const url = await uploadForumImage(file)
+      const url = await readImageFileAsDataUrl(file)
       setAttachUrl(url)
     } catch (e) {
-      const msg = e instanceof ApiError ? e.message : 'Failed to upload image'
-      toast(msg, 'error')
+      toast(e instanceof Error ? e.message : 'Failed to load image', 'error')
     } finally {
       setAttachUploading(false)
     }
