@@ -99,6 +99,81 @@ export const fetchMarkets = async (networkId: number = 10) => {
   return res.data;
 };
 
+function parseGameInfoPayload(
+  gameId: string,
+  payload: Record<string, GameInfo> | GameInfo | undefined,
+): GameInfo | undefined {
+  if (!payload || typeof payload !== 'object') return undefined;
+  if ('teams' in payload) return payload as GameInfo;
+  return (payload as Record<string, GameInfo>)[gameId];
+}
+
+function scoresFromGameInfo(info: GameInfo | undefined): {
+  homeScore: number;
+  awayScore: number;
+} | null {
+  const homeTeam = info?.teams?.find((team) => team.isHome);
+  const awayTeam = info?.teams?.find((team) => !team.isHome);
+  if (
+    homeTeam &&
+    awayTeam &&
+    Number.isFinite(homeTeam.score) &&
+    Number.isFinite(awayTeam.score)
+  ) {
+    return { homeScore: homeTeam.score, awayScore: awayTeam.score };
+  }
+  return null;
+}
+
+export async function fetchGameSettlementInfo(
+  gameId: string,
+  maxRetries: number = 2,
+  delay: number = 500,
+): Promise<{
+  isGameFinished: boolean;
+  homeScore: number;
+  awayScore: number;
+} | null> {
+  if (!gameId) return null;
+
+  const encodedGameId = encodeURIComponent(gameId);
+  const headers = { 'x-api-key': X_API_KEY };
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const gameInfoResponse = await axios.get<Record<string, GameInfo> | GameInfo>(
+        `${V2_API_URL}/games-info/${encodedGameId}`,
+        {
+          headers,
+          timeout: 8000,
+          validateStatus: (status) => status === 200 || status === 404,
+        },
+      );
+
+      if (gameInfoResponse.status === 404) return null;
+
+      const info = parseGameInfoPayload(gameId, gameInfoResponse.data);
+      const scores = scoresFromGameInfo(info);
+      if (!info || !scores) return null;
+
+      return {
+        isGameFinished: info.isGameFinished,
+        homeScore: scores.homeScore,
+        awayScore: scores.awayScore,
+      };
+    } catch (error) {
+      if (attempt === maxRetries - 1) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(`[overtime] fetchGameSettlementInfo ${gameId}: ${message}`);
+        return null;
+      }
+      await sleep(delay);
+    }
+  }
+
+  return null;
+}
+
 export async function fetchGameScoresWithRetry(
   gameId: string,
   maxRetries: number = 2,
@@ -144,24 +219,8 @@ export async function fetchGameScoresWithRetry(
 
       if (gameInfoResponse.status === 404) return null;
 
-      const payload = gameInfoResponse.data;
-      const info: GameInfo | undefined =
-        payload && typeof payload === 'object' && 'teams' in payload
-          ? (payload as GameInfo)
-          : (payload as Record<string, GameInfo>)?.[gameId];
-
-      const homeTeam = info?.teams?.find((team) => team.isHome);
-      const awayTeam = info?.teams?.find((team) => !team.isHome);
-      if (
-        homeTeam &&
-        awayTeam &&
-        Number.isFinite(homeTeam.score) &&
-        Number.isFinite(awayTeam.score)
-      ) {
-        return { homeScore: homeTeam.score, awayScore: awayTeam.score };
-      }
-
-      return null;
+      const info = parseGameInfoPayload(gameId, gameInfoResponse.data);
+      return scoresFromGameInfo(info);
     } catch (error) {
       if (attempt === maxRetries - 1) {
         const message = error instanceof Error ? error.message : 'Unknown error';

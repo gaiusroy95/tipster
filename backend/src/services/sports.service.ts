@@ -12,8 +12,31 @@ import { MemoryCache } from '../lib/memory-cache';
 import { cacheGameScoresFromLiveMarkets, getCachedGameScore } from '../lib/game-score-cache';
 
 const cache = new MemoryCache();
-
 const FINISHED_CACHE_MAX = 500;
+
+function isMarketResolved(market: Market): boolean {
+  return market.isResolved || market.statusCode === 'resolved' || market.status === 10;
+}
+
+function trimFinishedMarketsCache() {
+  while (sportsService.finishedMarketsCache.size > FINISHED_CACHE_MAX) {
+    const oldestKey = sportsService.finishedMarketsCache.keys().next().value;
+    if (!oldestKey) break;
+    sportsService.finishedMarketsCache.delete(oldestKey);
+  }
+}
+
+function archiveResolvedMarket(market: Market) {
+  if (!market.gameId || !isMarketResolved(market)) return;
+
+  const cachedScore = getCachedGameScore(market.gameId);
+  sportsService.finishedMarketsCache.set(market.gameId, {
+    ...market,
+    ...(cachedScore
+      ? { homeScore: cachedScore.homeScore, awayScore: cachedScore.awayScore }
+      : {}),
+  } as Market);
+}
 
 type MarketsCacheEntry = {
   data: unknown;
@@ -88,28 +111,60 @@ export const sportsService = {
           sportsService.OVERTIME_NETWORK_ID,
           gameId,
         );
-        if (
-          market &&
-          (market.isResolved || market.statusCode === 'resolved' || market.status === 10)
-        ) {
-          const cachedScore = getCachedGameScore(gameId);
-          sportsService.finishedMarketsCache.set(gameId, {
-            ...market,
-            ...(cachedScore
-              ? { homeScore: cachedScore.homeScore, awayScore: cachedScore.awayScore }
-              : {}),
-          } as Market);
+        if (market) {
+          archiveResolvedMarket(market);
         }
       } catch {
         // Best-effort archival when a live game disappears from feeds.
       }
     }
 
-    while (sportsService.finishedMarketsCache.size > FINISHED_CACHE_MAX) {
-      const oldestKey = sportsService.finishedMarketsCache.keys().next().value;
-      if (!oldestKey) break;
-      sportsService.finishedMarketsCache.delete(oldestKey);
+    trimFinishedMarketsCache();
+  },
+
+  /** Fetches a single market by id and archives it when resolved (for bet settlement). */
+  async prefetchMarketForSettlement(matchId: string): Promise<void> {
+    if (!matchId) return;
+
+    const cached = sportsService.finishedMarketsCache.get(matchId);
+    if (cached && isMarketResolved(cached)) return;
+
+    const market = await sportsService.getMarketOrNull(
+      sportsService.OVERTIME_NETWORK_ID,
+      matchId,
+    );
+    if (market) {
+      archiveResolvedMarket(market);
     }
+  },
+
+  /**
+   * Refreshes resolved markets from Overtime and archives them for bet settlement.
+   * Called each settlement cycle so bets settle even after server restarts.
+   */
+  async syncResolvedMarketsForSettlement(): Promise<number> {
+    const resolvedRaw = await sportsService.fetchMarketsMapper(
+      sportsService.OVERTIME_NETWORK_ID,
+      {
+        status: 'resolved',
+        ungroup: true,
+        onlyBasicProperties: true,
+        onlyMainMarkets: true,
+        includeHashInResponse: false,
+      },
+    );
+
+    const resolvedMarkets = extractMarketsFromPayload(resolvedRaw);
+    let archived = 0;
+
+    for (const market of resolvedMarkets) {
+      if (!market.gameId || !isMarketResolved(market)) continue;
+      archiveResolvedMarket(market);
+      archived++;
+    }
+
+    trimFinishedMarketsCache();
+    return archived;
   },
 
   async fetchMarketsMapper(network: number, query: Record<string, unknown>) {
@@ -411,11 +466,17 @@ export const sportsService = {
 
     const mergedByGameId = new Map<string, Market>();
     for (const market of resolvedMarkets) {
-      if (market.gameId) mergedByGameId.set(market.gameId, market);
+      if (!market.gameId) continue;
+      mergedByGameId.set(market.gameId, market);
+      if (isMarketResolved(market)) {
+        archiveResolvedMarket(market);
+      }
     }
     for (const [gameId, market] of sportsService.finishedMarketsCache) {
       mergedByGameId.set(gameId, market);
     }
+
+    trimFinishedMarketsCache();
 
     const markets = Array.from(mergedByGameId.values()).sort((a, b) => b.maturity - a.maturity);
     const result = { markets };

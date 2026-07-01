@@ -6,7 +6,10 @@ import {
   type BetOutcome,
 } from '../lib/bet-outcome.evaluator';
 import { cacheGameScore, getCachedGameScore } from '../lib/game-score-cache';
-import { fetchGameScoresWithRetry } from '../api/overtime';
+import {
+  fetchGameScoresWithRetry,
+  fetchGameSettlementInfo,
+} from '../api/overtime';
 import type { Market } from '../types/overtime';
 import { sportsService } from './sports.service';
 import { seasonService } from './season.service';
@@ -118,11 +121,24 @@ function isMarketResolved(market: Market): boolean {
 }
 
 async function resolveMarketForSettlement(matchId: string): Promise<Market | null> {
-  const live = await sportsService.getMarketOrNull(10, matchId);
-  if (live) return live;
-
   const archived = sportsService.finishedMarketsCache.get(matchId);
-  return archived ?? null;
+  if (archived && isMarketResolved(archived)) {
+    return archived;
+  }
+
+  await sportsService.prefetchMarketForSettlement(matchId);
+
+  const refreshed = sportsService.finishedMarketsCache.get(matchId);
+  if (refreshed && isMarketResolved(refreshed)) {
+    return refreshed;
+  }
+
+  const live = await sportsService.getMarketOrNull(10, matchId);
+  if (live?.gameId && isMarketResolved(live)) {
+    return live;
+  }
+
+  return live ?? refreshed ?? archived ?? null;
 }
 
 async function resolveScoresForMatch(matchId: string): Promise<{
@@ -162,9 +178,8 @@ async function settleBetsForMatch(
   activeSeasonId: string | null,
 ): Promise<number> {
   const market = await resolveMarketForSettlement(matchId);
-  if (!market) return 0;
 
-  if (market.isCancelled || market.statusCode === 'cancelled') {
+  if (market?.isCancelled || market?.statusCode === 'cancelled') {
     let settled = 0;
     for (const bet of bets) {
       await settleSingleBet(bet, 'void', activeSeasonId);
@@ -173,11 +188,25 @@ async function settleBetsForMatch(
     return settled;
   }
 
-  if (!isMarketResolved(market)) {
+  let marketResolved = market ? isMarketResolved(market) : false;
+  let scores = await resolveScoresForMatch(matchId);
+
+  if (!marketResolved) {
+    const gameInfo = await fetchGameSettlementInfo(matchId);
+    if (gameInfo?.isGameFinished) {
+      marketResolved = true;
+      scores = scores ?? {
+        homeScore: gameInfo.homeScore,
+        awayScore: gameInfo.awayScore,
+      };
+      cacheGameScore(matchId, gameInfo.homeScore, gameInfo.awayScore);
+    }
+  }
+
+  if (!marketResolved) {
     return 0;
   }
 
-  const scores = await resolveScoresForMatch(matchId);
   if (!scores) {
     console.warn(
       `[bet-settlement] No scores for resolved match ${matchId}; skipping ${bets.length} bet(s)`,
@@ -186,7 +215,7 @@ async function settleBetsForMatch(
   }
 
   const threeWayWinner =
-    (market.odds?.length ?? 0) >= 3 ||
+    (market?.odds?.length ?? 0) >= 3 ||
     bets.some((bet) => {
       const parsed = parseSelectionId(bet.selectionId);
       return parsed?.marketType === 'winner' && parsed.selectionIndex >= 2;
@@ -226,6 +255,15 @@ export const betSettlementService = {
       console.error('[bet-repair] Failed to repair clamped active bets:', error);
     });
 
+    try {
+      const archived = await sportsService.syncResolvedMarketsForSettlement();
+      if (archived > 0) {
+        console.log(`[bet-settlement] Synced ${archived} resolved market(s) from Overtime`);
+      }
+    } catch (error) {
+      console.error('[bet-settlement] Failed to sync resolved markets:', error);
+    }
+
     const activeBets = await prisma.bet.findMany({
       where: { status: 'active' },
       orderBy: { placedAt: 'asc' },
@@ -244,6 +282,12 @@ export const betSettlementService = {
       list.push(bet);
       betsByMatch.set(bet.matchId, list);
     }
+
+    await Promise.all(
+      [...betsByMatch.keys()].map((matchId) =>
+        sportsService.prefetchMarketForSettlement(matchId),
+      ),
+    );
 
     let settled = 0;
     let skipped = 0;
