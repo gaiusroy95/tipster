@@ -27,11 +27,13 @@ export const forumImageUpload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME.has(file.mimetype)) {
-      cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExt = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+    if (ALLOWED_MIME.has(file.mimetype) || allowedExt.has(ext)) {
+      cb(null, true);
       return;
     }
-    cb(null, true);
+    cb(new Error('Only JPEG, PNG, WebP, and GIF images are allowed'));
   },
 });
 

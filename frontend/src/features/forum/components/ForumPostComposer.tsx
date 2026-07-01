@@ -13,6 +13,7 @@ import { Label } from '@/shared/components/ui/Label'
 import { useForumCategories, uploadForumImage } from '@/features/forum/hooks/useForum'
 import type { CreateForumPostPayload, ForumPostStatus } from '@/features/forum/types/forum'
 import { cn } from '@/shared/utils/cn'
+import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
 
 interface ForumPostComposerProps {
@@ -84,8 +85,9 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
     try {
       const url = await uploadForumImage(file)
       setCoverImageUrl(url)
-    } catch {
-      toast('Failed to upload cover image', 'error')
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Failed to upload cover image'
+      toast(msg, 'error')
     } finally {
       setCoverUploading(false)
     }
@@ -101,8 +103,9 @@ export function ForumPostComposer({ onSubmit, isLoading, onCancel }: ForumPostCo
     try {
       const url = await uploadForumImage(file)
       setAttachUrl(url)
-    } catch {
-      toast('Failed to upload image', 'error')
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Failed to upload image'
+      toast(msg, 'error')
     } finally {
       setAttachUploading(false)
     }

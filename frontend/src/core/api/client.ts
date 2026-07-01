@@ -24,6 +24,14 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (authToken) {
     config.headers.Authorization = `Bearer ${authToken}`
   }
+  // Let the browser set multipart boundary — a manual Content-Type breaks uploads.
+  if (config.data instanceof FormData) {
+    if (typeof config.headers.delete === 'function') {
+      config.headers.delete('Content-Type')
+    } else {
+      delete config.headers['Content-Type']
+    }
+  }
   return config
 })
 

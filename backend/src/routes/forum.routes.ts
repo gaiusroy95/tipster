@@ -24,7 +24,12 @@ export const forumRouter = Router();
 forumRouter.post(
   '/upload',
   requireAuth,
-  forumImageUpload.single('image'),
+  (req, res, next) => {
+    forumImageUpload.single('image')(req, res, (err) => {
+      if (err) next(err);
+      else next();
+    });
+  },
   asyncHandler(async (req, res) => {
     const file = req.file;
     if (!file) {
