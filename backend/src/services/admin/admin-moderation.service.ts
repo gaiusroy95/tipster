@@ -85,6 +85,13 @@ export const adminBetsService = {
   },
 
   async voidBet(adminUserId: string, betId: string, reason?: string) {
+    const existing = await prisma.bet.findUnique({
+      where: { id: betId },
+      include: {
+        user: { select: { username: true, displayName: true } },
+      },
+    });
+
     const bet = await prisma.bet.update({
       where: { id: betId },
       data: {
@@ -99,7 +106,13 @@ export const adminBetsService = {
       action: 'bet.void',
       entityType: 'bet',
       entityId: betId,
-      metadata: { reason },
+      metadata: {
+        reason,
+        ticketReference: existing?.ticketReference,
+        username: existing?.user.username,
+        displayName: existing?.user.displayName,
+        placedAt: existing?.placedAt.toISOString(),
+      },
     });
 
     return bet;

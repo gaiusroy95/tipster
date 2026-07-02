@@ -8,6 +8,7 @@ import { AuditFilterRail } from '@/features/audit/components/AuditFilterRail'
 import { AuditTimelineStream } from '@/features/audit/components/AuditTimelineStream'
 import { AuditVaultHero } from '@/features/audit/components/AuditVaultHero'
 import {
+  auditApiEntityType,
   filterAuditEntries,
   summarizeAuditEntries,
   type AdminAuditEntry,
@@ -24,48 +25,62 @@ export function AuditLogPage() {
   const [entityType, setEntityType] = useState<AuditEntityFilter>('all')
   const [page, setPage] = useState(1)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [accumulated, setAccumulated] = useState<AdminAuditEntry[]>([])
+  const [loadedEntries, setLoadedEntries] = useState<AdminAuditEntry[]>([])
 
-  const queryParams = {
-    entityType: entityType === 'all' ? undefined : entityType,
-    limit: PAGE_SIZE,
-    page,
-  }
-
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: queryKeys.audit(queryParams),
+  const { data, isPending, isFetching, isError } = useQuery({
+    queryKey: queryKeys.audit({ entityType, page }),
     queryFn: async () => {
+      const params: Record<string, string | number> = {
+        limit: PAGE_SIZE,
+        page,
+      }
+      const apiEntityType = auditApiEntityType(entityType)
+      if (apiEntityType) params.entityType = apiEntityType
+
       const res = await adminClient.get<ApiResponse<Paginated<AdminAuditEntry>>>('/audit-logs', {
-        params: queryParams,
+        params,
       })
       return res.data.data
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   })
 
   useEffect(() => {
-    if (!data) return
-    setAccumulated((prev) => {
+    if (isPending) {
+      if (page === 1) setLoadedEntries([])
+      return
+    }
+
+    if (!data) {
+      if (page === 1) setLoadedEntries([])
+      return
+    }
+
+    setLoadedEntries((prev) => {
       if (page === 1) return data.items
-      const ids = new Set(prev.map((e) => e.id))
-      const next = data.items.filter((e) => !ids.has(e.id))
+      const ids = new Set(prev.map((entry) => entry.id))
+      const next = data.items.filter((entry) => !ids.has(entry.id))
       return [...prev, ...next]
     })
-  }, [data, page])
+  }, [data, page, entityType, isPending])
 
-  useEffect(() => {
+  const handleEntityTypeChange = (value: AuditEntityFilter) => {
+    if (value === entityType) return
+    setEntityType(value)
     setPage(1)
-    setAccumulated([])
     setSelectedId(null)
-  }, [entityType])
+  }
 
   const visibleEntries = useMemo(
-    () => filterAuditEntries(accumulated, search),
-    [accumulated, search],
+    () => filterAuditEntries(loadedEntries, search),
+    [loadedEntries, search],
   )
 
   useEffect(() => {
     if (!selectedId) return
-    const stillVisible = visibleEntries.some((e) => e.id === selectedId)
+    const stillVisible = visibleEntries.some((entry) => entry.id === selectedId)
     if (!stillVisible && visibleEntries.length > 0) {
       setSelectedId(visibleEntries[0]?.id ?? null)
     }
@@ -76,8 +91,9 @@ export function AuditLogPage() {
     () => summarizeAuditEntries(visibleEntries, search ? visibleEntries.length : total),
     [visibleEntries, search, total],
   )
-  const selectedEntry = visibleEntries.find((e) => e.id === selectedId) ?? null
-  const hasMore = accumulated.length < total
+  const selectedEntry = visibleEntries.find((entry) => entry.id === selectedId) ?? null
+  const hasMore = !search && loadedEntries.length < total
+  const timelineLoading = isPending || (isFetching && page === 1 && loadedEntries.length === 0)
 
   const handleSelect = (entry: AdminAuditEntry) => {
     setSelectedId(entry.id)
@@ -90,7 +106,7 @@ export function AuditLogPage() {
 
   return (
     <AdminPageShell compact>
-      {isLoading && !data ? (
+      {timelineLoading && loadedEntries.length === 0 ? (
         <Skeleton className="h-64 rounded-[1.75rem]" />
       ) : (
         <AuditVaultHero
@@ -106,7 +122,7 @@ export function AuditLogPage() {
         search={search}
         onSearchChange={setSearch}
         entityType={entityType}
-        onEntityTypeChange={setEntityType}
+        onEntityTypeChange={handleEntityTypeChange}
         total={total}
         visible={visibleEntries.length}
       />
@@ -117,10 +133,13 @@ export function AuditLogPage() {
             entries={visibleEntries}
             selectedId={selectedId}
             onSelect={handleSelect}
-            isLoading={isLoading}
-            hasMore={hasMore && !search}
-            onLoadMore={() => setPage((p) => p + 1)}
+            isLoading={timelineLoading}
+            hasMore={hasMore}
+            onLoadMore={() => setPage((current) => current + 1)}
             isLoadingMore={isFetching && page > 1}
+            isError={isError}
+            activeFilter={entityType}
+            totalRecords={search ? visibleEntries.length : total}
           />
         </div>
 

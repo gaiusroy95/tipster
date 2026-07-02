@@ -2,8 +2,10 @@ import type { ReactNode } from 'react'
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline'
 import { AuditTimelineNode } from '@/features/audit/components/AuditTimelineNode'
 import {
+  getAuditEmptyMessage,
   groupAuditByDay,
   type AdminAuditEntry,
+  type AuditEntityFilter,
 } from '@/features/audit/lib/auditUtils'
 import { Button } from '@/shared/components/ui/Button'
 import { Skeleton } from '@/shared/components/ui/Card'
@@ -78,6 +80,9 @@ export function AuditTimelineStream({
   hasMore,
   onLoadMore,
   isLoadingMore,
+  isError = false,
+  activeFilter = 'all',
+  totalRecords,
 }: {
   entries: AdminAuditEntry[]
   selectedId: string | null
@@ -86,6 +91,9 @@ export function AuditTimelineStream({
   hasMore: boolean
   onLoadMore: () => void
   isLoadingMore: boolean
+  isError?: boolean
+  activeFilter?: AuditEntityFilter
+  totalRecords?: number
 }) {
   if (isLoading) {
     return (
@@ -106,9 +114,13 @@ export function AuditTimelineStream({
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10">
             <ClipboardDocumentListIcon className="h-7 w-7 text-cyan-300" aria-hidden="true" />
           </div>
-          <p className="mt-4 font-display text-lg font-bold">Vault is quiet</p>
+          <p className="mt-4 font-display text-lg font-bold">
+            {isError ? 'Could not load audit log' : 'Vault is quiet'}
+          </p>
           <p className="mt-2 max-w-xs text-sm text-text-muted">
-            No audit events match your filters. Admin actions will appear here the moment they occur.
+            {isError
+              ? 'The audit feed failed to load. Refresh the page or try again in a moment.'
+              : getAuditEmptyMessage(activeFilter)}
           </p>
         </div>
       </TimelineShell>
@@ -119,7 +131,7 @@ export function AuditTimelineStream({
 
   return (
     <TimelineShell
-      recordCount={entries.length}
+      recordCount={totalRecords ?? entries.length}
       footer={
         hasMore ? (
           <Button variant="secondary" className="w-full" onClick={onLoadMore} isLoading={isLoadingMore}>

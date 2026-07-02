@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   formatAuditTime,
+  formatAuditEntityRef,
   formatMetadata,
   getActionCategory,
   getCategoryStyle,
@@ -55,6 +56,7 @@ export function AuditDossierPanel({ entry }: { entry: AdminAuditEntry | null }) 
   const style = getCategoryStyle(category)
   const destructive = isDestructiveAction(entry.action)
   const metadata = formatMetadata(entry.metadata)
+  const entityRef = formatAuditEntityRef(entry)
 
   return (
     <aside className="audit-dossier relative overflow-hidden rounded-[1.75rem] border border-border-default/60 bg-bg-surface/80 lg:sticky lg:top-6 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto admin-sidebar-scroll">
@@ -91,6 +93,7 @@ export function AuditDossierPanel({ entry }: { entry: AdminAuditEntry | null }) 
         <DossierSection title="Target entity" icon={ClipboardDocumentIcon}>
           <dl className="space-y-3 text-sm">
             <DossierRow label="Domain" value={humanizeEntityType(entry.entityType)} />
+            {entityRef !== '—' ? <DossierRow label="Reference" value={entityRef} mono /> : null}
             <DossierRow label="Raw type" value={entry.entityType} mono />
             {entry.entityId ? (
               <div className="flex items-start justify-between gap-3">

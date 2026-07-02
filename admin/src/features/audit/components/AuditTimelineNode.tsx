@@ -9,12 +9,13 @@ import {
 } from '@heroicons/react/24/outline'
 import {
   formatAuditClock,
+  formatAuditEntityRef,
+  formatAuditTime,
   getActionCategory,
   getCategoryStyle,
   humanizeAction,
   humanizeEntityType,
   isDestructiveAction,
-  truncateEntityId,
   type AdminAuditEntry,
 } from '@/features/audit/lib/auditUtils'
 import { Badge } from '@/shared/components/Badge'
@@ -49,6 +50,7 @@ export function AuditTimelineNode({
   const style = getCategoryStyle(category)
   const Icon = categoryIcon(category)
   const destructive = isDestructiveAction(entry.action)
+  const entityRef = formatAuditEntityRef(entry)
 
   return (
     <div className="audit-timeline-node grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 sm:grid-cols-[3rem_minmax(0,1fr)] sm:gap-4">
@@ -88,9 +90,12 @@ export function AuditTimelineNode({
         )}
       >
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <time className="font-mono text-[11px] tabular-nums text-text-muted" dateTime={entry.createdAt}>
-            {formatAuditClock(entry.createdAt)}
-          </time>
+          <div className="space-y-0.5">
+            <time className="font-mono text-[11px] tabular-nums text-text-muted" dateTime={entry.createdAt}>
+              {formatAuditClock(entry.createdAt)}
+            </time>
+            <p className="font-mono text-[10px] text-text-muted/80">{formatAuditTime(entry.createdAt)}</p>
+          </div>
           <Badge variant={destructive ? 'loss' : 'default'} className="font-mono normal-case tracking-normal">
             {style.label}
           </Badge>
@@ -106,10 +111,12 @@ export function AuditTimelineNode({
             <span className="font-medium text-text-primary">{entry.admin.displayName}</span>
           </span>
           <span className="hidden h-3 w-px bg-border-default sm:inline-block" aria-hidden="true" />
-          <span className="inline-flex items-center gap-1.5 font-mono">
-            <TicketIcon className="h-3.5 w-3.5 opacity-60" aria-hidden="true" />
-            {humanizeEntityType(entry.entityType)}
-            {entry.entityId ? ` · ${truncateEntityId(entry.entityId)}` : ''}
+          <span className="inline-flex min-w-0 items-center gap-1.5 font-mono">
+            <TicketIcon className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden="true" />
+            <span className="truncate">
+              {humanizeEntityType(entry.entityType)}
+              {entityRef !== '—' ? ` · ${entityRef}` : ''}
+            </span>
           </span>
         </div>
 

@@ -98,5 +98,12 @@ export const adminUpdateForumPostSchema = z.object({
 });
 
 export const adminAuditListSchema = adminListQuerySchema.extend({
-  entityType: z.string().optional(),
+  entityType: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      if (typeof val === 'string' && val.trim().toLowerCase() === 'all') return undefined;
+      return val;
+    },
+    z.string().optional(),
+  ),
 });

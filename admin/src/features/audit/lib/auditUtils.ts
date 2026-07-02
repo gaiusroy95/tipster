@@ -20,7 +20,7 @@ export const AUDIT_ENTITY_FILTERS: { value: AuditEntityFilter; label: string }[]
   { value: 'user', label: 'Users' },
   { value: 'curated_league', label: 'Leagues' },
   { value: 'season', label: 'Seasons' },
-  { value: 'prize', label: 'Prizes' },
+  { value: 'prize_tier', label: 'Prizes' },
   { value: 'bet', label: 'Bets' },
   { value: 'forum_post', label: 'Forum' },
   { value: 'forum_comment', label: 'Comments' },
@@ -50,7 +50,7 @@ const ENTITY_LABELS: Record<string, string> = {
   user: 'User',
   curated_league: 'League',
   season: 'Season',
-  prize: 'Prize tier',
+  prize_tier: 'Prize tier',
   bet: 'Bet slip',
   forum_post: 'Forum post',
   forum_comment: 'Comment',
@@ -184,6 +184,7 @@ export function filterAuditEntries(entries: AdminAuditEntry[], search: string) {
       entry.entityType,
       humanizeEntityType(entry.entityType),
       entry.entityId,
+      formatAuditEntityRef(entry),
       entry.admin.displayName,
       entry.admin.email,
       entry.admin.username,
@@ -226,4 +227,41 @@ export function truncateEntityId(id: string | null | undefined, length = 10) {
   if (!id) return '—'
   if (id.length <= length) return id
   return `${id.slice(0, length)}…`
+}
+
+/** Human-readable target for timeline rows (ticket ref, username, etc.). */
+export function formatAuditEntityRef(entry: AdminAuditEntry) {
+  const metadata = entry.metadata ?? {}
+  const ticketReference =
+    typeof metadata.ticketReference === 'string' ? metadata.ticketReference : undefined
+  const username = typeof metadata.username === 'string' ? metadata.username : undefined
+
+  if (entry.entityType === 'bet' && ticketReference) {
+    return ticketReference
+  }
+  if (username) {
+    return `@${username}`
+  }
+  if (entry.entityId) {
+    return truncateEntityId(entry.entityId, 16)
+  }
+  return '—'
+}
+
+export function auditApiEntityType(filter: AuditEntityFilter): string | undefined {
+  if (filter === 'all') return undefined
+  return filter
+}
+
+export function getAuditFilterLabel(filter: AuditEntityFilter) {
+  return AUDIT_ENTITY_FILTERS.find((item) => item.value === filter)?.label ?? 'Domain'
+}
+
+export function getAuditEmptyMessage(filter: AuditEntityFilter) {
+  if (filter === 'all') {
+    return 'No audit events yet. Admin actions will appear here the moment they occur.'
+  }
+
+  const label = getAuditFilterLabel(filter).toLowerCase()
+  return `No ${label} audit events yet. Actions in this area will be recorded here.`
 }

@@ -30,7 +30,7 @@ export function AuditFilterRail({
             <Input
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search actions, admins, entity IDs…"
+              placeholder="Search ticket, @username, action, or admin…"
               className="h-11 pl-10 font-mono text-sm"
               aria-label="Search audit log"
             />
