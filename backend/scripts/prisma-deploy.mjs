@@ -29,6 +29,20 @@ function directHostLabel() {
 
 const status = runPrisma(['migrate', 'status'], { capture: true });
 
+const hasFailedMigrations = status.output.includes('Following migration have failed');
+if (hasFailedMigrations) {
+  console.error('[prisma:deploy] A previous migration failed and must be resolved before deploy.');
+  console.error(status.output);
+  console.error(
+    '[prisma:deploy] If the database change is already applied, run:\n' +
+      '  npx prisma migrate resolve --applied "<migration_name>"\n' +
+      'If it was rolled back, run:\n' +
+      '  npx prisma migrate resolve --rolled-back "<migration_name>"\n' +
+      'Then run npm run prisma:deploy again.',
+  );
+  process.exit(1);
+}
+
 const hasPendingMigrations = status.output.includes('have not yet been applied');
 if (status.status !== 0 && !hasPendingMigrations) {
   console.error(status.output);

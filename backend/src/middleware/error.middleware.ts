@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import multer from 'multer';
 import { ApiException } from '../lib/api-exception';
 import { isPrismaConnectionError } from '../lib/prisma';
+import { isOutdatedBetSchemaError } from '../lib/prisma-errors';
 
 export function errorMiddleware(
   err: unknown,
@@ -76,28 +77,27 @@ export function errorMiddleware(
         });
         return;
       }
+      if (fields.includes('ticketReference')) {
+        res.status(409).json({
+          code: 'TICKET_COLLISION',
+          message: 'Could not assign a bet ticket. Please try again.',
+        });
+        return;
+      }
     }
 
-    if (err.code === 'P2021') {
+    if (err.code === 'P2021' || err.code === 'P2022') {
+      const column = (err.meta as { column?: string } | undefined)?.column ?? '';
       const table = (err.meta as { table?: string } | undefined)?.table ?? '';
-      const message =
-        table.includes('OAuthState')
+      const message = isOutdatedBetSchemaError(err)
+        ? 'Betting is temporarily unavailable while the database is being updated. Please try again in a minute.'
+        : table.includes('OAuthState')
           ? 'Database schema is outdated (OAuthState). Run npm run prisma:deploy in the backend folder, then restart.'
-          : 'Database schema is outdated. Run npm run prisma:deploy in the backend folder, then restart the server.';
+          : column.includes('avatarUrl')
+            ? 'Database schema is outdated (User.avatarUrl). Run npm run prisma:deploy in the backend folder, then restart the server.'
+            : 'Database schema is outdated. Run npm run prisma:deploy in the backend folder, then restart the server.';
       res.status(503).json({
         code: 'DATABASE_SCHEMA_OUTDATED',
-        message,
-      });
-      return;
-    }
-
-    if (err.code === 'P2022') {
-      const column = (err.meta as { column?: string } | undefined)?.column ?? '';
-      const message = column.includes('avatarUrl')
-        ? 'Database schema is outdated (User.avatarUrl). Run npm run prisma:deploy in the backend folder, then restart.'
-        : 'Database schema is outdated. Run npm run prisma:deploy in the backend folder, then restart the server.';
-      res.status(503).json({
-        code: 'DATABASE_UNAVAILABLE',
         message,
       });
       return;
@@ -111,6 +111,15 @@ export function errorMiddleware(
       });
       return;
     }
+  }
+
+  if (err instanceof Prisma.PrismaClientValidationError && isOutdatedBetSchemaError(err)) {
+    res.status(503).json({
+      code: 'DATABASE_SCHEMA_OUTDATED',
+      message:
+        'Betting is temporarily unavailable while the database is being updated. Please try again in a minute.',
+    });
+    return;
   }
 
   if (isPrismaConnectionError(err)) {

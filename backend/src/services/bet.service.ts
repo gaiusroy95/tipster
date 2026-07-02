@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { ApiException } from '../lib/api-exception';
+import { isOutdatedBetSchemaError, toBetPlacementApiException } from '../lib/prisma-errors';
 import {
   BETTING_RULES,
   calculateCancellationPenalty,
@@ -139,6 +140,24 @@ export const betService = {
   },
 
   async placeBet(
+    userId: string,
+    body: {
+      matchId: string;
+      marketType: string;
+      selectionId: string;
+      stake: number;
+    },
+  ) {
+    try {
+      return await this.placeBetInternal(userId, body);
+    } catch (error) {
+      const mapped = toBetPlacementApiException(error);
+      if (mapped) throw mapped;
+      throw error;
+    }
+  },
+
+  async placeBetInternal(
     userId: string,
     body: {
       matchId: string;
