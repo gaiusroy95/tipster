@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Badge } from '@/shared/components/ui/Badge'
+import { BetTicketRef } from '@/features/bets/components/BetTicketRef'
 import { LiveBadge } from '@/shared/components/LiveBadge'
 import { RankBadge, getRankRowClass } from '@/shared/components/RankBadge'
 import { formatCredits } from '@/shared/utils/formatCredits'
@@ -38,6 +39,7 @@ export function BetCard({ bet, showUser }: { bet: Bet; showUser?: boolean }) {
         </div>
         <Badge variant={statusVariant[bet.status]}>{bet.status}</Badge>
       </div>
+      <BetTicketRef ticketReference={bet.ticketReference} placedAt={bet.placedAt} />
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
           <span className="text-text-muted">Selection</span>

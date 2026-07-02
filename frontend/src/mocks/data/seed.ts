@@ -266,6 +266,7 @@ leaderboard.push({
 let bets: Bet[] = [
   {
     id: 'bet-1',
+    ticketReference: 'TA-DEMOPLAYER-20260101-1200-SEED01',
     userId: 'user-demo',
     matchId: 'match-2',
     marketType: 'winner',

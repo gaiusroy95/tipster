@@ -22,9 +22,20 @@ export const adminBetsService = {
       ...(search
         ? {
             OR: [
+              { ticketReference: { contains: search, mode: 'insensitive' as const } },
               { homeTeamName: { contains: search, mode: 'insensitive' as const } },
               { awayTeamName: { contains: search, mode: 'insensitive' as const } },
               { selectionLabel: { contains: search, mode: 'insensitive' as const } },
+              { id: { contains: search, mode: 'insensitive' as const } },
+              {
+                user: {
+                  OR: [
+                    { username: { contains: search, mode: 'insensitive' as const } },
+                    { displayName: { contains: search, mode: 'insensitive' as const } },
+                    { email: { contains: search, mode: 'insensitive' as const } },
+                  ],
+                },
+              },
             ],
           }
         : {}),
@@ -48,6 +59,7 @@ export const adminBetsService = {
     return {
       items: items.map((bet) => ({
         id: bet.id,
+        ticketReference: bet.ticketReference,
         userId: bet.userId,
         user: bet.user,
         matchId: bet.matchId,

@@ -19,6 +19,7 @@ import { marketTypeConfigService } from './admin/market-type-config.service';
 import { leaderboardService } from './leaderboard.service';
 import { notificationService } from './notification.service';
 import { achievementService } from './achievement.service';
+import { generateTicketReference } from '../lib/ticket-reference';
 
 const IDEMPOTENT_BET_WINDOW_MS = 2 * 60 * 1000;
 
@@ -213,31 +214,54 @@ export const betService = {
 
     const activeSeason = await seasonService.getActiveSeason();
 
+    const placedAt = new Date();
+
     const bet = await prisma.$transaction(async (tx) => {
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { balance: { decrement: body.stake } },
       });
 
-      const createdBet = await tx.bet.create({
-        data: {
-          userId,
-          matchId: body.matchId,
-          marketType: body.marketType,
-          selectionId: body.selectionId,
-          selectionLabel: resolved.selectionLabel,
-          odds: resolved.odds,
-          stake: body.stake,
-          potentialReturn,
-          betSize,
-          status: 'active',
-          homeTeamName: resolved.homeTeamName,
-          awayTeamName: resolved.awayTeamName,
-          leagueName: resolved.leagueName,
-          matchStartTime: resolved.matchStartTime,
-          sportId: resolved.sportId,
-        },
-      });
+      let ticketReference = generateTicketReference(user.username, placedAt);
+      let createdBet;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          createdBet = await tx.bet.create({
+            data: {
+              ticketReference,
+              userId,
+              matchId: body.matchId,
+              marketType: body.marketType,
+              selectionId: body.selectionId,
+              selectionLabel: resolved.selectionLabel,
+              odds: resolved.odds,
+              stake: body.stake,
+              potentialReturn,
+              betSize,
+              status: 'active',
+              placedAt,
+              homeTeamName: resolved.homeTeamName,
+              awayTeamName: resolved.awayTeamName,
+              leagueName: resolved.leagueName,
+              matchStartTime: resolved.matchStartTime,
+              sportId: resolved.sportId,
+            },
+          });
+          break;
+        } catch (error) {
+          const isDuplicate =
+            error &&
+            typeof error === 'object' &&
+            'code' in error &&
+            (error as { code?: string }).code === 'P2002';
+          if (!isDuplicate || attempt === 4) throw error;
+          ticketReference = generateTicketReference(user.username, placedAt);
+        }
+      }
+
+      if (!createdBet) {
+        throw new ApiException('INTERNAL_ERROR', 'Could not create bet ticket', 500);
+      }
 
       await tx.walletTransaction.create({
         data: {
@@ -246,7 +270,7 @@ export const betService = {
           type: 'bet_placed',
           amount: -body.stake,
           balanceAfter: updatedUser.balance,
-          description: `Bet placed on ${resolved.selectionLabel}`,
+          description: `Bet placed · ${ticketReference} · ${resolved.selectionLabel}`,
         },
       });
 

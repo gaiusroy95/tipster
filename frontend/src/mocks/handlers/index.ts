@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { mockDb } from '@/mocks/data/seed'
 import { mockApiPath as p, mockApiBase } from '@/mocks/config'
 import { bettingRules, getBetSize } from '@/core/config/bettingRules'
+import { generateTicketReference } from '@/features/bets/lib/ticketReference'
 import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import type { Bet, User } from '@/mocks/data/types'
 import { fetchRealAuthUser, getUserIdFromRequest } from '@/mocks/lib/realAuthBridge'
@@ -577,8 +578,10 @@ export const handlers = [
       ? malayReturn(body.stake, odds)
       : body.stake * (odds > 0 ? odds : 2)
 
+    const placedAt = new Date().toISOString()
     const bet: Bet = {
       id: `bet-${Date.now()}`,
+      ticketReference: generateTicketReference(user.username, new Date(placedAt)),
       userId,
       matchId: body.matchId,
       marketType: body.marketType as Bet['marketType'],
@@ -589,7 +592,7 @@ export const handlers = [
       potentialReturn: Math.round(potentialReturn),
       status: 'active',
       betSize,
-      placedAt: new Date().toISOString(),
+      placedAt,
     }
 
     const bets = mockDb.getBets()
@@ -606,7 +609,7 @@ export const handlers = [
       type: 'bet_placed',
       amount: -body.stake,
       balanceAfter: user.balance,
-      description: `Bet placed on ${selection.label}`,
+      description: `Bet placed · ${bet.ticketReference} · ${selection.label}`,
       createdAt: new Date().toISOString(),
       betId: bet.id,
     })

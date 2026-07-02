@@ -3,10 +3,10 @@ import { LiveBadge } from '@/shared/components/LiveBadge'
 import { Button } from '@/shared/components/ui/Button'
 import { formatCredits } from '@/shared/utils/formatCredits'
 import { formatMalayOdds } from '@/shared/utils/formatOdds'
-import { formatDateTime } from '@/shared/utils/formatDate'
-import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import { matchPath } from '@/core/constants/routes'
+import { calculateCancellationPenalty } from '@/core/config/bettingRules'
 import type { Bet } from '@/mocks/data/types'
+import { BetTicketRef } from '@/features/bets/components/BetTicketRef'
 import { cn } from '@/shared/utils/cn'
 
 function marketLabel(marketType: Bet['marketType']) {
@@ -60,9 +60,12 @@ export function ActiveBetCard({
               {home} vs {away}
             </h3>
           </Link>
+          <BetTicketRef
+            ticketReference={bet.ticketReference}
+            placedAt={bet.placedAt}
+            className="mt-1"
+          />
           <p className="text-xs text-text-muted mt-1">
-            Placed {formatDateTime(bet.placedAt)}
-            <span className="hidden sm:inline"> · </span>
             <Link
               to={matchPath(bet.matchId)}
               className="sm:ml-0 text-accent-secondary hover:underline font-medium"

@@ -7,8 +7,9 @@ import {
 } from '../lib/bet-cancellability';
 
 export interface BetDto {
-  id: string;
-  userId: string;
+  id: string
+  ticketReference: string
+  userId: string
   matchId: string;
   marketType: string;
   selectionId: string;
@@ -39,6 +40,7 @@ export function toBetDto(bet: Bet, market?: Market | null): BetDto {
   const matchStatus = resolveBetMatchStatus(market);
   const dto: BetDto = {
     id: bet.id,
+    ticketReference: bet.ticketReference,
     userId: bet.userId,
     matchId: bet.matchId,
     marketType: bet.marketType,

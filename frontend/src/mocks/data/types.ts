@@ -68,6 +68,7 @@ export interface Match {
 
 export interface Bet {
   id: string
+  ticketReference: string
   userId: string
   matchId: string
   marketType: MarketType

@@ -125,12 +125,20 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
     return true
   }
 
-  const finishSuccessfulPlacement = (count: number) => {
+  const finishSuccessfulPlacement = (count: number, ticketRefs: string[]) => {
     clear()
     setConfirmOpen(false)
     setPanelOpen(false)
+    const ticketHint =
+      count === 1 && ticketRefs[0]
+        ? ` · ${ticketRefs[0]}`
+        : count > 1 && ticketRefs.length > 0
+          ? ` · ${ticketRefs.slice(0, 2).join(', ')}${ticketRefs.length > 2 ? '…' : ''}`
+          : ''
     toast(
-      count === 1 ? 'Bet placed successfully!' : `${count} bets placed successfully!`,
+      count === 1
+        ? `Bet placed successfully!${ticketHint}`
+        : `${count} bets placed successfully!${ticketHint}`,
       'success',
     )
     navigate(ROUTES.BETS_ACTIVE)
@@ -141,6 +149,7 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
 
     setIsPlacingAll(true)
     const placedMatchIds: string[] = []
+    const placedTicketRefs: string[] = []
 
     try {
       for (const sel of selections) {
@@ -153,12 +162,14 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
         }
 
         try {
-          await placeBet.mutateAsync(payload)
+          const bet = await placeBet.mutateAsync(payload)
           placedMatchIds.push(sel.matchId)
+          if (bet.ticketReference) placedTicketRefs.push(bet.ticketReference)
         } catch (e) {
           const recovered = await reconcileBetPlacement(payload, queryClient)
           if (recovered) {
             placedMatchIds.push(sel.matchId)
+            if (recovered.ticketReference) placedTicketRefs.push(recovered.ticketReference)
             continue
           }
 
@@ -175,7 +186,7 @@ export function BetSlipPanelContent({ compact = false }: { compact?: boolean }) 
         }
       }
 
-      finishSuccessfulPlacement(placedMatchIds.length)
+      finishSuccessfulPlacement(placedMatchIds.length, placedTicketRefs)
     } finally {
       setIsPlacingAll(false)
     }

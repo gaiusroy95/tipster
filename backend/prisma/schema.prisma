@@ -318,6 +318,7 @@ model ForumViewReward {
 
 model Bet {
   id               String    @id @default(cuid())
+  ticketReference  String    @unique
   userId           String
   matchId          String
   marketType       String

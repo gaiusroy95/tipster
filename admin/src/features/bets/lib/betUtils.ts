@@ -1,5 +1,6 @@
 export interface AdminBet {
   id: string
+  ticketReference: string
   userId: string
   user: { id: string; email: string; username: string; displayName: string }
   matchId: string

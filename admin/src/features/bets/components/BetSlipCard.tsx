@@ -47,6 +47,9 @@ export function BetSlipCard({
           <div className="min-w-0 flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={style.badge}>{style.label}</Badge>
+              <span className="font-mono text-[11px] font-semibold text-accent-secondary">
+                {bet.ticketReference}
+              </span>
               {bet.leagueName ? (
                 <span className="truncate text-[11px] font-medium uppercase tracking-wider text-text-muted">
                   {bet.leagueName}
@@ -137,6 +140,14 @@ export function BetSlipCard({
 
         {expanded ? (
           <dl className="mt-4 grid gap-3 rounded-xl border border-border-default/50 bg-bg-elevated/20 p-4 text-sm sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <dt className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+                Ticket reference
+              </dt>
+              <dd className="mt-1 font-mono text-sm font-semibold text-accent-secondary">
+                {bet.ticketReference}
+              </dd>
+            </div>
             <div>
               <dt className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">Bet ID</dt>
               <dd className="mt-1 font-mono text-xs text-text-muted">{bet.id}</dd>

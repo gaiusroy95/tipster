@@ -29,12 +29,13 @@ function directHostLabel() {
 
 const status = runPrisma(['migrate', 'status'], { capture: true });
 
-if (status.status !== 0) {
+const hasPendingMigrations = status.output.includes('have not yet been applied');
+if (status.status !== 0 && !hasPendingMigrations) {
   console.error(status.output);
   process.exit(status.status);
 }
 
-if (status.output.includes('Database schema is up to date')) {
+if (status.status === 0 && status.output.includes('Database schema is up to date')) {
   console.log('[prisma:deploy] Database schema is up to date. No migrations to apply.');
   process.exit(0);
 }

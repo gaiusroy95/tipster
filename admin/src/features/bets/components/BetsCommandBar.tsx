@@ -180,7 +180,7 @@ export function BetsCommandBar({
               aria-hidden="true"
             />
             <Input
-              placeholder="Search match, selection, or tipster…"
+              placeholder="Search ticket, @username, match, or selection…"
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
               className="border-border-default/80 bg-bg-primary/60 pl-10 backdrop-blur-sm"

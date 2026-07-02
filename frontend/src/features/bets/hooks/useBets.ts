@@ -98,9 +98,9 @@ export function useCancelBet() {
 export async function reconcileBetPlacement(
   payload: PlaceBetPayload,
   queryClient: ReturnType<typeof useQueryClient>,
-): Promise<boolean> {
+): Promise<Bet | null> {
   const bet = await findRecentMatchingBet(payload)
-  if (!bet) return false
+  if (!bet) return null
   syncBetStateAfterPlacement(queryClient)
-  return true
+  return bet
 }
