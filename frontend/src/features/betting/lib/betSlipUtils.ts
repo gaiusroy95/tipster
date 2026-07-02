@@ -1,6 +1,13 @@
 import type { BetSelection } from '@/features/betting/stores/betSlipStore'
+import { MATCH_STATUS, type MatchStatus } from '@/core/constants/markets'
 import { formatMalayOdds } from '@/shared/utils/formatOdds'
 import { malayReturn, usesMalayOddsFormat } from '@/shared/utils/malayOdds'
+
+const BETTABLE_STATUSES = new Set<MatchStatus>([MATCH_STATUS.SCHEDULED, MATCH_STATUS.LIVE])
+
+export function isMatchBettable(status: MatchStatus | null | undefined): boolean {
+  return status != null && BETTABLE_STATUSES.has(status)
+}
 
 export function calcBetReturn(stake: number, odds: number, marketType: string): number {
   if (usesMalayOddsFormat(marketType)) {

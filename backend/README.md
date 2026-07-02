@@ -74,9 +74,13 @@ npm run start:prod
 | Root directory | `backend` |
 | Build command | `npm install && npm run build` |
 | Start command | `npm run start:prod` |
-| Release command (recommended) | `npx prisma migrate deploy` |
+| Release command (recommended) | `npm run prisma:deploy` |
 
 Ensure `DATABASE_URL` and other env vars are set in the host dashboard. The release command applies pending migrations before each deploy.
+
+**Neon PostgreSQL:** use the **pooler** URL for `DATABASE_URL` (app runtime). Migrations use `DIRECT_DATABASE_URL` automatically (derived by removing `-pooler` from the host). You can set `DIRECT_DATABASE_URL` explicitly in Render env vars if needed.
+
+If `prisma:deploy` reports an advisory lock timeout, stop local `npm run start:dev` and avoid running deploy from local and Render at the same time.
 
 ## Environment variables
 
@@ -84,7 +88,8 @@ Ensure `DATABASE_URL` and other env vars are set in the host dashboard. The rele
 |----------|----------|-------------|
 | `PORT` | No | Server port (default `3001` in code fallback, use `3000` in `.env`) |
 | `X_API_KEY` | Yes | Overtime API key |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon: use `-pooler` host for the app) |
+| `DIRECT_DATABASE_URL` | No | Direct Neon host for migrations; auto-derived from `DATABASE_URL` if omitted |
 | `JWT_SECRET` | Yes | Secret for signing auth tokens |
 | `JWT_EXPIRES_IN` | No | Token lifetime (default `7d`) |
 | `FRONTEND_URL` | Yes | Base URL for password reset links (e.g. `http://localhost:5173`) |

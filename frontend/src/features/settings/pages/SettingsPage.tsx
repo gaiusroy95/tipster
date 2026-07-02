@@ -6,6 +6,8 @@ import { PageShell } from '@/shared/layouts/PageShell'
 import { Skeleton } from '@/shared/components/ui/Skeleton'
 import { QueryErrorFallback } from '@/shared/components/QueryErrorFallback'
 import { useSettings, useUpdateSettings } from '@/features/settings/hooks/useSettings'
+import type { UserSettings } from '@/mocks/data/types'
+import { ApiError } from '@/core/types/api'
 import { useToast } from '@/shared/components/ui/Toast'
 import { ConnectedAccountsCard } from '@/features/settings/components/ConnectedAccountsCard'
 import { TwoFactorSettingsCard } from '@/features/settings/components/TwoFactorSettingsCard'
@@ -29,12 +31,13 @@ export function SettingsPage() {
   const updateSettings = useUpdateSettings()
   const { toast } = useToast()
 
-  const handleToggle = async (key: string, value: boolean) => {
+  const handleToggle = async (key: keyof Pick<UserSettings, 'emailNotifications' | 'pushNotifications' | 'showProfilePublic'>, value: boolean) => {
     try {
       await updateSettings.mutateAsync({ [key]: value })
       toast('Settings updated', 'success')
-    } catch {
-      toast('Failed to update settings', 'error')
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Failed to update settings'
+      toast(msg, 'error')
     }
   }
 

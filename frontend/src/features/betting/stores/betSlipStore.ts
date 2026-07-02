@@ -27,6 +27,7 @@ interface BetSlipState {
   isPanelOpen: boolean
   addSelection: (selection: Omit<BetSelection, 'stake'> & { stake?: number }) => void
   removeSelection: (matchId: string) => void
+  pruneSelections: (matchIds: string[]) => void
   clearSelections: () => void
   setSelectionStake: (matchId: string, stake: number) => void
   updateSelectionOdds: (matchId: string, odds: number) => void
@@ -65,6 +66,15 @@ export const useBetSlipStore = create<BetSlipState>()(
         set((state) => ({
           selections: state.selections.filter((s) => s.matchId !== matchId),
         })),
+
+      pruneSelections: (matchIds) =>
+        set((state) => {
+          if (matchIds.length === 0) return state
+          const remove = new Set(matchIds)
+          const next = state.selections.filter((s) => !remove.has(s.matchId))
+          if (next.length === state.selections.length) return state
+          return { selections: next }
+        }),
 
       clearSelections: () => set({ selections: [] }),
 

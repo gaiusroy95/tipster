@@ -262,16 +262,22 @@ export const achievementService = {
     });
     const earnedIds = new Set(existing.map((e) => e.achievementId));
     const now = new Date();
+    const toCreate: { userId: string; achievementId: string; earnedAt: Date }[] = [];
 
     for (const def of ACHIEVEMENT_CATALOG) {
       if (earnedIds.has(def.id)) continue;
       const { earned } = checkAchievement(def, ctx);
       if (earned) {
-        await prisma.userAchievement.create({
-          data: { userId, achievementId: def.id, earnedAt: now },
-        });
+        toCreate.push({ userId, achievementId: def.id, earnedAt: now });
         earnedIds.add(def.id);
       }
+    }
+
+    if (toCreate.length > 0) {
+      await prisma.userAchievement.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      });
     }
   },
 

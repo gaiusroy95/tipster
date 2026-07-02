@@ -831,8 +831,18 @@ export const handlers = [
     const userId = getUserId(request)
     if (!userId) return error('UNAUTHORIZED', 'Not authenticated', 401)
     const body = (await request.json()) as Record<string, boolean>
-    mockDb.settings[userId] = { ...mockDb.settings[userId], ...body }
-    syncUserAchievements(mockDb, userId)
+    const current = mockDb.settings[userId] ?? {
+      emailNotifications: true,
+      pushNotifications: false,
+      showProfilePublic: true,
+      twoFactorEnabled: false,
+      twoFactorMethod: null,
+      phoneNumberMasked: null,
+    }
+    mockDb.settings[userId] = { ...current, ...body }
+    if ('showProfilePublic' in body) {
+      syncUserAchievements(mockDb, userId)
+    }
     return json(mockDb.settings[userId])
   }),
 

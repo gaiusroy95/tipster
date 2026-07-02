@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { useBetSlipStore } from '@/features/betting/stores/betSlipStore'
+import { useBetSlipPruneFinished } from '@/features/betting/hooks/useBetSlipPruneFinished'
 import { BetSlipPanelContent } from '@/features/betting/components/BetSlipPanelContent'
 import { BetSlipIcon } from '@/features/betting/components/BetSlipIcon'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -28,6 +29,8 @@ export function BetSlipChatPanel() {
   const isPanelOpen = useBetSlipStore((s) => s.isPanelOpen)
   const togglePanel = useBetSlipStore((s) => s.togglePanel)
   const setPanelOpen = useBetSlipStore((s) => s.setPanelOpen)
+
+  useBetSlipPruneFinished()
 
   if (!user) return null
 

@@ -265,7 +265,10 @@ apiRouter.patch(
   asyncHandler(async (req, res) => {
     const user = (req as AuthenticatedRequest).user;
     const settings = await settingsService.update(user.id, req.body);
-    await achievementService.syncUserAchievements(user.id);
+    // Only profile visibility affects achievements — skip sync for notification toggles.
+    if (req.body.showProfilePublic !== undefined) {
+      await achievementService.syncUserAchievements(user.id);
+    }
     res.json({
       data: {
         emailNotifications: settings.emailNotifications,

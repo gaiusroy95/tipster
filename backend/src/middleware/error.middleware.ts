@@ -11,6 +11,14 @@ export function errorMiddleware(
   res: Response,
   _next: NextFunction,
 ): void {
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({
+      code: 'VALIDATION_ERROR',
+      message: 'Invalid JSON in request body',
+    });
+    return;
+  }
+
   if (err instanceof ApiException) {
     res.status(err.status).json({
       code: err.code,
